@@ -1,0 +1,215 @@
+# Production workflow reference
+
+Full detail behind the `SKILL.md` workflow: responsibilities, source
+organization, the per-step production workflow, targeted commands, and
+generation safety rules.
+
+## Responsibilities
+
+The user is responsible for:
+
+- Providing local source assets and confirming the right to use them.
+- Defining the audience, channel, objective, and important creative constraints.
+- Reviewing the final creative result.
+
+The agent is responsible for:
+
+- Inspecting source media and planning the edit.
+- Writing or updating the composition, scenes, timing, and captions.
+- Generating optional narration, music, and sound effects.
+- Rendering previews and final deliverables.
+- Checking visual quality, audio quality, encoding, and platform requirements.
+- Recording material limitations and publication status.
+
+## Source organization
+
+Each video owns a direct child directory of `src/`. Do not put composition
+files for different videos in the same directory.
+
+```text
+src/
+├── index.ts
+├── Root.tsx
+├── <video-id>/
+│   ├── <Composition>.tsx
+│   ├── scenes.tsx
+│   ├── AudioTracks.tsx
+│   ├── Captions.tsx
+│   ├── README.md
+│   └── video.config.json
+└── <next-video-id>/
+    ├── <Composition>.tsx
+    ├── scenes.tsx
+    ├── README.md
+    └── video.config.json
+```
+
+`src/index.ts` remains the Remotion entry point and `src/Root.tsx` registers
+the available compositions. A composition directory should contain everything
+specific to that video. Move code into a shared module only after two or more
+compositions genuinely reuse it.
+
+Canonical case assets remain outside `src/`. Link or copy only the assets that
+Remotion must read into `public/`; do not edit a canonical source asset through
+its runtime copy.
+
+## General production workflow
+
+### 1. Define the brief
+
+Before editing, record:
+
+- Target platform and aspect ratio.
+- Intended duration and frame rate.
+- Audience, message, and call to action.
+- Required source assets and their usage rights.
+- Whether the video needs narration, music, captions, or sound effects.
+- Expected output path and publication status.
+
+Keep copy short enough for the intended duration. The video must remain
+understandable without audio when it is intended for an autoplay social feed.
+
+### 2. Inspect the local assets
+
+The agent inventories the supplied files before changing the composition. Use
+`ffprobe` to inspect video and audio streams, frame rate, dimensions, duration,
+and codecs. Use FFmpeg for disposable inspection transcodes, frame extraction,
+or contact sheets. Use SoX when waveform, silence, peak, gain, or other audio
+analysis is useful.
+
+Inspection commands are production actions performed directly by the agent; they
+do not need repository wrappers unless the same operation becomes a stable,
+repeatable package requirement.
+
+### 3. Plan the composition
+
+Create or update one composition directory and register it in `src/Root.tsx`.
+Keep scene timing, caption timing, audio prompts, and composition metadata in
+the composition's `video.config.json` when they share one timeline.
+
+The config must declare a `videoId` matching its directory and a `production`
+object that owns asset links, the public runtime path, output paths, render
+props, optional audio steps, and optional mastering settings. New compositions
+should normally use their video id as `production.publicPath`, which isolates
+their runtime audio and assets under `public/<video-id>/`.
+
+Use frame-based Remotion primitives for deterministic rendering:
+
+- `Sequence` for scene boundaries.
+- `useCurrentFrame()` and `interpolate()` for animation.
+- `staticFile()` for local runtime assets.
+- `Video`, `Audio`, and `Img` for media.
+
+Do not use CSS transitions or CSS animations in a Remotion composition.
+
+### 4. Build and inspect silent visuals first
+
+Start with the visual edit before generating expensive or nondeterministic
+audio. Typecheck the package, render representative still frames, and inspect
+the opening hook, important transitions, result reveal, captions, safe areas,
+and end card.
+
+Use a silent preview render when timing cannot be judged from still frames.
+Iterate on the composition until the visual story works without narration.
+
+### 5. Generate optional audio
+
+Audio generation is a separate, explicit stage:
+
+- Gemini TTS may generate narration from the approved transcript.
+- Gemini verification may transcribe the result and compare it with the script.
+- Lyria may generate a music bed from the approved music direction.
+- Deterministic UI sound effects may be generated locally or supplied as assets.
+
+Generated speech must fit inside its assigned timeline slots. Music and sound
+effects should support the edit without masking narration or interface cues.
+Keep API keys in the environment and never save them in this package.
+
+### 6. Render and master
+
+Remotion produces the frame-accurate video and audio mix. FFmpeg may then be
+used directly or through a stable package script to normalize loudness,
+transcode audio, preserve or transcode video, add `faststart`, and create
+platform-specific delivery files.
+
+Use ffprobe on the finished deliverable to confirm at least:
+
+- Duration.
+- Width and height.
+- Frame rate.
+- Video and audio codecs.
+- Presence or absence of the intended audio stream.
+
+Use SoX or FFmpeg analysis when final loudness, peak level, clipping, or silence
+needs verification.
+
+### 7. Perform final QA
+
+Visual QA must inspect the actual rendered video, not only the Remotion source.
+Check:
+
+- The first frame and opening hook.
+- Text readability and platform safe areas.
+- Crop, scale, and motion at scene boundaries.
+- Product, logo, and generated-text integrity.
+- Claims, disclosure, and source-asset usage boundaries.
+- Audio synchronization, intelligibility, loudness, and ending.
+- Final encoding and playback.
+
+Record the asset inventory, known limitations, technical result, and publication
+status in the relevant case or marketing documentation.
+
+## Targeted commands
+
+Script paths are relative to this skill's own directory; run them with Node
+from the project root. `--env-file-if-exists=.env` loads `GEMINI_API_KEY`
+from a `.env` file in the project root when present, and is a no-op
+otherwise. Every command that reads or produces composition-specific files
+requires exactly one video id:
+
+```bash
+node --env-file-if-exists=.env scripts/run-video.mjs check <video-id>
+node --env-file-if-exists=.env scripts/link-assets.mjs <video-id>
+node --env-file-if-exists=.env scripts/run-video.mjs studio <video-id>
+node --env-file-if-exists=.env scripts/run-video.mjs still <video-id>
+node --env-file-if-exists=.env scripts/run-video.mjs render:silent <video-id>
+node --env-file-if-exists=.env scripts/generate-ui-sfx.mjs <video-id>
+node --env-file-if-exists=.env scripts/generate-gemini-voiceover.mjs <video-id>
+node --env-file-if-exists=.env scripts/generate-lyria-music.mjs <video-id>
+node --env-file-if-exists=.env scripts/prepare-audio.mjs <video-id>
+node --env-file-if-exists=.env scripts/verify-voiceover.mjs <video-id>
+node --env-file-if-exists=.env scripts/render-final.mjs <video-id>
+```
+
+`run-video.mjs check` validates and prints the selected config without
+linking assets, generating media, or rendering. Commands fail when the video
+id is missing, does not match the source directory, or points at an invalid
+config.
+
+Generation and render commands refuse to overwrite existing outputs. Use
+`--force` only after regeneration has been explicitly requested:
+
+```bash
+node --env-file-if-exists=.env scripts/render-final.mjs <video-id> --force
+```
+
+## Generation safety
+
+Generated assets are not disposable caches. Narration, music, sound effects,
+preview renders, and final renders must not be regenerated or overwritten as a
+side effect of typechecking, opening Remotion Studio, moving source files, or
+working on another composition.
+
+Follow these rules:
+
+- Always identify the intended composition before a generation or render step.
+- Never iterate over every composition and generate all of them implicitly.
+- Treat an existing generated file as preserved output; stop rather than
+  overwriting it unless regeneration was explicitly requested.
+- Keep audio generation separate from rendering.
+- Do not run a generator merely to verify a source-directory migration.
+- Prefer composition-specific output directories and file names.
+- Preserve canonical source assets and previously published deliverables.
+
+Each composition directory should maintain its own README for its source
+assets, commands, model choices, output paths, and QA records.

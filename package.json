@@ -1,0 +1,44 @@
+{
+  "name": "make-video",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agent Skill: turn local assets into a finished, mastered video with Remotion, FFmpeg, and optional Gemini narration/music.",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hunter-Gu/make-video.git"
+  },
+  "homepage": "https://github.com/Hunter-Gu/make-video#readme",
+  "bugs": {
+    "url": "https://github.com/Hunter-Gu/make-video/issues"
+  },
+  "scripts": {
+    "assets:link": "node skills/make-video/scripts/link-assets.mjs",
+    "audio:sfx": "node skills/make-video/scripts/generate-ui-sfx.mjs",
+    "audio:voiceover": "node skills/make-video/scripts/generate-gemini-voiceover.mjs",
+    "audio:music": "node skills/make-video/scripts/generate-lyria-music.mjs",
+    "audio:verify": "node skills/make-video/scripts/verify-voiceover.mjs",
+    "audio:prepare": "node skills/make-video/scripts/prepare-audio.mjs",
+    "video:check": "node skills/make-video/scripts/run-video.mjs check",
+    "studio": "node skills/make-video/scripts/run-video.mjs studio",
+    "still": "node skills/make-video/scripts/run-video.mjs still",
+    "render:silent": "node skills/make-video/scripts/run-video.mjs render:silent",
+    "render": "node skills/make-video/scripts/render-final.mjs",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json"
+  },
+  "dependencies": {
+    "@remotion/captions": "^4.0.499",
+    "@remotion/cli": "^4.0.499",
+    "@remotion/media": "^4.0.499",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "remotion": "^4.0.499"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,8 @@
+node_modules/
+out/
+public/*/assets/
+public/*/audio/music/*.mp3
+public/*/audio/voiceover/*.wav
+public/*/audio/voiceover/manifest.json
+!public/*/audio/music/.gitkeep
+!public/*/audio/voiceover/.gitkeep
