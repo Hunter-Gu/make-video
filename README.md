@@ -67,6 +67,11 @@ Get a key from [Google AI Studio](https://aistudio.google.com/apikey), then eith
   file when present and is a no-op otherwise. Add `.env` to your project's
   `.gitignore`; never commit it.
 
+## Roadmap
+
+The long-term plan for turning topics, documents, and books into image-led
+knowledge videos and documentary series is in [ROADMAP.md](ROADMAP.md).
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
