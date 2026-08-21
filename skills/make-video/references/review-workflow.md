@@ -5,6 +5,12 @@ script, storyboard, source index, generation manifests, voice manifest, and QA
 report into `output/<video-id>/review.html`. Refresh it with `--force` after an
 intentional change.
 
+Run `scripts/build-contact-sheet.mjs <video-id>` to render the midpoint of every
+scene and build `output/<video-id>/review/index.html`. The page shows the actual
+storyboard frames, can play an existing preview, and exports feedback JSON with
+scene, current time, optional x/y/width/height region, and note. It reads the
+project scene index and does not maintain a second production state.
+
 ## Approval state
 
 After approval, run `scripts/approval-lock.mjs lock <video-id>`. It records
