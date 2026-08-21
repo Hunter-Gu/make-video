@@ -20,6 +20,9 @@ reuses completed partial outputs after an interrupted batch. Existing unrelated
 outputs are protected. The script defaults to a 20-minute timeout; configure
 `pollSeconds` or `timeoutMinutes` when necessary.
 
+After an approved revision, pass `--asset=<id>` to process only that shot. The
+script preserves unrelated manifest entries and still honors approval locks.
+
 Generation may incur substantial cost. Confirm the shot count and provider
 before running it. Inspect subject consistency, unwanted text, historical
 accuracy, continuity, duration, and whether the clip supports its narration.

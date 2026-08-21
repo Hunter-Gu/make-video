@@ -1,16 +1,16 @@
 import {createHash} from "node:crypto";
-import {mkdirSync, writeFileSync} from "node:fs";
+import {existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
 import {dirname, extname, relative, resolve, sep} from "node:path";
 
 import {
   assertOutputsAvailable,
   loadVideoContext,
-  parseTargetArgs,
 } from "./video-context.mjs";
 import {firstInlineImage, generateContent} from "./gemini-client.mjs";
 import {assertTargetsUnlocked} from "./approval-lock-lib.mjs";
+import {parseGenerationArgs} from "./generation-args.mjs";
 
-const {videoId, force} = parseTargetArgs(process.argv.slice(2));
+const {videoId, force, assetIds} = parseGenerationArgs(process.argv.slice(2));
 const context = loadVideoContext(videoId);
 const {config, publicDir} = context;
 const imageGeneration = config.imageGeneration;
@@ -26,11 +26,6 @@ if (!Array.isArray(imageGeneration.assets) || imageGeneration.assets.length === 
 const model = process.env.GEMINI_IMAGE_MODEL ?? imageGeneration.model;
 if (typeof model !== "string" || model.length === 0) {
   throw new Error("imageGeneration.model must be a non-empty string.");
-}
-
-const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey) {
-  throw new Error("GEMINI_API_KEY is required for image generation.");
 }
 
 const seenIds = new Set();
@@ -63,23 +58,30 @@ const outputFiles = imageGeneration.assets.map((asset, index) => {
   }
   return output;
 });
+const selectedIndexes = assetIds.length > 0
+  ? imageGeneration.assets.map((asset, index) => assetIds.includes(asset.id) ? index : -1).filter((index) => index >= 0)
+  : imageGeneration.assets.map((_, index) => index);
+const missingIds = assetIds.filter((id) => !seenIds.has(id));
+if (missingIds.length > 0) throw new Error(`Unknown generated image assets: ${missingIds.join(", ")}`);
 
 const manifestFile = resolve(publicDir, "images/generated/manifest.json");
-assertTargetsUnlocked(context, [...outputFiles, manifestFile]);
-assertOutputsAvailable([...outputFiles, manifestFile], {
+const selectedOutputs = selectedIndexes.map((index) => outputFiles[index]);
+assertTargetsUnlocked(context, [...selectedOutputs, manifestFile]);
+assertOutputsAvailable(assetIds.length > 0 ? selectedOutputs : [...selectedOutputs, manifestFile], {
   force,
   action: `Image generation for ${videoId}`,
 });
 
 /** @type {{videoId: string, model: string, generatedAt: string, assets: Array<Record<string, string>>}} */
-const manifest = {
-  videoId,
-  model,
-  generatedAt: new Date().toISOString(),
-  assets: [],
-};
+const manifest = assetIds.length > 0 && existsSync(manifestFile)
+  ? JSON.parse(readFileSync(manifestFile, "utf8"))
+  : {videoId, model, generatedAt: new Date().toISOString(), assets: []};
+manifest.model = model;
+manifest.generatedAt = new Date().toISOString();
+const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) throw new Error("GEMINI_API_KEY is required for image generation.");
 
-for (let index = 0; index < imageGeneration.assets.length; index += 1) {
+for (const index of selectedIndexes) {
   const asset = imageGeneration.assets[index];
   const output = outputFiles[index];
   const prompt = [imageGeneration.direction, asset.prompt]
@@ -116,15 +118,19 @@ for (let index = 0; index < imageGeneration.assets.length; index += 1) {
   mkdirSync(dirname(output), {recursive: true});
   const bytes = Buffer.from(image.data, "base64");
   writeFileSync(output, bytes);
-  manifest.assets.push({
+  const record = {
     id: asset.id,
     output: relative(publicDir, output),
     mimeType: image.mimeType,
     promptHash: createHash("sha256").update(prompt).digest("hex"),
     sha256: createHash("sha256").update(bytes).digest("hex"),
-  });
+  };
+  manifest.assets = manifest.assets.filter((item) => item.id !== asset.id);
+  manifest.assets.push(record);
   console.log(`Generated ${asset.id}`);
 }
+const order = new Map(imageGeneration.assets.map((asset, index) => [asset.id, index]));
+manifest.assets.sort((left, right) => (order.get(left.id) ?? Infinity) - (order.get(right.id) ?? Infinity));
 
 mkdirSync(dirname(manifestFile), {recursive: true});
 writeFileSync(manifestFile, `${JSON.stringify(manifest, null, 2)}\n`);

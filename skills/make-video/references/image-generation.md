@@ -34,6 +34,10 @@ Run one target video from the caller's project root:
 node --env-file-if-exists=.env scripts/generate-gemini-images.mjs <video-id>
 ```
 
+After an approved revision, append `--asset=<id>` to regenerate only that image.
+Repeat the option or use comma-separated IDs for a small affected set. Unrelated
+manifest entries remain unchanged, and active approval locks still apply.
+
 The script uses `GEMINI_IMAGE_MODEL` when set, otherwise the configured model.
 It refuses to overwrite outputs without `--force` and records prompt and file
 hashes in `images/generated/manifest.json`.

@@ -3,18 +3,17 @@ import {createHash} from "node:crypto";
 import {existsSync, mkdirSync, readFileSync, renameSync, writeFileSync} from "node:fs";
 import {dirname, extname, relative, resolve, sep} from "node:path";
 
-import {assertOutputsAvailable, loadVideoContext, parseTargetArgs} from "./video-context.mjs";
+import {assertOutputsAvailable, loadVideoContext} from "./video-context.mjs";
 import {assertTargetsUnlocked} from "./approval-lock-lib.mjs";
+import {parseGenerationArgs} from "./generation-args.mjs";
 
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta";
-const {videoId, force} = parseTargetArgs(process.argv.slice(2));
+const {videoId, force, assetIds} = parseGenerationArgs(process.argv.slice(2));
 const context = loadVideoContext(videoId);
 const generation = context.config.videoGeneration;
 if (!generation || !Array.isArray(generation.assets) || generation.assets.length === 0) {
   throw new Error(`${videoId} has no videoGeneration assets.`);
 }
-const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey) throw new Error("GEMINI_API_KEY is required for video generation.");
 const model = process.env.GEMINI_VIDEO_MODEL ?? generation.model;
 if (!model) throw new Error("videoGeneration.model is required.");
 
@@ -64,8 +63,19 @@ const outputs = generation.assets.map((asset) => {
 });
 const manifestFile = resolve(context.publicDir, "video/generated/manifest.json");
 const operationsFile = resolve(context.publicDir, "video/generated/operations.json");
-assertTargetsUnlocked(context, [...outputs, manifestFile]);
-assertOutputsAvailable([manifestFile], {force, action: `Video generation for ${videoId}`});
+const configuredIds = generation.assets.map((asset) => asset.id);
+if (new Set(configuredIds).size !== configuredIds.length) throw new Error("Generated video asset IDs must be unique.");
+if (generation.assets.some((asset) => !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(asset.id) || !asset.prompt)) {
+  throw new Error("Each generated video needs a kebab-case id and prompt.");
+}
+const missingIds = assetIds.filter((id) => !configuredIds.includes(id));
+if (missingIds.length > 0) throw new Error(`Unknown generated video assets: ${missingIds.join(", ")}`);
+const selectedIndexes = assetIds.length > 0
+  ? generation.assets.map((asset, index) => assetIds.includes(asset.id) ? index : -1).filter((index) => index >= 0)
+  : generation.assets.map((_, index) => index);
+const selectedOutputs = selectedIndexes.map((index) => outputs[index]);
+assertTargetsUnlocked(context, [...selectedOutputs, manifestFile]);
+if (assetIds.length === 0) assertOutputsAvailable([manifestFile], {force, action: `Video generation for ${videoId}`});
 
 /** @type {{videoId: string, model: string, assets: Record<string, any>}} */
 const operations = existsSync(operationsFile)
@@ -82,15 +92,22 @@ const saveOperations = () => {
 };
 
 /** @type {{videoId: string, model: string, generatedAt: string, assets: Array<Record<string, unknown>>}} */
-const manifest = {videoId, model, generatedAt: new Date().toISOString(), assets: []};
-const assetIds = new Set();
-for (let index = 0; index < generation.assets.length; index += 1) {
+const manifest = assetIds.length > 0 && existsSync(manifestFile)
+  ? JSON.parse(readFileSync(manifestFile, "utf8"))
+  : {videoId, model, generatedAt: new Date().toISOString(), assets: []};
+manifest.model = model;
+manifest.generatedAt = new Date().toISOString();
+const recordManifest = (/** @type {Record<string, any>} */ record) => {
+  manifest.assets = manifest.assets.filter((/** @type {Record<string, any>} */ item) => item.id !== record.id);
+  manifest.assets.push(record);
+};
+const seenAssetIds = new Set();
+const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) throw new Error("GEMINI_API_KEY is required for video generation.");
+for (const index of selectedIndexes) {
   const asset = generation.assets[index];
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(asset.id) || !asset.prompt) {
-    throw new Error("Each generated video needs a kebab-case id and prompt.");
-  }
-  if (assetIds.has(asset.id)) throw new Error(`Duplicate generated video id: ${asset.id}`);
-  assetIds.add(asset.id);
+  if (seenAssetIds.has(asset.id)) throw new Error(`Duplicate generated video id: ${asset.id}`);
+  seenAssetIds.add(asset.id);
   const prompt = [generation.direction, asset.prompt].filter(Boolean).join("\n\n");
   const firstFrame = loadFrame(asset.firstFrame, `videoGeneration.assets.${asset.id}.firstFrame`);
   const lastFrame = loadFrame(asset.lastFrame, `videoGeneration.assets.${asset.id}.lastFrame`);
@@ -111,7 +128,7 @@ for (let index = 0; index < generation.assets.length; index += 1) {
   const output = outputs[index];
 
   if (existsSync(output) && prior?.status === "completed" && prior.fingerprint === fingerprint && !force) {
-    manifest.assets.push(prior.manifestAsset);
+    recordManifest(prior.manifestAsset);
     console.log(`Reused completed ${asset.id}`);
     continue;
   }
@@ -181,7 +198,7 @@ for (let index = 0; index < generation.assets.length; index += 1) {
     ...(firstFrame ? {firstFrame: {path: firstFrame.path, sha256: firstFrame.sha256}} : {}),
     ...(lastFrame ? {lastFrame: {path: lastFrame.path, sha256: lastFrame.sha256}} : {}),
   };
-  manifest.assets.push(manifestAsset);
+  recordManifest(manifestAsset);
   operations.assets[asset.id] = {
     ...operations.assets[asset.id],
     status: "completed",
@@ -191,5 +208,7 @@ for (let index = 0; index < generation.assets.length; index += 1) {
   saveOperations();
   console.log(`Generated ${asset.id}`);
 }
+const order = new Map(generation.assets.map((asset, index) => [asset.id, index]));
+manifest.assets.sort((/** @type {Record<string, any>} */ left, /** @type {Record<string, any>} */ right) => (order.get(left.id) ?? Infinity) - (order.get(right.id) ?? Infinity));
 mkdirSync(dirname(manifestFile), {recursive: true});
 writeFileSync(manifestFile, `${JSON.stringify(manifest, null, 2)}\n`);
