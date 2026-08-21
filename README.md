@@ -71,8 +71,19 @@ Get a key from [Google AI Studio](https://aistudio.google.com/apikey), then eith
 
 ## Roadmap
 
-The long-term plan for turning topics, documents, and books into image-led
+The implemented plan for turning topics, documents, and books into image-led
 knowledge videos and documentary series is in [ROADMAP.md](ROADMAP.md).
+
+The repository includes a reproducible Library of Alexandria acceptance case.
+After installing project dependencies, render and verify it with:
+
+```bash
+pnpm render:silent library-of-alexandria
+pnpm roadmap:verify library-of-alexandria
+```
+
+Model-backed image, video, voice, and music generation stays separate from
+this local acceptance path and requires explicit cost approval.
 
 ## License
 

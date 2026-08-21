@@ -1,5 +1,31 @@
 # Roadmap
 
+## Implementation status
+
+All six phases are implemented. The reproducible acceptance case is
+`library-of-alexandria`: 14 scenes, 1,551 frames, seven delivery variants, a
+rendered 51.754-second master, and deterministic source, series, media, and
+final-video QA.
+
+Run the release gate after rendering the example:
+
+```bash
+pnpm roadmap:verify library-of-alexandria
+```
+
+| Phase | Shipped evidence |
+| --- | --- |
+| Topic to video | Approved plan, script, storyboard, narration-derived timing, Remotion render, captions, configurable audio mix, and final-file QA |
+| Visual storytelling | Fourteen scene examples, 2.5D/focus motion, visual and character bibles, historical constraints, image QA, and render QA |
+| Source to video | Markdown/text/web/PDF/DOCX/EPUB ingestion, location-preserving index, annotations, claim checks, catalog, rights, and source list |
+| Book to series | Adaptation modes, compression estimate, episode/source allocation, continuity checks, and shared series bibles |
+| Hybrid scenes | Replaceable image/video adapters, conditioning and resume support, estimates and approval, provenance, clip QA, and Remotion video scenes |
+| Review and delivery | Contact sheet, interactive review, candidates, locks, revision mapping, review package, and seven delivery variants |
+
+Paid model calls remain explicit approval steps and require the caller's API
+credentials. The acceptance gate uses checked local fixtures, so verifying the
+workflow cannot create model charges.
+
 ## Product direction
 
 `make-video` is an agent skill for turning knowledge into image-led videos.
