@@ -3,17 +3,9 @@ out/
 output/
 packages/app/dist/
 
-# User-owned production workspace state.
+# Generated runtime assets.
+public/
+
+# User-owned video projects and series data.
+src/*/
 series/
-src/library-of-alexandria/
-src/*/COVER.json
-src/*/REMOTION_TIMELINE.json
-src/*/WORKBENCH.json
-public/*/assets/
-public/*/images/
-public/*/videos/
-public/*/audio/music/*.mp3
-public/*/audio/voiceover/*.wav
-public/*/audio/voiceover/manifest.json
-!public/*/audio/music/.gitkeep
-!public/*/audio/voiceover/.gitkeep
