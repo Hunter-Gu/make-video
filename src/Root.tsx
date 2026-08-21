@@ -1,6 +1,17 @@
-// Register one <Composition /> per video here, reading its id/fps/width/
-// height/durationInFrames from that video's video.config.json. See
-// SKILL.md and README.md for the composition-directory convention.
+import {Composition} from "remotion";
+
+import {LibraryOfAlexandria} from "./library-of-alexandria/LibraryOfAlexandria";
+import config from "./library-of-alexandria/video.config.json";
+
 export const RemotionRoot = () => {
-  return null;
+  return (
+    <Composition
+      id={config.composition.id}
+      component={LibraryOfAlexandria}
+      durationInFrames={config.composition.durationInFrames}
+      fps={config.composition.fps}
+      width={config.composition.width}
+      height={config.composition.height}
+    />
+  );
 };

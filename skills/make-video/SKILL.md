@@ -52,6 +52,11 @@ When the approved storyboard uses Gemini-generated stills, read
 [references/image-generation.md](references/image-generation.md) before
 configuring or running the image generator.
 
+For image-led compositions, reuse or adapt
+[assets/remotion/KnowledgeVideo.tsx](assets/remotion/KnowledgeVideo.tsx). It
+provides chapter, image, quotation, timeline, comparison, and caption scenes;
+extend it when the storyboard calls for a visual form it does not cover.
+
 Approval of the production plan authorizes the planned local production work,
 but does not authorize publishing, paid services beyond the approved scope, or
 overwriting existing generated outputs.
