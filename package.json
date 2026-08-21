@@ -25,6 +25,7 @@
     "audio:prepare": "node skills/make-video/scripts/prepare-audio.mjs",
     "video:check": "node skills/make-video/scripts/run-video.mjs check",
     "video:qa": "node skills/make-video/scripts/qa-video.mjs",
+    "video:review": "node skills/make-video/scripts/build-review.mjs",
     "studio": "node skills/make-video/scripts/run-video.mjs studio",
     "still": "node skills/make-video/scripts/run-video.mjs still",
     "render:silent": "node skills/make-video/scripts/run-video.mjs render:silent",

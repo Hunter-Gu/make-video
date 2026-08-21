@@ -69,6 +69,10 @@ When an approved storyboard justifies generated motion, read
 [references/video-generation.md](references/video-generation.md). Generate only
 the selected shots; do not replace the image-led visual plan wholesale.
 
+For storyboard approval, candidate selection, locked scenes, incremental
+changes, and delivery variants, read
+[references/review-workflow.md](references/review-workflow.md).
+
 Approval of the production plan authorizes the planned local production work,
 but does not authorize publishing, paid services beyond the approved scope, or
 overwriting existing generated outputs.
@@ -108,6 +112,7 @@ without erroring when it isn't:
 ```bash
 node --env-file-if-exists=.env scripts/run-video.mjs check <video-id>
 node --env-file-if-exists=.env scripts/qa-video.mjs <video-id>
+node --env-file-if-exists=.env scripts/build-review.mjs <video-id>
 node --env-file-if-exists=.env scripts/link-assets.mjs <video-id>
 node --env-file-if-exists=.env scripts/generate-gemini-images.mjs <video-id>
 node --env-file-if-exists=.env scripts/generate-veo-videos.mjs <video-id>
