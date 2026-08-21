@@ -61,6 +61,10 @@ When the request is grounded in supplied documents, books, or web pages, read
 [references/source-workflow.md](references/source-workflow.md) and ingest the
 sources before writing the final narration.
 
+When one long source should become multiple videos, read
+[references/series-workflow.md](references/series-workflow.md) after ingestion
+and obtain approval for the series plan before developing any episode.
+
 Approval of the production plan authorizes the planned local production work,
 but does not authorize publishing, paid services beyond the approved scope, or
 overwriting existing generated outputs.
