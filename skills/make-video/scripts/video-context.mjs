@@ -172,6 +172,7 @@ export const parseTargetArgs = (args) => {
  * @property {VoiceConfig} [voice]
  * @property {MusicConfig} [music]
  * @property {ImageGenerationConfig} [imageGeneration]
+ * @property {Array<{id: string, title?: string, type?: string, input?: string, url?: string, rights?: string}>} [sources]
  */
 
 /**

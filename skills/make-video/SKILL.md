@@ -57,6 +57,10 @@ For image-led compositions, reuse or adapt
 provides chapter, image, quotation, timeline, comparison, and caption scenes;
 extend it when the storyboard calls for a visual form it does not cover.
 
+When the request is grounded in supplied documents, books, or web pages, read
+[references/source-workflow.md](references/source-workflow.md) and ingest the
+sources before writing the final narration.
+
 Approval of the production plan authorizes the planned local production work,
 but does not authorize publishing, paid services beyond the approved scope, or
 overwriting existing generated outputs.
@@ -98,6 +102,7 @@ node --env-file-if-exists=.env scripts/run-video.mjs check <video-id>
 node --env-file-if-exists=.env scripts/qa-video.mjs <video-id>
 node --env-file-if-exists=.env scripts/link-assets.mjs <video-id>
 node --env-file-if-exists=.env scripts/generate-gemini-images.mjs <video-id>
+node --env-file-if-exists=.env scripts/ingest-sources.mjs <video-id>
 node --env-file-if-exists=.env scripts/run-video.mjs studio <video-id>
 node --env-file-if-exists=.env scripts/run-video.mjs still <video-id>
 node --env-file-if-exists=.env scripts/run-video.mjs render:silent <video-id>
