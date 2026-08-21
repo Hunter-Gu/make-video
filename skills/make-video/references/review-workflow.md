@@ -7,11 +7,15 @@ intentional change.
 
 ## Approval state
 
-Record approved scene and asset IDs in `STORYBOARD.md`. Treat approval as a
-lock: do not rewrite the scene, replace its source, regenerate its media, or
-change its timing unless the requested revision affects it. Existing output
-protection still applies; approval to revise one scene does not authorize
-`--force` for unrelated outputs.
+After approval, run `scripts/approval-lock.mjs lock <video-id>`. It records
+content hashes for the plan, script, storyboard, claims, composition, source
+index, canonical assets, and generated assets that exist. Run `verify` before
+delivery. Image and video generators refuse to replace locked outputs.
+
+For an approved revision, first record its scope, then run `unlock`. Make only
+the approved changes and create a fresh lock with `lock --force`. Unlocking is
+auditable in the retained lock file; `--force` alone does not bypass an active
+lock.
 
 When presenting candidates, keep each candidate in a distinct path and record
 its prompt, model, cost, and intended scene. After the user selects one, update

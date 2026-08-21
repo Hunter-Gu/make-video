@@ -4,6 +4,7 @@ import {existsSync, mkdirSync, readFileSync, renameSync, writeFileSync} from "no
 import {dirname, extname, relative, resolve, sep} from "node:path";
 
 import {assertOutputsAvailable, loadVideoContext, parseTargetArgs} from "./video-context.mjs";
+import {assertTargetsUnlocked} from "./approval-lock-lib.mjs";
 
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta";
 const {videoId, force} = parseTargetArgs(process.argv.slice(2));
@@ -63,6 +64,7 @@ const outputs = generation.assets.map((asset) => {
 });
 const manifestFile = resolve(context.publicDir, "video/generated/manifest.json");
 const operationsFile = resolve(context.publicDir, "video/generated/operations.json");
+assertTargetsUnlocked(context, [...outputs, manifestFile]);
 assertOutputsAvailable([manifestFile], {force, action: `Video generation for ${videoId}`});
 
 /** @type {{videoId: string, model: string, assets: Record<string, any>}} */

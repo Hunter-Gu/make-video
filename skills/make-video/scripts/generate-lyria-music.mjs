@@ -7,9 +7,11 @@ import {
   parseTargetArgs,
 } from "./video-context.mjs";
 import {firstInlineAudio, generateContent} from "./gemini-client.mjs";
+import {assertTargetsUnlocked} from "./approval-lock-lib.mjs";
 
 const {videoId, force} = parseTargetArgs(process.argv.slice(2));
-const {audioDirs, config} = loadVideoContext(videoId);
+const context = loadVideoContext(videoId);
+const {audioDirs, config} = context;
 const music = config.music;
 
 if (!music || typeof music !== "object") {
@@ -19,6 +21,7 @@ if (!music || typeof music !== "object") {
 const outputDir = audioDirs.music;
 const outputFile = resolve(outputDir, "lyria-underscore.mp3");
 
+assertTargetsUnlocked(context, [outputFile]);
 assertOutputsAvailable([outputFile], {
   force,
   action: `Music generation for ${videoId}`,

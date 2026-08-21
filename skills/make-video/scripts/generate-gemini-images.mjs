@@ -8,9 +8,11 @@ import {
   parseTargetArgs,
 } from "./video-context.mjs";
 import {firstInlineImage, generateContent} from "./gemini-client.mjs";
+import {assertTargetsUnlocked} from "./approval-lock-lib.mjs";
 
 const {videoId, force} = parseTargetArgs(process.argv.slice(2));
-const {config, publicDir} = loadVideoContext(videoId);
+const context = loadVideoContext(videoId);
+const {config, publicDir} = context;
 const imageGeneration = config.imageGeneration;
 
 if (!imageGeneration || typeof imageGeneration !== "object") {
@@ -63,6 +65,7 @@ const outputFiles = imageGeneration.assets.map((asset, index) => {
 });
 
 const manifestFile = resolve(publicDir, "images/generated/manifest.json");
+assertTargetsUnlocked(context, [...outputFiles, manifestFile]);
 assertOutputsAvailable([...outputFiles, manifestFile], {
   force,
   action: `Image generation for ${videoId}`,

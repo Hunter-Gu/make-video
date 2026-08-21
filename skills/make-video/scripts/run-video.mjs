@@ -9,6 +9,7 @@ import {
   projectRoot,
   scriptsDir,
 } from "./video-context.mjs";
+import {assertTargetsUnlocked} from "./approval-lock-lib.mjs";
 
 const action = process.argv[2];
 const supportedActions = new Set(["check", "studio", "still", "render:silent"]);
@@ -76,6 +77,7 @@ if (action === "studio") {
 }
 
 if (action === "still") {
+  assertTargetsUnlocked(context, [outputs.still]);
   assertOutputsAvailable([outputs.still], {
     force,
     action: `Still render for ${videoId}`,
@@ -93,6 +95,7 @@ if (action === "still") {
   process.exit(0);
 }
 
+assertTargetsUnlocked(context, [outputs.silent]);
 assertOutputsAvailable([outputs.silent], {
   force,
   action: `Silent render for ${videoId}`,

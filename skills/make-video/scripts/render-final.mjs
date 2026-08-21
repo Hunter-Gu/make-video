@@ -9,6 +9,7 @@ import {
   projectRoot,
   scriptsDir,
 } from "./video-context.mjs";
+import {assertTargetsUnlocked} from "./approval-lock-lib.mjs";
 
 const {videoId, force} = parseTargetArgs(process.argv.slice(2));
 const context = loadVideoContext(videoId);
@@ -19,6 +20,7 @@ const protectedOutputs = mastering
   ? [outputs.unmastered, outputs.final]
   : [outputs.final];
 
+assertTargetsUnlocked(context, protectedOutputs);
 assertOutputsAvailable(protectedOutputs, {
   force,
   action: `Final render for ${videoId}`,

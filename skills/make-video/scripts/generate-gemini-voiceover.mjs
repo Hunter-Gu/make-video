@@ -8,9 +8,11 @@ import {
   parseTargetArgs,
 } from "./video-context.mjs";
 import {firstInlineAudio, generateContent} from "./gemini-client.mjs";
+import {assertTargetsUnlocked} from "./approval-lock-lib.mjs";
 
 const {videoId, force} = parseTargetArgs(process.argv.slice(2));
-const {audioDirs, composition, config} = loadVideoContext(videoId);
+const context = loadVideoContext(videoId);
+const {audioDirs, composition, config} = context;
 const captions = config.captions;
 const voice = config.voice;
 
@@ -41,6 +43,7 @@ const outputFiles = [
   resolve(outputDir, "manifest.json"),
 ];
 
+assertTargetsUnlocked(context, outputFiles);
 assertOutputsAvailable(outputFiles, {
   force,
   action: `Voice generation for ${videoId}`,
