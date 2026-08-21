@@ -121,7 +121,6 @@ node --env-file-if-exists=.env scripts/generate-ui-sfx.mjs <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs voiceover <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs music <video-id>
 node --env-file-if-exists=.env scripts/prepare-audio.mjs <video-id>
-node --env-file-if-exists=.env scripts/ai.mjs verify-voiceover <video-id>
 node --env-file-if-exists=.env scripts/render.mjs final <video-id>
 ```
 

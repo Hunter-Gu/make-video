@@ -16,7 +16,6 @@
   "scripts": {
     "assets:link": "node skills/make-video/scripts/link-assets.mjs",
     "sources:ingest": "node skills/make-video/scripts/ingest-sources.mjs",
-    "audio:verify": "node skills/make-video/scripts/ai.mjs verify-voiceover",
     "audio:prepare": "node skills/make-video/scripts/prepare-audio.mjs",
     "video:qa": "node skills/make-video/scripts/qa-video.mjs",
     "render:preview": "node skills/make-video/scripts/render.mjs preview",

@@ -125,7 +125,6 @@ Iterate on the composition until the visual story works without narration.
 Audio generation is a separate, explicit stage:
 
 - Gemini TTS may generate narration from the configured transcript.
-- Gemini verification may transcribe the result and compare it with the script.
 - Lyria may generate a music bed from the configured music direction.
 - Deterministic UI sound effects may be generated locally or supplied as assets.
 
@@ -205,7 +204,6 @@ node --env-file-if-exists=.env scripts/generate-ui-sfx.mjs <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs voiceover <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs music <video-id>
 node --env-file-if-exists=.env scripts/prepare-audio.mjs <video-id>
-node --env-file-if-exists=.env scripts/ai.mjs verify-voiceover <video-id>
 node --env-file-if-exists=.env scripts/render.mjs final <video-id>
 ```
 

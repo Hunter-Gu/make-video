@@ -38,13 +38,12 @@ npx skills add remotion-dev/skills --skill remotion-best-practices
 
 | Variable                      | Required                                             | Purpose                                                                                                 |
 | ----------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `GEMINI_API_KEY`              | Generation or verification                           | Server-only Gemini key used by the AI package; never exposed to the browser.                            |
+| `GEMINI_API_KEY`              | Generation                                             | Server-only Gemini key used by the AI package; never exposed to the browser.                            |
 | `GEMINI_TTS_MODEL`            | No                                                   | Overrides `voice.model` from `video.config.json` for narration.                                         |
 | `GEMINI_TTS_VOICE`            | No                                                   | Overrides `voice.voiceName` from `video.config.json` for narration.                                     |
 | `GEMINI_IMAGE_MODEL`          | No                                                   | Overrides `imageGeneration.model` for generated still images.                                           |
 | `GEMINI_VIDEO_MODEL`          | No                                                   | Overrides `videoGeneration.model` for generated video shots.                                            |
 | `LYRIA_MODEL`                 | No                                                   | Overrides `music.model` from `video.config.json` for the music bed.                                     |
-| `GEMINI_VERIFY_MODEL`         | No                                                   | Model used to transcribe generated narration for verification (defaults to `gemini-3.6-flash`).         |
 | `TTS_START_AT`                | No                                                   | Resumes narration generation from a given caption id, reusing earlier segment files.                    |
 | `REMOTION_BROWSER_EXECUTABLE` | No                                                   | Overrides the headless browser Remotion uses to render (defaults to system Chrome on macOS if present). |
 
@@ -70,7 +69,7 @@ Get a key from [Google AI Studio](https://aistudio.google.com/apikey), then eith
   `.gitignore`; never commit it.
 
 Video plans are produced by the host agent. The AI package only handles media
-generation and audio verification.
+generation.
 
 ## Roadmap
 
