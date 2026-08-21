@@ -19,6 +19,7 @@
     "assets:videos": "node skills/make-video/scripts/generate-veo-videos.mjs",
     "sources:ingest": "node skills/make-video/scripts/ingest-sources.mjs",
     "sources:verify": "node skills/make-video/scripts/verify-claims.mjs",
+    "sources:catalog": "node skills/make-video/scripts/build-source-catalog.mjs",
     "series:verify": "node skills/make-video/scripts/verify-series.mjs",
     "audio:sfx": "node skills/make-video/scripts/generate-ui-sfx.mjs",
     "audio:voiceover": "node skills/make-video/scripts/generate-gemini-voiceover.mjs",

@@ -43,6 +43,7 @@ ${jsonSection("Visual bible", resolve(context.sourceDir, "VISUAL_BIBLE.json"))}
 ${jsonSection("Character bible", resolve(context.sourceDir, "CHARACTER_BIBLE.json"))}
 ${section("Historical constraints", read(resolve(context.sourceDir, "PROMPT_CONSTRAINTS.md")))}
 ${jsonSection("Source index", resolve(context.sourceDir, "sources/index.json"))}
+${jsonSection("Source catalog", resolve(context.sourceDir, "sources/catalog.json"))}
 ${jsonSection("Generated images", resolve(context.publicDir, "images/generated/manifest.json"))}
 ${jsonSection("Generated video", resolve(context.publicDir, "video/generated/manifest.json"))}
 ${jsonSection("Voiceover", resolve(context.publicDir, "audio/voiceover/manifest.json"))}
