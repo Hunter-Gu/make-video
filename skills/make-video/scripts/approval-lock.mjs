@@ -50,6 +50,7 @@ const candidates = [
   "GENERATION_ESTIMATE.json",
   "GENERATION_APPROVAL.json",
   "CLIP_QA.json",
+  "IMAGE_QA.json",
   "sources/catalog.json",
   "content.ts",
   "video.config.json",

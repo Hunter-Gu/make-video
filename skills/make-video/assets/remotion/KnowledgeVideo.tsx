@@ -120,7 +120,7 @@ const PortraitScene = ({scene}: {scene: KnowledgeScene}) => {
   const reveal = interpolate(frame, [0, 35], [0, 100], {extrapolateRight: "clamp"});
   return <AbsoluteFill style={{alignItems: "center", justifyContent: "center"}}>
     {scene.image ? <Img src={staticFile(scene.image)} style={{width: "62%", height: "86%", objectFit: "cover", objectPosition: scene.imagePosition ?? "center", clipPath: `inset(${100 - reveal}% 0 0 0 round 400px 400px 40px 40px)`, filter: "drop-shadow(0 30px 60px #0009)"}} /> : null}
-    <div style={{position: "absolute", left: 120, bottom: 110, fontSize: 68}}>{scene.title}</div>
+    <div style={{position: "absolute", left: 120, bottom: scene.narration ? 210 : 110, fontSize: 68}}>{scene.title}</div>
   </AbsoluteFill>;
 };
 
@@ -134,7 +134,7 @@ const DepthScene = ({scene}: {scene: KnowledgeScene}) => {
       return <Img key={`${layer.image}-${index}`} src={staticFile(layer.image)} style={{position: "absolute", inset: "-8%", width: "116%", height: "116%", objectFit: "cover", opacity: layer.opacity ?? 1, clipPath: layer.mask, transform: `translate(${(layer.x ?? 0) + shift * progress}px, ${(layer.y ?? 0) - shift * .35 * progress}px) scale(${layer.scale ?? 1})`, filter: `blur(${Math.abs(layer.depth - focusDepth) * 5}px)`}} />;
     })}
     <AbsoluteFill style={{background: "linear-gradient(0deg, #080c12bb, transparent 60%)"}} />
-    <div style={{position: "absolute", left: 130, bottom: 110, fontSize: 64}}>{scene.title}</div>
+    <div style={{position: "absolute", left: 130, bottom: scene.narration ? 210 : 110, fontSize: 64}}>{scene.title}</div>
   </AbsoluteFill>;
 };
 
@@ -151,7 +151,7 @@ const VideoScene = ({scene}: {scene: KnowledgeScene}) => (
       />
     ) : null}
     {scene.title || scene.subtitle ? (
-      <AbsoluteFill style={{justifyContent: "end", padding: "120px 140px", background: "linear-gradient(0deg, #080c12cc, transparent 55%)"}}>
+      <AbsoluteFill style={{justifyContent: "end", padding: `${scene.narration ? 220 : 120}px 140px`, background: "linear-gradient(0deg, #080c12cc, transparent 55%)"}}>
         <Enter>
           <div style={{fontSize: 62}}>{scene.title}</div>
           <div style={{fontSize: 30, color: "var(--muted)", marginTop: 18}}>{scene.subtitle}</div>
@@ -304,7 +304,7 @@ const Scene = ({scene}: {scene: KnowledgeScene}) => {
 const Caption = ({text, start = 0, end = Infinity}: {text?: string; start?: number; end?: number}) => {
   const frame = useCurrentFrame();
   return text && frame >= start && frame < end ? (
-    <div style={{position: "absolute", left: 180, right: 180, bottom: 54, textAlign: "center", fontFamily: "Arial, sans-serif", fontSize: 30, lineHeight: 1.35, textShadow: "0 2px 10px #000", zIndex: 10}}>
+    <div style={{position: "absolute", left: 180, right: 180, bottom: 44, textAlign: "center", fontFamily: "Arial, sans-serif", fontSize: 30, lineHeight: 1.35, textShadow: "0 2px 10px #000", background: "#05080db8", padding: "8px 18px", borderRadius: 8, zIndex: 10}}>
       {text}
     </div>
   ) : null;

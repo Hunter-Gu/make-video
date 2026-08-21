@@ -29,6 +29,7 @@
     "video:check": "node skills/make-video/scripts/run-video.mjs check",
     "video:qa": "node skills/make-video/scripts/qa-video.mjs",
     "video:clips:qa": "node skills/make-video/scripts/qa-generated-videos.mjs",
+    "images:qa": "node skills/make-video/scripts/qa-images.mjs",
     "video:review": "node skills/make-video/scripts/build-review.mjs",
     "video:contact-sheet": "node skills/make-video/scripts/build-contact-sheet.mjs",
     "approval:lock": "node skills/make-video/scripts/approval-lock.mjs lock",

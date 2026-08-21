@@ -61,6 +61,10 @@ For still-image motion, choose explicit purpose: `portrait` for a masked reveal,
 separated layers, masks, parallax, and a focus-depth transition. The motion
 should direct attention to the narrated idea.
 
+Treat the bottom caption band as protected. Video, portrait, and depth scene
+titles automatically move above it when narration is present; do not place
+important generated-image details or source text in that safe area.
+
 Save the storyboard as `src/<video-id>/STORYBOARD.md`. Include an asset summary
 with approximate supplied, sourced, generated, and programmatic counts so the
 user can understand cost and workload.

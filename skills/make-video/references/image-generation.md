@@ -43,6 +43,11 @@ stages in `CHARACTER_BIBLE.json`, and historical boundaries in
 `PROMPT_CONSTRAINTS.md`. Generation automatically prepends them. An asset may
 request exact character stages with `characters: [{"id":"...","stage":"..."}]`.
 
+List selected visual assets in `IMAGE_QA.json` with a semantic `visualIdea`,
+text policy, and minimum information threshold. Run `scripts/qa-images.mjs
+<video-id>` to reject near-duplicate perceptual hashes, repeated visual ideas,
+low-variance images, and high-confidence OCR text that was not allowed.
+
 The script uses `GEMINI_IMAGE_MODEL` when set, otherwise the configured model.
 It refuses to overwrite outputs without `--force` and records prompt and file
 hashes in `images/generated/manifest.json`.
