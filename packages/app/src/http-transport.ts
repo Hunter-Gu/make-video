@@ -1,4 +1,4 @@
-import type {Caption, ProjectState, WorkbenchTransport} from "@make-video/contracts";
+import type {Caption, WorkbenchTransport} from "@make-video/contracts";
 
 const request = async <T,>(path: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(path, {...init, headers: {"content-type": "application/json", ...init?.headers}});
