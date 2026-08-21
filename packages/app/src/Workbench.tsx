@@ -1,10 +1,10 @@
 import {useCallback, useEffect, useState} from 'react';
 import {Badge} from '@astryxdesign/core/Badge';
 import type {Asset, ProjectState, WorkbenchTransport} from '@make-video/contracts';
-import {AssetBin} from '../components/AssetBin';
-import {Inspector} from '../components/Inspector';
-import {Preview} from '../components/Preview';
-import {Timeline} from '../components/Timeline';
+import {AssetBin} from './components/AssetBin';
+import {Inspector} from './components/Inspector';
+import {Preview} from './components/Preview';
+import {Timeline} from './components/Timeline';
 import type {InspectorMode, PreviewMode} from './types';
 
 export const Workbench = ({transport}: {transport: WorkbenchTransport}) => {

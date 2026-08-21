@@ -2,7 +2,7 @@ import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import {Theme} from '@astryxdesign/core/theme';
 import {neutralTheme} from '@astryxdesign/theme-neutral/built';
-import {Workbench} from './app/Workbench';
+import {Workbench} from './Workbench';
 import {mcpTransport} from './mcp-transport';
 import './astryx.css';
 import './styles.css';

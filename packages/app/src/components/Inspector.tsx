@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import type {Asset, Caption, ProjectState, RemotionEffect, WorkbenchTransport} from '@make-video/contracts';
-import type {InspectorMode} from '../app/types';
+import type {InspectorMode} from '../types';
 import {formatTime} from '../lib/format-time';
 
 type InspectorProps = {

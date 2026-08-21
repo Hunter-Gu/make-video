@@ -1,6 +1,6 @@
 import {useMemo, useRef, useState} from 'react';
 import type {ProjectState} from '@make-video/contracts';
-import type {PreviewMode} from '../app/types';
+import type {PreviewMode} from '../types';
 import {formatTime} from '../lib/format-time';
 
 type PreviewProps = {
