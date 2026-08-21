@@ -20,6 +20,12 @@ audience, tone, source policy, and target runtime.
 Estimate spoken duration and revise the script until it fits. Treat the voice
 model's real output as authoritative once narration is generated.
 
+Define scene timing rules in `TIMING_PLAN.json`, then run
+`scripts/build-narration-timing.mjs <video-id> --force` after voice generation.
+Narrated scenes derive their duration from measured voice segments plus explicit
+lead/tail handles; non-narrated transitions may keep a fixed duration. The
+script writes `SCENE_INDEX.json` and updates the composition duration.
+
 Save the approved narration as `src/<video-id>/SCRIPT.md`. Give stable IDs to
 narration blocks so storyboard scenes and later source citations can refer to
 them without matching prose by position.

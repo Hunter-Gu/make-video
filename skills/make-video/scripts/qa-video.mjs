@@ -85,12 +85,13 @@ add(
   audio ? "present" : "missing",
 );
 
-const captions = Array.isArray(config.captions) ? config.captions : [];
+const sceneIndexFile = resolve(context.sourceDir, "SCENE_INDEX.json");
+const indexedCaptions = existsSync(sceneIndexFile) ? JSON.parse(readFileSync(sceneIndexFile, "utf8")).captions : null;
+const captions = Array.isArray(indexedCaptions) ? indexedCaptions : Array.isArray(config.captions) ? config.captions : [];
 let previousEnd = 0;
 for (const caption of captions) {
   const valid =
-    typeof caption.text === "string" &&
-    caption.text.trim().length > 0 &&
+    (caption.text === undefined || typeof caption.text === "string" && caption.text.trim().length > 0) &&
     Number.isFinite(caption.startFrame) &&
     Number.isFinite(caption.endFrame) &&
     caption.startFrame >= previousEnd &&

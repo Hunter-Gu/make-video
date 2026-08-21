@@ -45,6 +45,7 @@ const candidates = [
   "CHARACTER_BIBLE.json",
   "PROMPT_CONSTRAINTS.md",
   "SOURCE_ANNOTATIONS.json",
+  "TIMING_PLAN.json",
   "sources/catalog.json",
   "content.ts",
   "video.config.json",

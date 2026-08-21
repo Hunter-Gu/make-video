@@ -37,6 +37,7 @@ ${section("Production plan", read(resolve(context.sourceDir, "PRODUCTION_PLAN.md
 ${section("Narration script", read(resolve(context.sourceDir, "SCRIPT.md")))}
 ${section("Storyboard", read(resolve(context.sourceDir, "STORYBOARD.md")))}
 ${jsonSection("Scene index", resolve(context.sourceDir, "SCENE_INDEX.json"))}
+${jsonSection("Timing plan", resolve(context.sourceDir, "TIMING_PLAN.json"))}
 ${jsonSection("Candidates", resolve(context.sourceDir, "CANDIDATES.json"))}
 ${jsonSection("Deliverables", resolve(context.sourceDir, "DELIVERABLES.json"))}
 ${jsonSection("Visual bible", resolve(context.sourceDir, "VISUAL_BIBLE.json"))}

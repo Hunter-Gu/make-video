@@ -1,0 +1,12 @@
+{
+  "videoId": "library-of-alexandria",
+  "model": "timing-fixture",
+  "voiceName": "documentary-fixture",
+  "segments": {
+    "opening": {"durationSeconds": 4.2},
+    "city": {"durationSeconds": 6},
+    "timeline": {"durationSeconds": 4.5},
+    "myth": {"durationSeconds": 5.5},
+    "legacy": {"durationSeconds": 6}
+  }
+}

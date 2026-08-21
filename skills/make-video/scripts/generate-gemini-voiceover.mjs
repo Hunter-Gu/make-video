@@ -37,9 +37,10 @@ for (const segment of captions) {
 }
 
 const outputDir = audioDirs.voiceover;
+const narrationTiming = voice.timingMode === "narration";
 const outputFiles = [
   ...captions.map((segment) => resolve(outputDir, `${segment.id}.wav`)),
-  resolve(outputDir, "voiceover.wav"),
+  ...(!narrationTiming ? [resolve(outputDir, "voiceover.wav")] : []),
   resolve(outputDir, "manifest.json"),
 ];
 
@@ -169,7 +170,7 @@ ${segment.text}`;
   );
   const generatedSamples = Math.floor(pcm.length / bytesPerSample);
 
-  if (generatedSamples > availableSamples) {
+  if (!narrationTiming && generatedSamples > availableSamples) {
     throw new Error(
       `Voice segment "${segment.id}" is ${(
         generatedSamples / sampleRate
@@ -185,16 +186,16 @@ ${segment.text}`;
     durationSeconds: generatedSamples / sampleRate,
   };
 
-  const startSample = Math.round(
-    (segment.startFrame / config.composition.fps) * sampleRate,
-  );
-  pcm.copy(timelinePcm, startSample * bytesPerSample);
+  if (!narrationTiming) {
+    const startSample = Math.round((segment.startFrame / config.composition.fps) * sampleRate);
+    pcm.copy(timelinePcm, startSample * bytesPerSample);
+  }
   console.log(
     `Generated ${segment.id}: ${(generatedSamples / sampleRate).toFixed(2)}s`,
   );
 }
 
-writeWave(resolve(outputDir, "voiceover.wav"), timelinePcm);
+if (!narrationTiming) writeWave(resolve(outputDir, "voiceover.wav"), timelinePcm);
 writeFileSync(
   resolve(outputDir, "manifest.json"),
   `${JSON.stringify(manifest, null, 2)}\n`,

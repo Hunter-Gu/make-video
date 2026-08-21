@@ -18,6 +18,8 @@ export type KnowledgeScene = {
   title?: string;
   subtitle?: string;
   narration?: string;
+  captionStartInFrames?: number;
+  captionEndInFrames?: number;
   image?: string;
   imagePosition?: string;
   panX?: number;
@@ -299,12 +301,14 @@ const Scene = ({scene}: {scene: KnowledgeScene}) => {
   return <ImageScene scene={scene} />;
 };
 
-const Caption = ({text}: {text?: string}) =>
-  text ? (
+const Caption = ({text, start = 0, end = Infinity}: {text?: string; start?: number; end?: number}) => {
+  const frame = useCurrentFrame();
+  return text && frame >= start && frame < end ? (
     <div style={{position: "absolute", left: 180, right: 180, bottom: 54, textAlign: "center", fontFamily: "Arial, sans-serif", fontSize: 30, lineHeight: 1.35, textShadow: "0 2px 10px #000", zIndex: 10}}>
       {text}
     </div>
   ) : null;
+};
 
 export const KnowledgeVideo = ({spec, showCaptions = true, sceneOverrides = {}}: {spec: KnowledgeVideoSpec; showCaptions?: boolean; sceneOverrides?: Record<string, Partial<KnowledgeScene>>}) => {
   let start = 0;
@@ -326,7 +330,7 @@ export const KnowledgeVideo = ({spec, showCaptions = true, sceneOverrides = {}}:
         return (
           <Sequence key={scene.id} from={from} durationInFrames={scene.durationInFrames} premountFor={30}>
             <Scene scene={scene} />
-            <Caption text={showCaptions ? scene.narration : undefined} />
+            <Caption text={showCaptions ? scene.narration : undefined} start={scene.captionStartInFrames} end={scene.captionEndInFrames} />
           </Sequence>
         );
       })}

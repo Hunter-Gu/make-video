@@ -140,6 +140,7 @@ export const parseTargetArgs = (args) => {
  * @property {string} model
  * @property {string} voiceName
  * @property {string} direction
+ * @property {"narration" | "fixed"} [timingMode]
  */
 
 /**
