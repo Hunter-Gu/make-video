@@ -39,6 +39,9 @@ ${section("Storyboard", read(resolve(context.sourceDir, "STORYBOARD.md")))}
 ${jsonSection("Scene index", resolve(context.sourceDir, "SCENE_INDEX.json"))}
 ${jsonSection("Candidates", resolve(context.sourceDir, "CANDIDATES.json"))}
 ${jsonSection("Deliverables", resolve(context.sourceDir, "DELIVERABLES.json"))}
+${jsonSection("Visual bible", resolve(context.sourceDir, "VISUAL_BIBLE.json"))}
+${jsonSection("Character bible", resolve(context.sourceDir, "CHARACTER_BIBLE.json"))}
+${section("Historical constraints", read(resolve(context.sourceDir, "PROMPT_CONSTRAINTS.md")))}
 ${jsonSection("Source index", resolve(context.sourceDir, "sources/index.json"))}
 ${jsonSection("Generated images", resolve(context.publicDir, "images/generated/manifest.json"))}
 ${jsonSection("Generated video", resolve(context.publicDir, "video/generated/manifest.json"))}

@@ -6,6 +6,7 @@ import {dirname, extname, relative, resolve, sep} from "node:path";
 import {assertOutputsAvailable, loadVideoContext} from "./video-context.mjs";
 import {assertTargetsUnlocked} from "./approval-lock-lib.mjs";
 import {parseGenerationArgs} from "./generation-args.mjs";
+import {buildVisualContext} from "./visual-context.mjs";
 
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta";
 const {videoId, force, assetIds} = parseGenerationArgs(process.argv.slice(2));
@@ -108,7 +109,7 @@ for (const index of selectedIndexes) {
   const asset = generation.assets[index];
   if (seenAssetIds.has(asset.id)) throw new Error(`Duplicate generated video id: ${asset.id}`);
   seenAssetIds.add(asset.id);
-  const prompt = [generation.direction, asset.prompt].filter(Boolean).join("\n\n");
+  const prompt = [generation.direction, buildVisualContext(context, asset.characters), asset.prompt].filter(Boolean).join("\n\n");
   const firstFrame = loadFrame(asset.firstFrame, `videoGeneration.assets.${asset.id}.firstFrame`);
   const lastFrame = loadFrame(asset.lastFrame, `videoGeneration.assets.${asset.id}.lastFrame`);
   if (lastFrame && !firstFrame) throw new Error(`${asset.id} needs firstFrame when lastFrame is set.`);

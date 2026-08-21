@@ -38,6 +38,11 @@ After an approved revision, append `--asset=<id>` to regenerate only that image.
 Repeat the option or use comma-separated IDs for a small affected set. Unrelated
 manifest entries remain unchanged, and active approval locks still apply.
 
+Keep reusable style rules in `VISUAL_BIBLE.json`, recurring people and life
+stages in `CHARACTER_BIBLE.json`, and historical boundaries in
+`PROMPT_CONSTRAINTS.md`. Generation automatically prepends them. An asset may
+request exact character stages with `characters: [{"id":"...","stage":"..."}]`.
+
 The script uses `GEMINI_IMAGE_MODEL` when set, otherwise the configured model.
 It refuses to overwrite outputs without `--force` and records prompt and file
 hashes in `images/generated/manifest.json`.

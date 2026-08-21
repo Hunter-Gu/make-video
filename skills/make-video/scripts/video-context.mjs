@@ -154,6 +154,7 @@ export const parseTargetArgs = (args) => {
  * @property {string} prompt
  * @property {string} output
  * @property {string} [aspectRatio]
+ * @property {Array<{id: string, stage?: string}>} [characters]
  */
 
 /**
@@ -173,7 +174,7 @@ export const parseTargetArgs = (args) => {
  * @property {MusicConfig} [music]
  * @property {ImageGenerationConfig} [imageGeneration]
  * @property {Array<{id: string, title?: string, type?: string, input?: string, url?: string, rights?: string}>} [sources]
- * @property {{model: string, direction?: string, pollSeconds?: number, timeoutMinutes?: number, assets: Array<{id: string, prompt: string, output: string, aspectRatio?: string, resolution?: string, durationSeconds?: number, firstFrame?: string, lastFrame?: string}>}} [videoGeneration]
+ * @property {{model: string, direction?: string, pollSeconds?: number, timeoutMinutes?: number, assets: Array<{id: string, prompt: string, output: string, aspectRatio?: string, resolution?: string, durationSeconds?: number, firstFrame?: string, lastFrame?: string, characters?: Array<{id: string, stage?: string}>}>}} [videoGeneration]
  */
 
 /**

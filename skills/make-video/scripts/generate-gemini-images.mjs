@@ -9,6 +9,7 @@ import {
 import {firstInlineImage, generateContent} from "./gemini-client.mjs";
 import {assertTargetsUnlocked} from "./approval-lock-lib.mjs";
 import {parseGenerationArgs} from "./generation-args.mjs";
+import {buildVisualContext} from "./visual-context.mjs";
 
 const {videoId, force, assetIds} = parseGenerationArgs(process.argv.slice(2));
 const context = loadVideoContext(videoId);
@@ -84,7 +85,7 @@ if (!apiKey) throw new Error("GEMINI_API_KEY is required for image generation.")
 for (const index of selectedIndexes) {
   const asset = imageGeneration.assets[index];
   const output = outputFiles[index];
-  const prompt = [imageGeneration.direction, asset.prompt]
+  const prompt = [imageGeneration.direction, buildVisualContext(context, asset.characters), asset.prompt]
     .filter(Boolean)
     .join("\n\n");
   const imageConfig = asset.aspectRatio
