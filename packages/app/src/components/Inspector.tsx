@@ -1,4 +1,6 @@
 import {useEffect, useState} from 'react';
+import {Button} from '@astryxdesign/core/Button';
+import {Selector} from '@astryxdesign/core/Selector';
 import type {Asset, Caption, ProjectState, RemotionEffect, WorkbenchTransport} from '@make-video/contracts';
 import type {InspectorMode} from '../types';
 import {formatTime} from '../lib/format-time';
@@ -75,7 +77,7 @@ const CaptionEditor = ({caption, fps, save}: {caption: Caption; fps: number; sav
         <label>End frame<input type="number" value={draft.endFrame} onChange={(event) => setDraft({...draft, endFrame: Number(event.target.value)})} /></label>
       </div>
       <small>{(draft.startFrame / fps).toFixed(2)}s – {(draft.endFrame / fps).toFixed(2)}s</small>
-      <button className="primary" onClick={() => save(draft)}>Save caption</button>
+      <Button label="Save caption" variant="primary" width="100%" onClick={() => save(draft)} />
     </div>
   );
 };
@@ -87,19 +89,19 @@ const ImageInspector = ({state, asset, transport, refresh, notice}: {state: Proj
     <div className="inspector-body">
       <span className="kicker">VISUAL</span><h2>{asset?.id ?? 'No asset'}</h2>
       {asset?.kind === 'image' && <div className="inspector-image-wrap"><img className="inspector-image" src={asset.url} />{isCover && <em>Current cover</em>}</div>}
-      <button className={`cover-button ${isCover ? 'selected' : ''}`} disabled={!asset || asset.kind !== 'image' || isCover} onClick={async () => {
+      <Button label={isCover ? '✓ Current cover' : 'Set as cover'} variant={isCover ? 'secondary' : 'ghost'} width="100%" className={`cover-button ${isCover ? 'selected' : ''}`} isDisabled={!asset || asset.kind !== 'image' || isCover} onClick={async () => {
         if (!asset) return;
         try { await transport.setCover(state.videoId, asset.id); await refresh(); notice('Cover image selected'); }
         catch (error) { notice(error instanceof Error ? error.message : String(error)); }
-      }}>{isCover ? '✓ Current cover' : 'Set as cover'}</button>
+      }} />
       <label>Revision instruction<textarea value={instruction} onChange={(event) => setInstruction(event.target.value)} placeholder="Describe what should change…" /></label>
-      <button className="primary" disabled={!asset || asset.kind !== 'image' || !instruction.trim()} onClick={async () => {
+      <Button label="Request revision" variant="primary" width="100%" isDisabled={!asset || asset.kind !== 'image' || !instruction.trim()} onClick={async () => {
         if (!asset) return;
         try {
           await transport.createAssetRevision(state.videoId, {assetId: asset.id, sceneId: asset.sceneId, modelId: state.models.image, instruction});
           setInstruction(''); await refresh(); notice('Revision request created');
         } catch (error) { notice(error instanceof Error ? error.message : String(error)); }
-      }}>Request revision</button>
+      }} />
       <small>Cover selection is project state. It does not overwrite a rendered thumbnail.</small>
     </div>
   );
@@ -115,12 +117,12 @@ const ModelSettings = ({state, transport, refresh, notice}: {state: ProjectState
   return (
     <div className="inspector-body">
       <span className="kicker">PROJECT SETTINGS</span><h2>Generation models</h2>
-      <label>Image model<select value={image} onChange={(event) => setImage(event.target.value)}>{state.registry.image.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}</select></label>
-      <label>Voice model<select value={voice} onChange={(event) => setVoice(event.target.value)}>{state.registry.voice.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}</select></label>
-      <button className="primary" onClick={async () => {
+      <label>Image model<Selector className="model-selector" label="Image model" isLabelHidden options={state.registry.image.map((item) => ({value: item.id, label: item.label}))} value={image} onChange={setImage} /></label>
+      <label>Voice model<Selector className="model-selector" label="Voice model" isLabelHidden options={state.registry.voice.map((item) => ({value: item.id, label: item.label}))} value={voice} onChange={setVoice} /></label>
+      <Button label="Save settings" variant="primary" width="100%" onClick={async () => {
         try { await transport.updateModels(state.videoId, {image, voice}); await refresh(); notice('Project settings saved'); }
         catch (error) { notice(error instanceof Error ? error.message : String(error)); }
-      }}>Save settings</button>
+      }} />
       <small>Saving configuration does not start generation.</small>
     </div>
   );

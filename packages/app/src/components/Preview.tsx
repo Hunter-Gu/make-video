@@ -1,4 +1,5 @@
 import {useMemo, useRef, useState} from 'react';
+import {Selector} from '@astryxdesign/core/Selector';
 import type {ProjectState} from '@make-video/contracts';
 import type {PreviewMode} from '../types';
 import {formatTime} from '../lib/format-time';
@@ -37,9 +38,14 @@ export const Preview = ({state, mode, setMode, stage, setStageId, sceneId, selec
           <button className={mode === 'storyboard' ? 'active' : ''} onClick={() => setMode('storyboard')}>Storyboard</button>
         </div>
         {mode === 'player' && (
-          <select value={stage?.id ?? ''} onChange={(event) => setStageId(event.target.value)}>
-            {state.stages.filter((item) => item.exists).map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}
-          </select>
+          <Selector
+            className="stage-selector"
+            label="Preview stage"
+            isLabelHidden
+            options={state.stages.filter((item) => item.exists).map((item) => ({value: item.id, label: item.label}))}
+            value={stage?.id ?? ''}
+            onChange={setStageId}
+          />
         )}
         <span>{state.composition.width} × {state.composition.height}</span>
       </div>

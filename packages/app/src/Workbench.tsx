@@ -1,5 +1,7 @@
 import {useCallback, useEffect, useState} from 'react';
 import {Badge} from '@astryxdesign/core/Badge';
+import {Button} from '@astryxdesign/core/Button';
+import {Selector} from '@astryxdesign/core/Selector';
 import type {Asset, ProjectState, WorkbenchTransport} from '@make-video/contracts';
 import {AssetBin} from './components/AssetBin';
 import {Inspector} from './components/Inspector';
@@ -59,14 +61,12 @@ export const Workbench = ({transport}: {transport: WorkbenchTransport}) => {
     <main className="editor">
       <header className="topbar">
         <div className="brand"><span>MV</span><strong>Make Video</strong></div>
-        <select value={videoId} onChange={(event) => { setVideoId(event.target.value); void refresh(event.target.value); }}>
-          {projects.map((id) => <option key={id}>{id}</option>)}
-        </select>
+        <Selector className="project-selector" label="Project" isLabelHidden options={projects} value={videoId} onChange={(id) => { setVideoId(id); void refresh(id); }} />
         <div />
         <div className="topbar-actions">
           <Badge className="qa-badge" variant={state.qa?.passed ? 'success' : 'warning'} label={state.qa?.passed ? 'QA passed' : 'QA pending'} />
-          <button onClick={() => setInspectorMode('settings')}>Project settings</button>
-          <button className="render-button" onClick={() => setPreviewMode('player')}>Render</button>
+          <Button label="Project settings" variant="secondary" size="sm" onClick={() => setInspectorMode('settings')} />
+          <Button label="Render" variant="primary" size="sm" onClick={() => setPreviewMode('player')} />
         </div>
       </header>
       <section className="edit-area">
