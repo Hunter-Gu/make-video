@@ -36,6 +36,8 @@ The pnpm workspace keeps runtime boundaries explicit:
 - `packages/app`: React/Vite editor shell and browser transports.
 - `packages/contracts`: shared project and transport types.
 - `packages/ai`: AI SDK provider seam and the versioned video-plan schema.
+- `packages/examples`: reusable media/source fixtures; user project state stays
+  local and ignored.
 - `skills/make-video/scripts`: current local application service and MCP
   adapters; this is the next extraction target for a backend package.
 
