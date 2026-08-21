@@ -178,6 +178,7 @@ requires exactly one video id:
 ```bash
 node --env-file-if-exists=.env scripts/run-video.mjs check <video-id>
 node --env-file-if-exists=.env scripts/link-assets.mjs <video-id>
+node --env-file-if-exists=.env scripts/generate-gemini-images.mjs <video-id>
 node --env-file-if-exists=.env scripts/run-video.mjs studio <video-id>
 node --env-file-if-exists=.env scripts/run-video.mjs still <video-id>
 node --env-file-if-exists=.env scripts/run-video.mjs render:silent <video-id>

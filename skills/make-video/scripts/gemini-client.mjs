@@ -37,6 +37,22 @@ export const firstInlineAudio = (response) =>
 
 /**
  * @param {any} response
+ * @returns {{data: string, mimeType: string} | undefined}
+ */
+export const firstInlineImage = (response) => {
+  const inlineData = response.candidates?.[0]?.content?.parts?.find(
+    (/** @type {any} */ part) =>
+      typeof part.inlineData?.data === "string" &&
+      part.inlineData?.mimeType?.startsWith("image/"),
+  )?.inlineData;
+
+  return inlineData
+    ? {data: inlineData.data, mimeType: inlineData.mimeType}
+    : undefined;
+};
+
+/**
+ * @param {any} response
  * @returns {string | undefined}
  */
 export const firstText = (response) =>

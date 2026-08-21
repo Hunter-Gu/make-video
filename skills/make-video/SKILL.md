@@ -48,6 +48,10 @@ alongside Remotion.
    `ffprobe`/`sox`: duration, resolution, fps, codecs, loudness, true peak,
    audio presence/sync. Record results.
 
+When the approved storyboard uses Gemini-generated stills, read
+[references/image-generation.md](references/image-generation.md) before
+configuring or running the image generator.
+
 Approval of the production plan authorizes the planned local production work,
 but does not authorize publishing, paid services beyond the approved scope, or
 overwriting existing generated outputs.
@@ -87,6 +91,7 @@ without erroring when it isn't:
 ```bash
 node --env-file-if-exists=.env scripts/run-video.mjs check <video-id>
 node --env-file-if-exists=.env scripts/link-assets.mjs <video-id>
+node --env-file-if-exists=.env scripts/generate-gemini-images.mjs <video-id>
 node --env-file-if-exists=.env scripts/run-video.mjs studio <video-id>
 node --env-file-if-exists=.env scripts/run-video.mjs still <video-id>
 node --env-file-if-exists=.env scripts/run-video.mjs render:silent <video-id>

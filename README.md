@@ -41,6 +41,7 @@ npx skills add remotion-dev/skills --skill remotion-best-practices
 | `GEMINI_API_KEY`              | Only for narration/music generation and verification | Gemini REST API key, called directly with `fetch` (no SDK).                                             |
 | `GEMINI_TTS_MODEL`            | No                                                   | Overrides `voice.model` from `video.config.json` for narration.                                         |
 | `GEMINI_TTS_VOICE`            | No                                                   | Overrides `voice.voiceName` from `video.config.json` for narration.                                     |
+| `GEMINI_IMAGE_MODEL`          | No                                                   | Overrides `imageGeneration.model` for generated still images.                                           |
 | `LYRIA_MODEL`                 | No                                                   | Overrides `music.model` from `video.config.json` for the music bed.                                     |
 | `GEMINI_VERIFY_MODEL`         | No                                                   | Model used to transcribe generated narration for verification (defaults to `gemini-3.6-flash`).         |
 | `TTS_START_AT`                | No                                                   | Resumes narration generation from a given caption id, reusing earlier segment files.                    |

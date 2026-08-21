@@ -148,6 +148,21 @@ export const parseTargetArgs = (args) => {
  */
 
 /**
+ * @typedef {object} GeneratedImageAsset
+ * @property {string} id
+ * @property {string} prompt
+ * @property {string} output
+ * @property {string} [aspectRatio]
+ */
+
+/**
+ * @typedef {object} ImageGenerationConfig
+ * @property {string} model
+ * @property {string} [direction]
+ * @property {GeneratedImageAsset[]} assets
+ */
+
+/**
  * @typedef {object} VideoConfig
  * @property {string} videoId
  * @property {CompositionConfig} composition
@@ -155,6 +170,7 @@ export const parseTargetArgs = (args) => {
  * @property {CaptionSegment[]} [captions]
  * @property {VoiceConfig} [voice]
  * @property {MusicConfig} [music]
+ * @property {ImageGenerationConfig} [imageGeneration]
  */
 
 /**
