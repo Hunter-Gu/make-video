@@ -1,5 +1,5 @@
 import {spawnSync} from "node:child_process";
-import {existsSync, mkdirSync, writeFileSync} from "node:fs";
+import {existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
 import {dirname, resolve} from "node:path";
 
 import {
@@ -9,7 +9,8 @@ import {
 } from "./video-context.mjs";
 
 const {videoId} = parseTargetArgs(process.argv.slice(2));
-const {composition, config, outputs, production} = loadVideoContext(videoId);
+const context = loadVideoContext(videoId);
+const {composition, config, outputs, production} = context;
 const qa = production.qa ?? {};
 const outputName = /** @type {keyof typeof outputs} */ (qa.output ?? "final");
 
@@ -100,6 +101,25 @@ for (const caption of captions) {
     endFrame: caption.endFrame,
   });
   previousEnd = Math.max(previousEnd, caption.endFrame ?? 0);
+}
+
+const visualAnalysis = run("ffmpeg", [
+  "-hide_banner", "-nostats", "-i", input,
+  "-vf", "blackdetect=d=0.5:pix_th=0.02,freezedetect=n=-60dB:d=2",
+  "-an", "-f", "null", "-",
+]).stderr;
+const blackDurations = [...visualAnalysis.matchAll(/black_duration:([\d.]+)/g)].map((match) => Number(match[1]));
+const freezeDurations = [...visualAnalysis.matchAll(/freeze_duration: ([\d.]+)/g)].map((match) => Number(match[1]));
+const longestBlack = Math.max(0, ...blackDurations);
+const longestFreeze = Math.max(0, ...freezeDurations);
+add("black-frames", longestBlack <= (qa.maxBlackSeconds ?? 0.5), `≤ ${qa.maxBlackSeconds ?? 0.5}s`, longestBlack);
+add("frozen-frames", longestFreeze <= (qa.maxFreezeSeconds ?? 6), `≤ ${qa.maxFreezeSeconds ?? 6}s`, longestFreeze);
+
+const imageManifest = resolve(context.publicDir, "images/generated/manifest.json");
+if (existsSync(imageManifest)) {
+  const assets = JSON.parse(readFileSync(imageManifest, "utf8")).assets ?? [];
+  const hashes = assets.map((/** @type {any} */ asset) => asset.sha256).filter(Boolean);
+  add("duplicate-images", new Set(hashes).size === hashes.length, "unique generated images", hashes.length - new Set(hashes).size);
 }
 
 if (production.mastering && audio) {

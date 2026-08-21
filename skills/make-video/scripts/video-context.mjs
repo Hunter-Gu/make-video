@@ -124,7 +124,7 @@ export const parseTargetArgs = (args) => {
  * @property {Record<string, unknown>} [stillProps]
  * @property {Record<string, unknown>} [silentProps]
  * @property {Record<string, unknown>} [finalProps]
- * @property {{output?: string, audioRequired?: boolean, durationToleranceSeconds?: number}} [qa]
+ * @property {{output?: string, audioRequired?: boolean, durationToleranceSeconds?: number, maxBlackSeconds?: number, maxFreezeSeconds?: number}} [qa]
  */
 
 /**

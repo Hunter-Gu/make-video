@@ -162,6 +162,7 @@ Check:
 - Product, logo, and generated-text integrity.
 - Claims, disclosure, and source-asset usage boundaries.
 - Audio synchronization, intelligibility, loudness, and ending.
+- Unexpected black or frozen intervals and duplicate generated images.
 - Final encoding and playback.
 
 Record the asset inventory, known limitations, technical result, and publication
