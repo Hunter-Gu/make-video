@@ -6,8 +6,8 @@ packages/app/dist/
 # Generated runtime assets.
 public/
 
-# User-owned video projects and series data. Keep Remotion's two entry files.
+# User-owned video projects. Keep Remotion's two entry files.
 /src/*
 !/src/index.ts
 !/src/Root.tsx
-series/
+projects/

@@ -45,13 +45,13 @@ Check the plan for unsupported leaps, repeated explanations, missing chronology,
 and episodes that depend on concepts not yet introduced. Obtain user approval
 before writing an episode script.
 
-Save the approved overview as `series/PRODUCTION_PLAN.md`. Give each episode its
+Save the approved overview as `projects/<project-id>/PRODUCTION_PLAN.md`. Give each episode its
 own directory and the same plan, script, storyboard, configuration, render, and
 QA lifecycle as a standalone video.
 
 ## Maintain series bibles
 
-Keep shared, inspectable files under `series/` when they are relevant:
+Keep shared, inspectable files under `projects/<project-id>/` when they are relevant:
 
 - `SOURCE_INDEX.md` — source coverage and citation conventions.
 - `CHARACTERS.md` — identity, age stages, pronunciation, and reference images.
@@ -63,7 +63,7 @@ Keep shared, inspectable files under `series/` when they are relevant:
 Update the shared bibles when an approved episode introduces new canonical
 information. Do not let an episode silently contradict them.
 
-Store the machine-checkable plan as `series/<series-id>/series-plan.json` with
+Store the machine-checkable plan as `projects/<project-id>/series-plan.json` with
 an ordered `episodes` array, project-relative `sourceIndex`, explicit
 `previous`/`next` links, topics, source block IDs, and estimated minutes. Run
 `scripts/verify-series.mjs <series-id>` to detect invalid sources, accidental

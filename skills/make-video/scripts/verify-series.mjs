@@ -8,8 +8,8 @@ if (args.length !== 1 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(args[0])) {
   throw new Error("Exactly one kebab-case series id is required.");
 }
 const seriesId = args[0];
-const seriesDir = resolve(projectRoot, "series", seriesId);
-const planFile = resolve(seriesDir, "series-plan.json");
+const projectDir = resolve(projectRoot, "projects", seriesId);
+const planFile = resolve(projectDir, "series-plan.json");
 if (!existsSync(planFile)) throw new Error(`Series plan not found: ${planFile}`);
 const plan = JSON.parse(readFileSync(planFile, "utf8"));
 if (plan.seriesId !== seriesId || !Array.isArray(plan.episodes) || plan.episodes.length === 0) {
@@ -24,7 +24,7 @@ if (relativeSource === ".." || relativeSource.startsWith(`..${sep}`) || !existsS
 const sourceIndex = JSON.parse(readFileSync(sourceIndexFile, "utf8"));
 const availableBlocks = new Set((sourceIndex.sources ?? []).flatMap((/** @type {any} */ source) => (source.blocks ?? []).map((/** @type {any} */ block) => block.id)));
 const sourceWordCount = (sourceIndex.sources ?? []).flatMap((/** @type {any} */ source) => source.blocks ?? []).reduce((/** @type {number} */ sum, /** @type {any} */ block) => sum + block.text.trim().split(/\s+/).length, 0);
-const bibleFile = resolve(seriesDir, "SERIES_BIBLE.json");
+const bibleFile = resolve(projectDir, "SERIES_BIBLE.json");
 if (!existsSync(bibleFile)) throw new Error("Series bible not found: " + bibleFile);
 const bible = JSON.parse(readFileSync(bibleFile, "utf8"));
 const sharedBlocks = new Set(plan.sharedSourceBlockIds ?? []);
@@ -111,7 +111,7 @@ const coverage = [
   ]),
   "## Unassigned source blocks", "", unusedBlocks.join(", ") || "None", "",
 ].join("\n");
-writeFileSync(resolve(seriesDir, "COVERAGE.md"), coverage);
+writeFileSync(resolve(projectDir, "COVERAGE.md"), coverage);
 if (errors.length) {
   errors.forEach((error) => console.error(`✗ ${error}`));
   process.exit(1);
