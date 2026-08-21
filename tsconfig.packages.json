@@ -11,5 +11,5 @@
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "include": ["packages/contracts/src", "packages/ai/src", "packages/mcp/src"]
+  "include": ["packages/contracts/src", "packages/ai/src", "packages/mcp/src", "packages/qa/src"]
 }

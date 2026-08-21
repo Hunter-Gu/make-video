@@ -17,7 +17,7 @@
     "assets:link": "node skills/make-video/scripts/link-assets.mjs",
     "sources:ingest": "node skills/make-video/scripts/ingest-sources.mjs",
     "audio:prepare": "node skills/make-video/scripts/prepare-audio.mjs",
-    "video:qa": "node skills/make-video/scripts/qa-video.mjs",
+    "video:qa": "node skills/make-video/scripts/qa.mjs video",
     "render:preview": "node skills/make-video/scripts/render.mjs preview",
     "render": "node skills/make-video/scripts/render.mjs final",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json && tsc --noEmit -p tsconfig.workbench.json && tsc --noEmit -p tsconfig.packages.json"

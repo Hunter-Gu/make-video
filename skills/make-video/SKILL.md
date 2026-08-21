@@ -109,7 +109,7 @@ files takes exactly one video id. Prefix with `--env-file-if-exists=.env` so
 without erroring when it isn't:
 
 ```bash
-node --env-file-if-exists=.env scripts/qa-video.mjs <video-id>
+node --env-file-if-exists=.env scripts/qa.mjs video <video-id>
 node --env-file-if-exists=.env scripts/link-assets.mjs <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs images <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs video <video-id>

@@ -192,7 +192,7 @@ otherwise. Every command that reads or produces composition-specific files
 requires exactly one video id:
 
 ```bash
-node --env-file-if-exists=.env scripts/qa-video.mjs <video-id>
+node --env-file-if-exists=.env scripts/qa.mjs video <video-id>
 node --env-file-if-exists=.env scripts/link-assets.mjs <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs images <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs video <video-id>
