@@ -8,20 +8,40 @@ caption editing, model selection, and QA.
 ## Architecture boundary
 
 ```text
-Workbench UI -> Transport -> Application service -> Project files and jobs
-                    |-> HTTP today
-                    `-> MCP Apps later
+Workbench UI -> Transport -> MCP Streamable HTTP -> Application service
+Agent host ----------------> MCP stdio -----------> Application service
+REST compatibility adapter ----------------------> Application service
 ```
 
 GUI components must never call MCP, `fetch`, the filesystem, shell commands,
 or model providers directly. Components depend only on the `WorkbenchTransport`
-interface. The HTTP transport is the first implementation; an MCP Apps
-transport can replace it without changing screens or production rules.
+interface. The browser uses a Streamable HTTP MCP client hidden behind that
+interface. Codex, Claude Code, and other local MCP hosts use the stdio adapter.
+Both call the same application service.
 
 The application service owns validation, path boundaries, approval locks,
 version creation, cost checks, and atomic writes. A future remote backend must
 be able to implement the same service contract. HTTP routes and MCP tools are
 thin adapters around that contract, not separate business logic.
+
+The frontend server owns the Streamable HTTP MCP endpoint and local filesystem
+access; React components only call `WorkbenchTransport`. Agent hosts spawn the
+stdio MCP server. A future remote backend can implement the same transport and
+service contracts without changing components or production rules.
+
+## MCP surface
+
+The stdio and `/mcp` Streamable HTTP entries expose the same tools:
+
+- `workbench_list_projects`
+- `workbench_get_project`
+- `workbench_update_caption`
+- `workbench_update_models`
+- `workbench_request_image_revision`
+
+They also expose `workbench://projects` and one read-only project resource per
+video. Tool handlers contain no filesystem rules; they delegate to
+`workbench-service.mjs`, just like the REST compatibility routes.
 
 ## Source of truth
 

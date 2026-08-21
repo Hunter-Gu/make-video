@@ -2,11 +2,19 @@ import {createReadStream, existsSync, readFileSync, statSync} from "node:fs";
 import {createServer} from "node:http";
 import {extname, relative, resolve, sep} from "node:path";
 
+import {localhostHostValidation, localhostOriginValidation, toNodeHandler} from "@modelcontextprotocol/node";
+import {createMcpHandler} from "@modelcontextprotocol/server";
+
+import {createWorkbenchMcpServer} from "./workbench-mcp.mjs";
 import {createAssetRevision, getProjectState, listProjects, resolveMediaPath, updateCaption, updateModels} from "./workbench-service.mjs";
 import {projectRoot} from "./video-context.mjs";
 
 const port = Number(process.env.MAKE_VIDEO_WORKBENCH_PORT ?? 4317);
 const dist = resolve(projectRoot, "workbench/dist");
+const mcp = createMcpHandler(createWorkbenchMcpServer, {responseMode: "json"});
+const handleMcp = toNodeHandler(mcp, {onerror: (error) => console.error(error)});
+const validateMcpHost = localhostHostValidation();
+const validateMcpOrigin = localhostOriginValidation();
 /** @param {import("node:http").ServerResponse} response @param {number} status @param {unknown} value */
 const json = (response, status, value) => { response.writeHead(status, {"content-type": "application/json; charset=utf-8"}); response.end(JSON.stringify(value)); };
 /** @param {import("node:http").IncomingMessage} request @returns {Promise<any>} */
@@ -23,6 +31,10 @@ const requiredParam = (value) => { if (!value) throw new Error("A required query
 createServer(async (request, response) => {
   try {
     const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
+    if (url.pathname === "/mcp") {
+      if (!validateMcpHost(request, response) || !validateMcpOrigin(request, response)) return;
+      return handleMcp(request, response);
+    }
     if (url.pathname === "/api/projects" && request.method === "GET") return json(response, 200, listProjects());
     if (url.pathname === "/api/project" && request.method === "GET") return json(response, 200, getProjectState(requiredParam(url.searchParams.get("videoId"))));
     if (url.pathname.startsWith("/api/captions/") && request.method === "PATCH") { const input = await body(request); return json(response, 200, updateCaption(input.videoId, decodeURIComponent(url.pathname.slice(14)), input)); }

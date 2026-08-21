@@ -79,6 +79,10 @@ the local Workbench. It previews assets and render stages, records versioned
 image revision requests, edits captions, inspects the scene timeline, and
 selects image and voice models without starting paid generation.
 
+Expose the same operations to a local MCP host with `pnpm workbench:mcp`.
+Validate its tools, resources, and stdio calls with
+`pnpm workbench:mcp:check`.
+
 Approval of the production plan authorizes the planned local production work,
 but does not authorize publishing, paid services beyond the approved scope, or
 overwriting existing generated outputs.

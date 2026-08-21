@@ -44,6 +44,8 @@
     "roadmap:verify": "node skills/make-video/scripts/verify-roadmap.mjs",
     "workbench:build": "vite build --config workbench/vite.config.ts",
     "workbench:server": "node skills/make-video/scripts/workbench-server.mjs",
+    "workbench:mcp": "node skills/make-video/scripts/workbench-mcp.mjs",
+    "workbench:mcp:check": "node skills/make-video/scripts/check-workbench-mcp.mjs",
     "studio": "node skills/make-video/scripts/run-video.mjs studio",
     "still": "node skills/make-video/scripts/run-video.mjs still",
     "render:silent": "node skills/make-video/scripts/run-video.mjs render:silent",
@@ -51,12 +53,16 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json && tsc --noEmit -p tsconfig.workbench.json"
   },
   "dependencies": {
+    "@modelcontextprotocol/client": "^2.0.0",
+    "@modelcontextprotocol/node": "^2.0.0",
+    "@modelcontextprotocol/server": "^2.0.0",
     "@remotion/captions": "^4.0.499",
     "@remotion/cli": "^4.0.499",
     "@remotion/media": "^4.0.499",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "remotion": "^4.0.499"
+    "remotion": "^4.0.499",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

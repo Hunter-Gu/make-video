@@ -87,9 +87,10 @@ this local acceptance path and requires explicit cost approval.
 
 The local production GUI is documented in
 [docs/workbench-architecture.md](docs/workbench-architecture.md). Its screens
-depend on a transport interface rather than calling MCP directly, so the first
-local HTTP service can later be replaced by an MCP Apps or remote backend
-adapter without rewriting the GUI.
+depend on a transport interface rather than calling MCP directly. The current
+transport invokes the frontend server's Streamable HTTP MCP endpoint. Browser,
+stdio MCP, and REST adapters share one application service, so they do not
+duplicate project validation or production rules.
 
 Build and open the local Workbench with:
 
@@ -99,6 +100,18 @@ pnpm workbench:server
 ```
 
 Then visit `http://127.0.0.1:4317`.
+
+Expose the same Workbench operations to Codex, Claude Code, or another local
+MCP host over stdio:
+
+```bash
+pnpm workbench:mcp:check
+codex mcp add make-video -- node "$PWD/skills/make-video/scripts/workbench-mcp.mjs"
+claude mcp add make-video --scope project -- node "$PWD/skills/make-video/scripts/workbench-mcp.mjs"
+```
+
+The MCP server provides project inspection, caption and model updates, and
+non-destructive image revision requests. It does not start paid generation.
 
 ## License
 

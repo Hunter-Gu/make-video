@@ -1,6 +1,6 @@
 import {StrictMode, useEffect, useState} from "react";
 import {createRoot} from "react-dom/client";
-import {httpTransport} from "./http-transport";
+import {mcpTransport} from "./mcp-transport";
 import type {Asset, Caption, ProjectState, WorkbenchTransport} from "./types";
 import "./styles.css";
 
@@ -56,4 +56,4 @@ const CaptionRow = ({caption, fps, save}: {caption: Caption; fps: number; save: 
 const Models = ({state, transport, refresh}: {state: ProjectState; transport: WorkbenchTransport; refresh: () => Promise<void>}) => { const [image, setImage] = useState(state.models.image ?? state.registry.image[0]?.id); const [voice, setVoice] = useState(state.models.voice ?? state.registry.voice[0]?.id); const imageModel = state.registry.image.find((item) => item.id === image); const voiceModel = state.registry.voice.find((item) => item.id === voice); return <div className="models"><ModelCard title="Image model" models={state.registry.image} value={image} setValue={setImage} selected={imageModel} /><ModelCard title="Voice model" models={state.registry.voice} value={voice} setValue={setVoice} selected={voiceModel} /><button className="save-models" onClick={async () => {await transport.updateModels(state.videoId, {image, voice}); await refresh();}}>Save model choices</button><p className="cost-note">Saving a model does not start generation or create charges.</p></div>; };
 const ModelCard = ({title, models, value, setValue, selected}: {title: string; models: ProjectState["registry"]["image"]; value?: string; setValue: (id: string) => void; selected?: ProjectState["registry"]["image"][number]}) => <article><span className="eyebrow">DEFAULT</span><h2>{title}</h2><select value={value} onChange={(event) => setValue(event.target.value)}>{models.map((model) => <option value={model.id} key={model.id}>{model.label}</option>)}</select><div className="chips">{selected?.capabilities.map((capability) => <span key={capability}>{capability}</span>)}</div><p>{selected?.provider}</p></article>;
 
-createRoot(document.getElementById("root")!).render(<StrictMode><Workbench transport={httpTransport} /></StrictMode>);
+createRoot(document.getElementById("root")!).render(<StrictMode><Workbench transport={mcpTransport} /></StrictMode>);
