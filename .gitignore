@@ -2,6 +2,12 @@ node_modules/
 out/
 output/
 packages/app/dist/
+
+# User-owned production workspace state.
+series/
+src/*/COVER.json
+src/*/REMOTION_TIMELINE.json
+src/*/WORKBENCH.json
 public/*/assets/
 public/*/images/
 public/*/videos/
