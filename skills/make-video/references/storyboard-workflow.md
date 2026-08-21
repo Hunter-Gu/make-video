@@ -50,6 +50,11 @@ portraits for people, and reconstructed illustrations for scenes without direct
 records. Do not default every scene to a full-screen generated image with a
 slow zoom.
 
+For still-image motion, choose explicit purpose: `portrait` for a masked reveal,
+`image` with pan/crop and archival treatment for evidence, or `depth` with
+separated layers, masks, parallax, and a focus-depth transition. The motion
+should direct attention to the narrated idea.
+
 Save the storyboard as `src/<video-id>/STORYBOARD.md`. Include an asset summary
 with approximate supplied, sourced, generated, and programmatic counts so the
 user can understand cost and workload.

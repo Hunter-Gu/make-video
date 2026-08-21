@@ -13,12 +13,20 @@ import {
 
 export type KnowledgeScene = {
   id: string;
-  type: "chapter" | "image" | "portrait" | "video" | "quote" | "timeline" | "comparison" | "statistic" | "chart" | "map" | "document" | "relationship" | "montage";
+  type: "chapter" | "image" | "portrait" | "depth" | "video" | "quote" | "timeline" | "comparison" | "statistic" | "chart" | "map" | "document" | "relationship" | "montage";
   durationInFrames: number;
   title?: string;
   subtitle?: string;
   narration?: string;
   image?: string;
+  imagePosition?: string;
+  panX?: number;
+  panY?: number;
+  zoomFrom?: number;
+  zoomTo?: number;
+  archival?: boolean;
+  layers?: Array<{image: string; depth: number; x?: number; y?: number; scale?: number; mask?: string; opacity?: number}>;
+  focus?: {fromDepth: number; toDepth: number};
   video?: string;
   videoFit?: "cover" | "contain";
   videoStartInFrames?: number;
@@ -79,15 +87,17 @@ const ChapterScene = ({scene}: {scene: KnowledgeScene}) => (
 
 const ImageScene = ({scene}: {scene: KnowledgeScene}) => {
   const frame = useCurrentFrame();
-  const scale = interpolate(frame, [0, scene.durationInFrames], [1.02, 1.12], {
+  const scale = interpolate(frame, [0, scene.durationInFrames], [scene.zoomFrom ?? 1.02, scene.zoomTo ?? 1.12], {
     extrapolateRight: "clamp",
   });
+  const x = interpolate(frame, [0, scene.durationInFrames], [0, scene.panX ?? 0]);
+  const y = interpolate(frame, [0, scene.durationInFrames], [0, scene.panY ?? 0]);
   return (
     <AbsoluteFill>
       {scene.image ? (
         <Img
           src={staticFile(scene.image)}
-          style={{width: "100%", height: "100%", objectFit: "cover", transform: `scale(${scale})`}}
+          style={{width: "100%", height: "100%", objectFit: "cover", objectPosition: scene.imagePosition ?? "center", transform: `translate(${x}px, ${y}px) scale(${scale})`, filter: scene.archival ? "sepia(.3) saturate(.72) contrast(1.08)" : undefined}}
         />
       ) : null}
       <AbsoluteFill style={{background: "linear-gradient(90deg, rgba(8,12,18,.94) 0%, rgba(8,12,18,.42) 58%, transparent 100%)"}} />
@@ -101,6 +111,29 @@ const ImageScene = ({scene}: {scene: KnowledgeScene}) => {
       </AbsoluteFill>
     </AbsoluteFill>
   );
+};
+
+const PortraitScene = ({scene}: {scene: KnowledgeScene}) => {
+  const frame = useCurrentFrame();
+  const reveal = interpolate(frame, [0, 35], [0, 100], {extrapolateRight: "clamp"});
+  return <AbsoluteFill style={{alignItems: "center", justifyContent: "center"}}>
+    {scene.image ? <Img src={staticFile(scene.image)} style={{width: "62%", height: "86%", objectFit: "cover", objectPosition: scene.imagePosition ?? "center", clipPath: `inset(${100 - reveal}% 0 0 0 round 400px 400px 40px 40px)`, filter: "drop-shadow(0 30px 60px #0009)"}} /> : null}
+    <div style={{position: "absolute", left: 120, bottom: 110, fontSize: 68}}>{scene.title}</div>
+  </AbsoluteFill>;
+};
+
+const DepthScene = ({scene}: {scene: KnowledgeScene}) => {
+  const frame = useCurrentFrame();
+  const progress = interpolate(frame, [0, scene.durationInFrames], [0, 1], {extrapolateRight: "clamp"});
+  const focusDepth = interpolate(progress, [0, 1], [scene.focus?.fromDepth ?? 0, scene.focus?.toDepth ?? 1]);
+  return <AbsoluteFill style={{overflow: "hidden"}}>
+    {(scene.layers ?? []).map((layer, index) => {
+      const shift = (layer.depth + .25) * 55;
+      return <Img key={`${layer.image}-${index}`} src={staticFile(layer.image)} style={{position: "absolute", inset: "-8%", width: "116%", height: "116%", objectFit: "cover", opacity: layer.opacity ?? 1, clipPath: layer.mask, transform: `translate(${(layer.x ?? 0) + shift * progress}px, ${(layer.y ?? 0) - shift * .35 * progress}px) scale(${layer.scale ?? 1})`, filter: `blur(${Math.abs(layer.depth - focusDepth) * 5}px)`}} />;
+    })}
+    <AbsoluteFill style={{background: "linear-gradient(0deg, #080c12bb, transparent 60%)"}} />
+    <div style={{position: "absolute", left: 130, bottom: 110, fontSize: 64}}>{scene.title}</div>
+  </AbsoluteFill>;
 };
 
 const VideoScene = ({scene}: {scene: KnowledgeScene}) => (
@@ -251,6 +284,8 @@ const MontageScene = ({scene}: {scene: KnowledgeScene}) => {
 const Scene = ({scene}: {scene: KnowledgeScene}) => {
   if (scene.type === "chapter") return <ChapterScene scene={scene} />;
   if (scene.type === "image") return <ImageScene scene={scene} />;
+  if (scene.type === "portrait") return <PortraitScene scene={scene} />;
+  if (scene.type === "depth") return <DepthScene scene={scene} />;
   if (scene.type === "video") return <VideoScene scene={scene} />;
   if (scene.type === "quote") return <QuoteScene scene={scene} />;
   if (scene.type === "timeline") return <TimelineScene scene={scene} />;
