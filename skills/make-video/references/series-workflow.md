@@ -69,6 +69,13 @@ an ordered `episodes` array, project-relative `sourceIndex`, explicit
 `scripts/verify-series.mjs <series-id>` to detect invalid sources, accidental
 source/topic reuse, broken order links, and to generate `COVERAGE.md`.
 
+Keep machine-checkable shared state in `SERIES_BIBLE.json`: adaptation mode,
+words-per-minute assumption, rights and intended use, shared bible paths,
+canonical positions, timeline events, and terminology. Episodes declare ideas
+they introduce or require, canonical positions, and ordered timeline event IDs.
+The verifier rejects missing bibles, premature dependencies, chronology errors,
+and silent contradictions, and reports the source-to-narration compression ratio.
+
 ## Regeneration boundaries
 
 Treat each episode and approved asset as independently preservable. A change to
