@@ -25,22 +25,26 @@ alongside Remotion.
    visual direction, sources, audio, and output. Present the plan in plain
    language and obtain approval before research, scripting, asset generation,
    or composition work.
-2. **Inspect supplied assets** with `ffprobe`/`ffmpeg`/`sox` before touching
+2. **Develop the approved plan.** For image-led knowledge videos, read
+   [references/storyboard-workflow.md](references/storyboard-workflow.md).
+   Write the narration and visual storyboard, check their pacing and factual
+   coverage, and obtain storyboard approval before generating visual assets.
+3. **Inspect supplied assets** with `ffprobe`/`ffmpeg`/`sox` before touching
    the composition — know the real duration, codecs, resolution of what you
    were given.
-3. **Create one composition directory per video** under `src/<video-id>/`,
+4. **Create one composition directory per video** under `src/<video-id>/`,
    with its own `video.config.json` as the single source of truth for scene
    timing, caption timing, audio steps, and render/mastering props. Never mix
    two videos' files in one directory.
-4. **Build the silent visual edit first.** Typecheck, render still frames,
+5. **Build the silent visual edit first.** Typecheck, render still frames,
    iterate on timing before generating any audio — audio generation is
    expensive/slow and should happen once the visuals are right.
-5. **Generate audio as an explicit, separate stage** (voiceover, music, sfx)
+6. **Generate audio as an explicit, separate stage** (voiceover, music, sfx)
    only when the brief calls for it, and verify generated narration against
    the script before treating it as final.
-6. **Render and master.** Remotion renders picture; FFmpeg masters loudness,
+7. **Render and master.** Remotion renders picture; FFmpeg masters loudness,
    transcodes, and produces platform-specific delivery files.
-7. **QA the actual rendered file**, not just the source — check with
+8. **QA the actual rendered file**, not just the source — check with
    `ffprobe`/`sox`: duration, resolution, fps, codecs, loudness, true peak,
    audio presence/sync. Record results.
 

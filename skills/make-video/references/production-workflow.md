@@ -70,7 +70,14 @@ approved plan in `src/<video-id>/PRODUCTION_PLAN.md`, including:
 Keep copy short enough for the intended duration. The video must remain
 understandable without audio when it is intended for an autoplay social feed.
 
-### 2. Inspect the local assets
+### 2. Approve the narration and storyboard
+
+For image-led knowledge videos, follow
+[storyboard-workflow.md](storyboard-workflow.md). Save the agreed narration and
+storyboard as `SCRIPT.md` and `STORYBOARD.md` in the composition directory.
+Do not generate media before this review gate.
+
+### 3. Inspect the local assets
 
 The agent inventories the supplied files before changing the composition. Use
 `ffprobe` to inspect video and audio streams, frame rate, dimensions, duration,
@@ -82,7 +89,7 @@ Inspection commands are production actions performed directly by the agent; they
 do not need repository wrappers unless the same operation becomes a stable,
 repeatable package requirement.
 
-### 3. Plan the composition
+### 4. Plan the composition
 
 Create or update one composition directory and register it in `src/Root.tsx`.
 Keep scene timing, caption timing, audio prompts, and composition metadata in
@@ -103,7 +110,7 @@ Use frame-based Remotion primitives for deterministic rendering:
 
 Do not use CSS transitions or CSS animations in a Remotion composition.
 
-### 4. Build and inspect silent visuals first
+### 5. Build and inspect silent visuals first
 
 Start with the visual edit before generating expensive or nondeterministic
 audio. Typecheck the package, render representative still frames, and inspect
@@ -113,7 +120,7 @@ and end card.
 Use a silent preview render when timing cannot be judged from still frames.
 Iterate on the composition until the visual story works without narration.
 
-### 5. Generate optional audio
+### 6. Generate optional audio
 
 Audio generation is a separate, explicit stage:
 
@@ -126,7 +133,7 @@ Generated speech must fit inside its assigned timeline slots. Music and sound
 effects should support the edit without masking narration or interface cues.
 Keep API keys in the environment and never save them in this package.
 
-### 6. Render and master
+### 7. Render and master
 
 Remotion produces the frame-accurate video and audio mix. FFmpeg may then be
 used directly or through a stable package script to normalize loudness,
@@ -144,7 +151,7 @@ Use ffprobe on the finished deliverable to confirm at least:
 Use SoX or FFmpeg analysis when final loudness, peak level, clipping, or silence
 needs verification.
 
-### 7. Perform final QA
+### 8. Perform final QA
 
 Visual QA must inspect the actual rendered video, not only the Remotion source.
 Check:
