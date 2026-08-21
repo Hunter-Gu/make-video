@@ -51,6 +51,7 @@ ${jsonSection("Generated images", resolve(context.publicDir, "images/generated/m
 ${jsonSection("Generated video", resolve(context.publicDir, "video/generated/manifest.json"))}
 ${jsonSection("Voiceover", resolve(context.publicDir, "audio/voiceover/manifest.json"))}
 ${jsonSection("Technical QA", resolve(projectRoot, "output", videoId, "qa-report.json"))}
+${jsonSection("Clip QA", resolve(projectRoot, "output", videoId, "clip-qa-report.json"))}
 ${jsonSection("Delivery report", resolve(projectRoot, "output", videoId, "delivery-report.json"))}
 </main></body></html>`;
 

@@ -38,3 +38,9 @@ timeline as stills and programmatic scenes. Configure `video`, and optionally
 `videoFit`, `videoStartInFrames`, `videoPlaybackRate`, `videoMuted`, or
 `videoVolume`. Generated clips default to muted so narration remains the primary
 audio track.
+
+List generated or supplied clips in `CLIP_QA.json`, including expected duration,
+minimum resolution, cut threshold, text policy, and a recorded human review for
+subject consistency, visual continuity, historical suitability, and scene fit.
+Run `scripts/qa-generated-videos.mjs <video-id>` for probe, scene-cut, midpoint
+OCR, and review-gate checks. Keep this report with the production review.
