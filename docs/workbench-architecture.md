@@ -41,6 +41,11 @@ The pnpm workspace keeps runtime boundaries explicit:
 - `skills/make-video/scripts`: current local application service and MCP
   adapters; this is the next extraction target for a backend package.
 
+The app keeps UI responsibilities separate: `app/Workbench.tsx` owns project
+selection and editor state; `components/` owns the asset bin, preview,
+inspector, and timeline; `lib/` contains presentation helpers. `main.tsx` only
+boots React and the Astryx theme.
+
 ## MCP surface
 
 The stdio and `/mcp` Streamable HTTP entries expose the same tools:
