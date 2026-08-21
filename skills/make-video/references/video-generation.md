@@ -27,6 +27,12 @@ Generation may incur substantial cost. Confirm the shot count and provider
 before running it. Inspect subject consistency, unwanted text, historical
 accuracy, continuity, duration, and whether the clip supports its narration.
 
+Before any model call, define units, pricing, and latency bounds in
+`GENERATION_PLAN.json`, then run `scripts/estimate-generation.mjs <video-id>`.
+Record user-approved asset IDs and the estimate's `planHash` in
+`GENERATION_APPROVAL.json`. Image and video generators reject missing, stale,
+or partial approvals. Manifests preserve the estimated per-asset cost.
+
 Use a `video` scene in `KnowledgeVideo.tsx` to mix an approved MP4 into the same
 timeline as stills and programmatic scenes. Configure `video`, and optionally
 `videoFit`, `videoStartInFrames`, `videoPlaybackRate`, `videoMuted`, or

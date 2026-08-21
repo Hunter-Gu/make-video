@@ -38,6 +38,7 @@
     "deliverables:render": "node skills/make-video/scripts/render-deliverables.mjs",
     "visual:verify": "node skills/make-video/scripts/verify-visual-bibles.mjs",
     "timing:build": "node skills/make-video/scripts/build-narration-timing.mjs",
+    "generation:estimate": "node skills/make-video/scripts/estimate-generation.mjs",
     "studio": "node skills/make-video/scripts/run-video.mjs studio",
     "still": "node skills/make-video/scripts/run-video.mjs still",
     "render:silent": "node skills/make-video/scripts/run-video.mjs render:silent",

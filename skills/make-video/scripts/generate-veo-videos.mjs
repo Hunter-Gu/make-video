@@ -7,6 +7,7 @@ import {assertOutputsAvailable, loadVideoContext} from "./video-context.mjs";
 import {assertTargetsUnlocked} from "./approval-lock-lib.mjs";
 import {parseGenerationArgs} from "./generation-args.mjs";
 import {buildVisualContext} from "./visual-context.mjs";
+import {assertGenerationApproved} from "./generation-approval.mjs";
 
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta";
 const {videoId, force, assetIds} = parseGenerationArgs(process.argv.slice(2));
@@ -75,6 +76,7 @@ const selectedIndexes = assetIds.length > 0
   ? generation.assets.map((asset, index) => assetIds.includes(asset.id) ? index : -1).filter((index) => index >= 0)
   : generation.assets.map((_, index) => index);
 const selectedOutputs = selectedIndexes.map((index) => outputs[index]);
+const approvedAssets = assertGenerationApproved(context, "video", selectedIndexes.map((index) => generation.assets[index].id));
 assertTargetsUnlocked(context, [...selectedOutputs, manifestFile]);
 if (assetIds.length === 0) assertOutputsAvailable([manifestFile], {force, action: `Video generation for ${videoId}`});
 
@@ -195,6 +197,8 @@ for (const index of selectedIndexes) {
     operation: operationName,
     duration: Number(JSON.parse(probe.stdout).format?.duration),
     promptHash: hash(prompt),
+    parameters,
+    estimatedCost: approvedAssets.get(asset.id)?.units * approvedAssets.get(asset.id)?.costPerUnit,
     sha256: hash(bytes),
     ...(firstFrame ? {firstFrame: {path: firstFrame.path, sha256: firstFrame.sha256}} : {}),
     ...(lastFrame ? {lastFrame: {path: lastFrame.path, sha256: lastFrame.sha256}} : {}),

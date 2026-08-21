@@ -10,6 +10,7 @@ import {firstInlineImage, generateContent} from "./gemini-client.mjs";
 import {assertTargetsUnlocked} from "./approval-lock-lib.mjs";
 import {parseGenerationArgs} from "./generation-args.mjs";
 import {buildVisualContext} from "./visual-context.mjs";
+import {assertGenerationApproved} from "./generation-approval.mjs";
 
 const {videoId, force, assetIds} = parseGenerationArgs(process.argv.slice(2));
 const context = loadVideoContext(videoId);
@@ -67,13 +68,14 @@ if (missingIds.length > 0) throw new Error(`Unknown generated image assets: ${mi
 
 const manifestFile = resolve(publicDir, "images/generated/manifest.json");
 const selectedOutputs = selectedIndexes.map((index) => outputFiles[index]);
+const approvedAssets = assertGenerationApproved(context, "image", selectedIndexes.map((index) => imageGeneration.assets[index].id));
 assertTargetsUnlocked(context, [...selectedOutputs, manifestFile]);
 assertOutputsAvailable(assetIds.length > 0 ? selectedOutputs : [...selectedOutputs, manifestFile], {
   force,
   action: `Image generation for ${videoId}`,
 });
 
-/** @type {{videoId: string, model: string, generatedAt: string, assets: Array<Record<string, string>>}} */
+/** @type {{videoId: string, model: string, generatedAt: string, assets: Array<Record<string, unknown>>}} */
 const manifest = assetIds.length > 0 && existsSync(manifestFile)
   ? JSON.parse(readFileSync(manifestFile, "utf8"))
   : {videoId, model, generatedAt: new Date().toISOString(), assets: []};
@@ -125,13 +127,14 @@ for (const index of selectedIndexes) {
     mimeType: image.mimeType,
     promptHash: createHash("sha256").update(prompt).digest("hex"),
     sha256: createHash("sha256").update(bytes).digest("hex"),
+    estimatedCost: approvedAssets.get(asset.id)?.units * approvedAssets.get(asset.id)?.costPerUnit,
   };
   manifest.assets = manifest.assets.filter((item) => item.id !== asset.id);
   manifest.assets.push(record);
   console.log(`Generated ${asset.id}`);
 }
 const order = new Map(imageGeneration.assets.map((asset, index) => [asset.id, index]));
-manifest.assets.sort((left, right) => (order.get(left.id) ?? Infinity) - (order.get(right.id) ?? Infinity));
+manifest.assets.sort((left, right) => (order.get(String(left.id)) ?? Infinity) - (order.get(String(right.id)) ?? Infinity));
 
 mkdirSync(dirname(manifestFile), {recursive: true});
 writeFileSync(manifestFile, `${JSON.stringify(manifest, null, 2)}\n`);
