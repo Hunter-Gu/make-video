@@ -28,7 +28,7 @@ export const AssetBin = ({state, selected, onSelect}: AssetBinProps) => {
         <div className="asset-grid">
           {state.assets.map((asset) => (
             <button className={selected === asset.id ? 'selected' : ''} onClick={() => onSelect(asset)} key={asset.id}>
-              {asset.kind === 'image' ? <img src={asset.url} /> : <video src={asset.url} muted />}
+              {asset.kind === 'image' ? <img src={asset.url} alt={asset.id} loading="lazy" /> : <video src={asset.url} muted autoPlay loop playsInline preload="metadata" />}
               {state.cover?.assetId === asset.id && <em>Cover</em>}
               <span>{asset.id}</span>
               <small>{asset.kind}</small>

@@ -5,6 +5,7 @@ import {McpServer} from "@modelcontextprotocol/server";
 import {serveStdio} from "@modelcontextprotocol/server/stdio";
 import {z} from "zod";
 
+import {generateVideoPlan} from "../../../packages/ai/src/generator.mjs";
 import {createAssetRevision, getProjectState, listProjects, setCover, updateCaption, updateModels} from "./workbench-service.mjs";
 
 /** @typedef {import("@modelcontextprotocol/server").CallToolResult} CallToolResult */
@@ -62,6 +63,12 @@ export const createWorkbenchMcpServer = () => {
     inputSchema: z.object({videoId: z.string().min(1), assetId: z.string().min(1)}),
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: true},
   }, ({videoId, assetId}) => run(() => setCover(videoId, {assetId})));
+
+  server.registerTool("workbench_generate_video_plan", {
+    description: "Generate a validated scene plan from a brief using the server-side AI SDK. This may incur model costs.",
+    inputSchema: z.object({brief: z.string().min(1), videoId: z.string().min(1).optional(), modelId: z.string().min(1).optional()}),
+    annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: false},
+  }, ({brief, videoId, modelId}) => run(() => generateVideoPlan({brief, modelId, project: videoId ? getProjectState(videoId) : undefined})));
 
   server.registerResource("workbench-projects", "workbench://projects", {
     title: "Make Video projects",

@@ -35,7 +35,8 @@ The pnpm workspace keeps runtime boundaries explicit:
 
 - `packages/app`: React/Vite editor shell and browser transports.
 - `packages/contracts`: shared project and transport types.
-- `packages/ai`: AI SDK provider seam and the versioned video-plan schema.
+- `packages/ai`: AI SDK provider seam, the versioned video-plan schema, and the
+  server-side plan generator.
 - `packages/examples`: reusable media/source fixtures; user project state stays
   local and ignored.
 - `skills/make-video/scripts`: current local application service and MCP
@@ -56,6 +57,7 @@ The stdio and `/mcp` Streamable HTTP entries expose the same tools:
 - `workbench_update_models`
 - `workbench_request_image_revision`
 - `workbench_set_cover`
+- `workbench_generate_video_plan`
 
 They also expose `workbench://projects` and one read-only project resource per
 video. Tool handlers contain no filesystem rules; they delegate to

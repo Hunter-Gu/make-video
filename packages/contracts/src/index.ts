@@ -14,4 +14,13 @@ export interface WorkbenchTransport {
   updateModels(videoId: string, models: {image?: string; voice?: string}): Promise<void>;
   createAssetRevision(videoId: string, input: {assetId: string; sceneId: string | null; modelId: string | null; instruction: string}): Promise<void>;
   setCover(videoId: string, assetId: string): Promise<void>;
+  generatePlan(brief: string, videoId?: string, modelId?: string): Promise<{
+    plan: {
+      title: string;
+      language: string;
+      scenes: Array<{id: string; narration: string; visualPrompt: string; durationSeconds: number}>;
+    };
+    model: string;
+    usage?: {inputTokens?: number; outputTokens?: number};
+  }>;
 }

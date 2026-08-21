@@ -22,7 +22,7 @@ try {
   const tools = await client.listTools();
   toolCount = tools.tools.length;
   const names = tools.tools.map((tool) => tool.name);
-  assert.deepEqual(names.sort(), ["workbench_get_project", "workbench_list_projects", "workbench_request_image_revision", "workbench_set_cover", "workbench_update_caption", "workbench_update_models"]);
+  assert.deepEqual(names.sort(), ["workbench_generate_video_plan", "workbench_get_project", "workbench_list_projects", "workbench_request_image_revision", "workbench_set_cover", "workbench_update_caption", "workbench_update_models"]);
   const projects = await client.callTool({name: "workbench_list_projects", arguments: {}});
   assert.equal(projects.isError, undefined);
   assert.ok(JSON.stringify(projects.structuredContent).includes("library-of-alexandria"));

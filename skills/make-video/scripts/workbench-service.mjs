@@ -1,8 +1,25 @@
 import {randomUUID} from "node:crypto";
 import {existsSync, readFileSync, readdirSync, renameSync, writeFileSync} from "node:fs";
-import {extname, relative, resolve, sep} from "node:path";
+import {spawnSync} from "node:child_process";
+import {dirname, extname, relative, resolve, sep} from "node:path";
+import {fileURLToPath} from "node:url";
 
 import {loadVideoContext, projectRoot} from "./video-context.mjs";
+
+const scriptsDir = dirname(fileURLToPath(import.meta.url));
+const preparedAssetProjects = new Set();
+
+/** Prepare the ignored public/ links required by Remotion's staticFile(). */
+/** @param {string} videoId */
+export const prepareProjectAssets = (videoId) => {
+  if (preparedAssetProjects.has(videoId)) return true;
+  const result = spawnSync(process.execPath, [resolve(scriptsDir, "link-assets.mjs"), videoId], {
+    cwd: projectRoot,
+    stdio: "ignore",
+  });
+  if (result.status === 0) preparedAssetProjects.add(videoId);
+  return result.status === 0;
+};
 
 /** @param {string} file @param {any} [fallback] @returns {any} */
 const readJson = (file, fallback = null) => existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : fallback;
@@ -32,6 +49,7 @@ const parseScript = (file) => new Map(
 
 /** @param {string} videoId */
 export const getProjectState = (videoId) => {
+  prepareProjectAssets(videoId);
   const context = loadVideoContext(videoId);
   const sceneIndex = readJson(resolve(context.sourceDir, "SCENE_INDEX.json"), {scenes: [], captions: []});
   const candidates = readJson(resolve(context.sourceDir, "CANDIDATES.json"), {groups: []});
