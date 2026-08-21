@@ -1,21 +1,17 @@
 ---
 name: make-video
-version: 0.1.0
-description: Turn local assets (screen recordings, images, video clips, a text brief) into a finished, mastered video — Remotion composition, optional AI narration/music/sound effects, captions, and a loudness-checked final render. Use this whenever the user wants an actual video file produced, edited, or rendered — a product demo, a marketing/ad clip, an explainer, a walkthrough, a screen-recording turned into a narrated video — even if they just say "make this into a video" or "I recorded my screen, can you add a voiceover" without naming any tool. Also use it when the user wants to check or fix a finished video's loudness, captions, or encoding. Don't use this for writing standalone Remotion animation code with no rendering/audio/QA involved — load `remotion-best-practices` for that instead.
+description: Plan and produce image-led knowledge videos with Remotion, including history, biography, science, education, document, and book-based explanations. Use when the user wants a video plan, storyboard, narration, generated or supplied visuals, captions, voiceover, rendering, mastering, or final-video QA. Also use for other local Remotion productions that need this end-to-end pipeline. Do not use for standalone animation snippets with no production workflow.
 license: MIT
-compatibility: Requires Node.js 22.9+ (for `--env-file-if-exists`; older versions work if GEMINI_API_KEY is exported in the shell instead) and the ffmpeg/ffprobe/sox CLI tools on PATH. Runs against a Remotion project (remotion, @remotion/cli, react, react-dom) in the current project — this skill does not bundle them. GEMINI_API_KEY is required only for AI narration/music generation steps; those call the Gemini REST API directly with no SDK dependency.
 metadata:
   tags: video, remotion, ffmpeg, ffprobe, sox, tts, captions, rendering, production
 ---
 
 ## What this skill does
 
-This is a full local video production pipeline, not a single "generate a video"
-prompt. It composes a project (`video.config.json` + Remotion scenes) from the
-assets the user supplies, optionally generates narration/music/sound effects,
-renders, and masters the result to a checked loudness/encoding spec before
-calling it done. It works for any video — demos, product marketing, explainer
-content, tutorials — driven entirely by the assets and brief the user gives it.
+This is a full local production workflow. It begins by turning the user's
+request into an understandable production plan, then creates a Remotion
+composition, obtains or generates visuals, produces optional audio, renders,
+and checks the actual deliverable.
 
 This skill is the layer above raw Remotion code: the end-to-end build,
 generate, render, and verify workflow, using FFmpeg, ffprobe, and SoX
@@ -23,9 +19,12 @@ alongside Remotion.
 
 ## Workflow
 
-1. **Get the brief.** Target platform/aspect ratio, duration, fps, message,
-   required assets, whether narration/music/captions/sfx are needed, and the
-   expected output path.
+1. **Plan from the request.** Read
+   [references/planning-workflow.md](references/planning-workflow.md). Resolve
+   the intended subject, audience, scope, duration, format, narrative approach,
+   visual direction, sources, audio, and output. Present the plan in plain
+   language and obtain approval before research, scripting, asset generation,
+   or composition work.
 2. **Inspect supplied assets** with `ffprobe`/`ffmpeg`/`sox` before touching
    the composition — know the real duration, codecs, resolution of what you
    were given.
@@ -44,6 +43,10 @@ alongside Remotion.
 7. **QA the actual rendered file**, not just the source — check with
    `ffprobe`/`sox`: duration, resolution, fps, codecs, loudness, true peak,
    audio presence/sync. Record results.
+
+Approval of the production plan authorizes the planned local production work,
+but does not authorize publishing, paid services beyond the approved scope, or
+overwriting existing generated outputs.
 
 ## Generation safety (read before running any script)
 
@@ -66,6 +69,8 @@ to already have, or be given, a Remotion setup:
   `package.json` (add them with the project's package manager if missing).
 - `src/index.ts` calling `registerRoot`, and `src/Root.tsx` registering
   compositions (create this minimal scaffold if the project has none yet).
+- Node.js 22.9+ when using `--env-file-if-exists`, plus `ffmpeg`, `ffprobe`, and
+  `sox` on `PATH`.
 
 ## Commands
 

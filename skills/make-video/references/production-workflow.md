@@ -55,9 +55,10 @@ its runtime copy.
 
 ## General production workflow
 
-### 1. Define the brief
+### 1. Approve the production plan
 
-Before editing, record:
+Follow [planning-workflow.md](planning-workflow.md) before editing. Record the
+approved plan in `src/<video-id>/PRODUCTION_PLAN.md`, including:
 
 - Target platform and aspect ratio.
 - Intended duration and frame rate.
