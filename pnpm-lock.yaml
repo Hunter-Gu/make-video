@@ -8,15 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@modelcontextprotocol/client':
-        specifier: ^2.0.0
-        version: 2.0.0
-      '@modelcontextprotocol/node':
-        specifier: ^2.0.0
-        version: 2.0.0(@modelcontextprotocol/server@2.0.0)(hono@4.13.3)
-      '@modelcontextprotocol/server':
-        specifier: ^2.0.0
-        version: 2.0.0
       '@remotion/captions':
         specifier: ^4.0.499
         version: 4.0.506
@@ -35,9 +26,6 @@ importers:
       remotion:
         specifier: ^4.0.499
         version: 4.0.506(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
     devDependencies:
       '@types/node':
         specifier: ^26.1.1
@@ -138,6 +126,34 @@ importers:
         version: 4.4.3
 
   packages/examples: {}
+
+  packages/mcp:
+    dependencies:
+      '@make-video/ai':
+        specifier: workspace:*
+        version: link:../ai
+      '@modelcontextprotocol/client':
+        specifier: ^2.0.0
+        version: 2.0.0
+      '@modelcontextprotocol/node':
+        specifier: ^2.0.0
+        version: 2.0.0(@modelcontextprotocol/server@2.0.0)(hono@4.13.3)
+      '@modelcontextprotocol/server':
+        specifier: ^2.0.0
+        version: 2.0.0
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: ^26.1.1
+        version: 26.1.2
+      esbuild:
+        specifier: ^0.28.1
+        version: 0.28.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
 packages:
 

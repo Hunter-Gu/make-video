@@ -37,10 +37,13 @@ The pnpm workspace keeps runtime boundaries explicit:
 - `packages/contracts`: shared project and transport types.
 - `packages/ai`: AI SDK provider seam, the versioned video-plan schema, and the
   server-side plan generator.
+- `packages/mcp`: TypeScript MCP application service and adapters; its build
+  emits one `skills/make-video/scripts/mcp.mjs` entrypoint with `stdio`,
+  `http`, and `check` modes.
 - `packages/examples`: reusable media/source fixtures; user project state stays
   local and ignored.
-- `skills/make-video/scripts`: current local application service and MCP
-  adapters; this is the next extraction target for a backend package.
+- `skills/make-video/scripts`: generated skill entrypoints and production
+  scripts; MCP source code does not live here.
 
 The app keeps UI responsibilities separate: `app/Workbench.tsx` owns project
 selection and editor state; `components/` owns the asset bin, preview,
@@ -61,7 +64,7 @@ The stdio and `/mcp` Streamable HTTP entries expose the same tools:
 
 They also expose `workbench://projects` and one read-only project resource per
 video. Tool handlers contain no filesystem rules; they delegate to
-`workbench-service.mjs`, just like the REST compatibility routes.
+the shared MCP application service, just like the REST compatibility routes.
 
 ## Source of truth
 

@@ -1,0 +1,21 @@
+{
+  "name": "@make-video/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit && esbuild src/index.ts --bundle --minify --platform=node --format=esm --target=node22 --outfile=../../skills/make-video/scripts/mcp.mjs --banner:js='import {createRequire} from \"node:module\"; const require = createRequire(import.meta.url);'"
+  },
+  "dependencies": {
+    "@make-video/ai": "workspace:*",
+    "@modelcontextprotocol/client": "^2.0.0",
+    "@modelcontextprotocol/node": "^2.0.0",
+    "@modelcontextprotocol/server": "^2.0.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "esbuild": "^0.28.1",
+    "typescript": "^5.9.3"
+  }
+}

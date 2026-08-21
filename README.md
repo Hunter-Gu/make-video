@@ -101,8 +101,12 @@ duplicate project validation or production rules.
 Build and open the local Workbench with:
 
 ```bash
-pnpm workbench:build
-pnpm workbench:server
+cd packages/app
+pnpm build
+cd ../mcp
+pnpm build
+cd ../..
+node skills/make-video/scripts/mcp.mjs http
 ```
 
 Then visit `http://127.0.0.1:4317`.
@@ -111,9 +115,9 @@ Expose the same Workbench operations to Codex, Claude Code, or another local
 MCP host over stdio:
 
 ```bash
-pnpm workbench:mcp:check
-codex mcp add make-video -- node "$PWD/skills/make-video/scripts/workbench-mcp.mjs"
-claude mcp add make-video --scope project -- node "$PWD/skills/make-video/scripts/workbench-mcp.mjs"
+node skills/make-video/scripts/mcp.mjs check
+codex mcp add make-video -- node "$PWD/skills/make-video/scripts/mcp.mjs"
+claude mcp add make-video --scope project -- node "$PWD/skills/make-video/scripts/mcp.mjs"
 ```
 
 The MCP server provides project inspection, caption and model updates, and
