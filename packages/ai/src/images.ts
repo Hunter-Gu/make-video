@@ -3,13 +3,8 @@ import {dirname, extname, relative, resolve, sep} from "node:path";
 
 import {generateImage} from "ai";
 
-import {assertTargetsUnlocked} from "../../../skills/make-video/scripts/approval-lock-lib.mjs";
-import {assertGenerationApproved} from "../../../skills/make-video/scripts/generation-approval.mjs";
-import {parseGenerationArgs} from "../../../skills/make-video/scripts/generation-args.mjs";
-import {loadVideoContext, assertOutputsAvailable} from "../../../skills/make-video/scripts/video-context.mjs";
-import {buildVisualContext} from "../../../skills/make-video/scripts/visual-context.mjs";
-
 import {estimate, google, hash, mediaTypeFor, readJson, writeJson} from "./provider";
+import {assertGenerationApproved, assertOutputsAvailable, assertTargetsUnlocked, buildVisualContext, loadVideoContext, parseGenerationArgs} from "./project";
 import type {AnyRecord} from "./types";
 
 export const runImages = async (args: string[]) => {

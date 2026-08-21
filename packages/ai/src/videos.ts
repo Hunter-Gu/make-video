@@ -4,13 +4,8 @@ import {spawnSync} from "node:child_process";
 
 import {experimental_generateVideo} from "ai";
 
-import {assertTargetsUnlocked} from "../../../skills/make-video/scripts/approval-lock-lib.mjs";
-import {assertGenerationApproved} from "../../../skills/make-video/scripts/generation-approval.mjs";
-import {parseGenerationArgs} from "../../../skills/make-video/scripts/generation-args.mjs";
-import {assertOutputsAvailable, loadVideoContext} from "../../../skills/make-video/scripts/video-context.mjs";
-import {buildVisualContext} from "../../../skills/make-video/scripts/visual-context.mjs";
-
 import {estimate, google, hash, mediaTypeFor, readJson, writeJson} from "./provider";
+import {assertGenerationApproved, assertOutputsAvailable, assertTargetsUnlocked, buildVisualContext, loadVideoContext, parseGenerationArgs} from "./project";
 import type {AnyRecord} from "./types";
 
 const frameInput = (context: AnyRecord, configuredPath: unknown, label: string, frameType: "first_frame" | "last_frame") => {

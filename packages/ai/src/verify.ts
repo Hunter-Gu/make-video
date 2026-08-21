@@ -3,9 +3,8 @@ import {resolve} from "node:path";
 
 import {generateText} from "ai";
 
-import {loadVideoContext, parseTargetArgs} from "../../../skills/make-video/scripts/video-context.mjs";
-
 import {google} from "./provider";
+import {loadVideoContext, parseTargetArgs} from "./project";
 
 export const runVerifyVoiceover = async (args: string[]) => {
   const {videoId} = parseTargetArgs(args);

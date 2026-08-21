@@ -3,10 +3,8 @@ import {dirname, resolve} from "node:path";
 
 import {generateSpeech, generateText} from "ai";
 
-import {assertTargetsUnlocked} from "../../../skills/make-video/scripts/approval-lock-lib.mjs";
-import {assertOutputsAvailable, loadVideoContext, parseTargetArgs} from "../../../skills/make-video/scripts/video-context.mjs";
-
 import {google, hash, readJson, writeJson} from "./provider";
+import {assertOutputsAvailable, assertTargetsUnlocked, loadVideoContext, parseTargetArgs} from "./project";
 import type {AnyRecord} from "./types";
 
 const pcmFromAudio = (bytes: Uint8Array) => {
