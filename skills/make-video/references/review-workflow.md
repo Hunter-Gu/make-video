@@ -22,6 +22,11 @@ its prompt, model, cost, and intended scene. After the user selects one, update
 the storyboard and composition to reference it. Preserve rejected candidates
 until the user approves disposal.
 
+Store candidate groups in `CANDIDATES.json`. Each group has a stable output,
+scene, kind, candidate paths, provenance, and cost. Run
+`scripts/select-candidate.mjs <video-id> <group-id> <candidate-id> --force` to
+switch the stable runtime link. The unselected canonical files remain intact.
+
 ## Incremental changes
 
 Trace feedback from timestamp to scene ID, then to narration blocks, sources,

@@ -1,4 +1,4 @@
-import {existsSync, writeFileSync} from "node:fs";
+import {existsSync, readFileSync, writeFileSync} from "node:fs";
 import {relative, resolve} from "node:path";
 
 import {approvalLockFile, fileHash, readApprovalLock} from "./approval-lock-lib.mjs";
@@ -39,6 +39,7 @@ const candidates = [
   "STORYBOARD.md",
   "CLAIMS.json",
   "SCENE_INDEX.json",
+  "CANDIDATES.json",
   "content.ts",
   "video.config.json",
   "sources/index.json",
@@ -56,6 +57,14 @@ for (const file of ["voiceover.wav", "manifest.json"]) candidates.push(resolve(c
 candidates.push(resolve(context.audioDirs.music, "lyria-underscore.mp3"));
 for (const file of ["click.wav", "ding.wav", "whoosh.wav"]) candidates.push(resolve(context.audioDirs.sfx, file));
 for (const output of Object.values(context.outputs)) candidates.push(output);
+const candidateFile = resolve(context.sourceDir, "CANDIDATES.json");
+if (existsSync(candidateFile)) {
+  const candidateManifest = JSON.parse(readFileSync(candidateFile, "utf8"));
+  for (const group of candidateManifest.groups ?? []) {
+    candidates.push(resolve(context.publicDir, group.output));
+    for (const candidate of group.candidates ?? []) candidates.push(context.resolveConfiguredPath(candidate.path, `candidate ${candidate.id}`));
+  }
+}
 const files = [...new Set(candidates)].filter(existsSync).map((file) => ({path: relative(projectRoot, file), sha256: fileHash(file)})).sort((a, b) => a.path.localeCompare(b.path));
 const lock = {version: 1, videoId, active: true, approvedAt: new Date().toISOString(), files};
 writeFileSync(lockFile, `${JSON.stringify(lock, null, 2)}\n`);

@@ -5,6 +5,7 @@ import {
   linkSync,
   lstatSync,
   mkdirSync,
+  readFileSync,
   statSync,
   unlinkSync,
 } from "node:fs";
@@ -34,6 +35,16 @@ const hashFile = (fileName) =>
 
 if (!Array.isArray(assetLinks)) {
   throw new Error("production.assetLinks must be an array.");
+}
+
+const candidateFile = resolve(context.sourceDir, "CANDIDATES.json");
+if (existsSync(candidateFile)) {
+  const candidates = JSON.parse(readFileSync(candidateFile, "utf8"));
+  for (const group of candidates.groups ?? []) {
+    const selected = group.candidates?.find((/** @type {any} */ item) => item.id === group.selectedId);
+    if (!selected) throw new Error(`Candidate group ${group.id} has no valid selection.`);
+    assetLinks.push({source: selected.path, output: group.output});
+  }
 }
 
 for (const [index, item] of assetLinks.entries()) {
