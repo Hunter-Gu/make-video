@@ -133,6 +133,22 @@ Generated speech must fit inside its assigned timeline slots. Music and sound
 effects should support the edit without masking narration or interface cues.
 Keep API keys in the environment and never save them in this package.
 
+Pass generated tracks through render props so the composition mixes them:
+
+```json
+{
+  "audioTracks": [
+    {"id": "voice", "src": "my-video/audio/voiceover/voiceover.wav"},
+    {"id": "music", "src": "my-video/audio/music/underscore.mp3", "volume": 0.14, "loop": true},
+    {"id": "chapter-hit", "src": "my-video/audio/sfx/ding.wav", "from": 120}
+  ]
+}
+```
+
+`KnowledgeVideo` accepts these tracks directly. Use `from`,
+`durationInFrames`, and `trimBefore` when a track belongs to only part of the
+timeline.
+
 ### 7. Render and master
 
 Remotion produces the frame-accurate video and audio mix. FFmpeg may then be

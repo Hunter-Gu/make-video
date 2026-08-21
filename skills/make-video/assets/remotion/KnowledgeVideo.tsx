@@ -1,6 +1,7 @@
 import type {CSSProperties, ReactNode} from "react";
 import {
   AbsoluteFill,
+  Audio,
   Img,
   OffthreadVideo,
   Sequence,
@@ -58,6 +59,16 @@ export type KnowledgeVideoSpec = {
     accent: string;
   };
   scenes: KnowledgeScene[];
+};
+
+export type KnowledgeAudioTrack = {
+  id: string;
+  src: string;
+  from?: number;
+  durationInFrames?: number;
+  trimBefore?: number;
+  volume?: number;
+  loop?: boolean;
 };
 
 const base: CSSProperties = {
@@ -310,7 +321,7 @@ const Caption = ({text, start = 0, end = Infinity}: {text?: string; start?: numb
   ) : null;
 };
 
-export const KnowledgeVideo = ({spec, showCaptions = true, sceneOverrides = {}}: {spec: KnowledgeVideoSpec; showCaptions?: boolean; sceneOverrides?: Record<string, Partial<KnowledgeScene>>}) => {
+export const KnowledgeVideo = ({spec, showCaptions = true, sceneOverrides = {}, audioTracks = []}: {spec: KnowledgeVideoSpec; showCaptions?: boolean; sceneOverrides?: Record<string, Partial<KnowledgeScene>>; audioTracks?: KnowledgeAudioTrack[]}) => {
   let start = 0;
   return (
     <AbsoluteFill
@@ -334,6 +345,11 @@ export const KnowledgeVideo = ({spec, showCaptions = true, sceneOverrides = {}}:
           </Sequence>
         );
       })}
+      {audioTracks.map((track) => (
+        <Sequence key={track.id} from={track.from ?? 0} durationInFrames={track.durationInFrames}>
+          <Audio src={staticFile(track.src)} trimBefore={track.trimBefore} volume={track.volume ?? 1} loop={track.loop} />
+        </Sequence>
+      ))}
     </AbsoluteFill>
   );
 };
