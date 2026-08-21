@@ -1,6 +1,7 @@
 node_modules/
 out/
 output/
+workbench/dist/
 public/*/assets/
 public/*/images/
 public/*/videos/

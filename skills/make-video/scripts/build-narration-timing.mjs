@@ -12,6 +12,10 @@ const plan = JSON.parse(readFileSync(planFile, "utf8"));
 const manifestFile = context.resolveConfiguredPath(plan.voiceManifest, "TIMING_PLAN.voiceManifest");
 if (!existsSync(manifestFile)) throw new Error(`Voice manifest not found: ${manifestFile}`);
 const voice = JSON.parse(readFileSync(manifestFile, "utf8"));
+const scriptFile = resolve(context.sourceDir, "SCRIPT.md");
+const script = existsSync(scriptFile)
+  ? new Map([...readFileSync(scriptFile, "utf8").matchAll(/^- `([^`]+)`: (.+)$/gm)].map((match) => [match[1], match[2]]))
+  : new Map();
 const fps = context.composition.fps;
 const scenes = [];
 const captions = [];
@@ -30,7 +34,7 @@ for (const scene of plan.scenes ?? []) {
   let narrationFrame = frame + (scene.leadFrames ?? 0);
   for (const id of narrationIds) {
     const segmentFrames = Math.ceil(voice.segments[id].durationSeconds * fps);
-    captions.push({id, sceneId: scene.id, startFrame: narrationFrame, endFrame: narrationFrame + segmentFrames});
+    captions.push({id, sceneId: scene.id, text: script.get(id) ?? "", startFrame: narrationFrame, endFrame: narrationFrame + segmentFrames});
     narrationFrame += segmentFrames;
   }
   scenes.push({...scene, startFrame: frame, endFrame: frame + durationInFrames, durationInFrames, timingSource: narrationIds.length > 0 ? "voice-manifest" : "fixed"});

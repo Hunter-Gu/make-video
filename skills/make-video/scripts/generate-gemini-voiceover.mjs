@@ -13,7 +13,9 @@ import {assertTargetsUnlocked} from "./approval-lock-lib.mjs";
 const {videoId, force} = parseTargetArgs(process.argv.slice(2));
 const context = loadVideoContext(videoId);
 const {audioDirs, composition, config} = context;
-const captions = config.captions;
+const sceneIndexFile = resolve(context.sourceDir, "SCENE_INDEX.json");
+const indexedCaptions = existsSync(sceneIndexFile) ? JSON.parse(readFileSync(sceneIndexFile, "utf8")).captions : null;
+const captions = Array.isArray(config.captions) ? config.captions : indexedCaptions;
 const voice = config.voice;
 
 if (!Array.isArray(captions) || captions.length === 0) {

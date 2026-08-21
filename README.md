@@ -85,11 +85,20 @@ pnpm roadmap:verify library-of-alexandria
 Model-backed image, video, voice, and music generation stays separate from
 this local acceptance path and requires explicit cost approval.
 
-The planned local production GUI is documented in
+The local production GUI is documented in
 [docs/workbench-architecture.md](docs/workbench-architecture.md). Its screens
 depend on a transport interface rather than calling MCP directly, so the first
 local HTTP service can later be replaced by an MCP Apps or remote backend
 adapter without rewriting the GUI.
+
+Build and open the local Workbench with:
+
+```bash
+pnpm workbench:build
+pnpm workbench:server
+```
+
+Then visit `http://127.0.0.1:4317`.
 
 ## License
 

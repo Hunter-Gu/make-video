@@ -74,6 +74,11 @@ For storyboard approval, candidate selection, locked scenes, incremental
 changes, and delivery variants, read
 [references/review-workflow.md](references/review-workflow.md).
 
+When visual review or manual production adjustments are useful, build and run
+the local Workbench. It previews assets and render stages, records versioned
+image revision requests, edits captions, inspects the scene timeline, and
+selects image and voice models without starting paid generation.
+
 Approval of the production plan authorizes the planned local production work,
 but does not authorize publishing, paid services beyond the approved scope, or
 overwriting existing generated outputs.
