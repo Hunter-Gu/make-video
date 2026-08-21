@@ -30,7 +30,7 @@ export const generateVideoPlan = async ({brief, project, modelId} = {}) => {
   if (!prompt) throw new Error("A video brief is required.");
   const geminiKey = process.env.GEMINI_API_KEY;
   const gatewayKey = process.env.AI_GATEWAY_API_KEY;
-  if (!geminiKey && !gatewayKey) throw new Error("GEMINI_API_KEY or AI_GATEWAY_API_KEY is required for plan generation. Keys must stay on the Workbench server.");
+  if (!geminiKey && !gatewayKey) throw new Error("GEMINI_API_KEY or AI_GATEWAY_API_KEY is required for plan generation. Keys must stay on the Make Video MCP server.");
 
   const configuredModel = modelId ?? process.env.AI_PLAN_MODEL;
   const useGemini = Boolean(geminiKey);

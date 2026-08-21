@@ -29,61 +29,61 @@ const run = async (operation: () => unknown | Promise<unknown>): Promise<CallToo
   }
 };
 
-export const createWorkbenchMcpServer = () => {
-  const server = new McpServer({name: "make-video-workbench", version: "0.1.0"});
+export const createMakeVideoMcpServer = () => {
+  const server = new McpServer({name: "make-video-mcp", version: "0.1.0"});
 
-  server.registerTool("workbench_list_projects", {
-    description: "List video projects available in the Make Video Workbench.",
+  server.registerTool("make_video_list_projects", {
+    description: "List video projects available to Make Video.",
     inputSchema: z.object({}),
     annotations: {readOnlyHint: true},
   }, () => result({projects: listProjects()}));
 
-  server.registerTool("workbench_get_project", {
+  server.registerTool("make_video_get_project", {
     description: "Read scenes, captions, assets, render stages, models, revisions, and QA for one video project.",
     inputSchema: z.object({videoId: z.string().min(1)}),
     annotations: {readOnlyHint: true},
   }, ({videoId}) => run(() => getProjectState(videoId)));
 
-  server.registerTool("workbench_update_caption", {
+  server.registerTool("make_video_update_caption", {
     description: "Update one caption's text and frame range in the project source of truth.",
     inputSchema: z.object({videoId: z.string().min(1), id: z.string().min(1), text: z.string().min(1), startFrame: z.number().int().nonnegative(), endFrame: z.number().int().positive()}),
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: true},
   }, ({videoId, id, ...input}) => run(() => updateCaption(videoId, id, input)));
 
-  server.registerTool("workbench_update_models", {
+  server.registerTool("make_video_update_models", {
     description: "Save the selected image and voice models without starting paid generation.",
     inputSchema: z.object({videoId: z.string().min(1), image: z.string().min(1).optional(), voice: z.string().min(1).optional()}),
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: true},
   }, ({videoId, image, voice}) => run(() => updateModels(videoId, {image, voice})));
 
-  server.registerTool("workbench_request_image_revision", {
+  server.registerTool("make_video_request_image_revision", {
     description: "Create a non-destructive, versioned image revision request for an existing image asset.",
     inputSchema: z.object({videoId: z.string().min(1), assetId: z.string().min(1), modelId: z.string().min(1).nullable().optional(), instruction: z.string().min(1)}),
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: false},
   }, ({videoId, ...input}) => run(() => createAssetRevision(videoId, input)));
 
-  server.registerTool("workbench_set_cover", {
+  server.registerTool("make_video_set_cover", {
     description: "Select an existing project image as the cover source without rendering or overwriting thumbnail output.",
     inputSchema: z.object({videoId: z.string().min(1), assetId: z.string().min(1)}),
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: true},
   }, ({videoId, assetId}) => run(() => setCover(videoId, {assetId})));
 
-  server.registerTool("workbench_generate_video_plan", {
+  server.registerTool("make_video_generate_video_plan", {
     description: "Generate a validated scene plan from a brief using the server-side AI SDK. This may incur model costs.",
     inputSchema: z.object({brief: z.string().min(1), videoId: z.string().min(1).optional(), modelId: z.string().min(1).optional()}),
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: false},
   }, ({brief, videoId, modelId}) => run(() => generateVideoPlan({brief, modelId, project: videoId ? getProjectState(videoId) : undefined})));
 
-  server.registerResource("workbench-projects", "workbench://projects", {
+  server.registerResource("make-video-projects", "make-video://projects", {
     title: "Make Video projects",
-    description: "Available Workbench video project identifiers.",
+    description: "Available Make Video project identifiers.",
     mimeType: "application/json",
   }, (uri) => ({contents: [{uri: uri.href, mimeType: "application/json", text: JSON.stringify({projects: listProjects()}, null, 2)}]}));
 
   for (const videoId of listProjects()) {
-    server.registerResource(`workbench-project-${videoId}`, `workbench://projects/${videoId}`, {
+    server.registerResource(`make-video-project-${videoId}`, `make-video://projects/${videoId}`, {
       title: `Make Video project: ${videoId}`,
-      description: "Current Workbench project state.",
+      description: "Current Make Video project state.",
       mimeType: "application/json",
     }, (uri) => ({contents: [{uri: uri.href, mimeType: "application/json", text: JSON.stringify(getProjectState(videoId), null, 2)}]}));
   }
@@ -93,10 +93,10 @@ export const createWorkbenchMcpServer = () => {
 
 export const startStdioServer = async () => {
   const {serveStdio} = await import("@modelcontextprotocol/server/stdio");
-  await serveStdio(createWorkbenchMcpServer);
+  await serveStdio(createMakeVideoMcpServer);
 };
 
-const port = () => Number(process.env.MAKE_VIDEO_WORKBENCH_PORT ?? 4317);
+const port = () => Number(process.env.MAKE_VIDEO_MCP_PORT ?? 4317);
 const dist = resolve(projectRoot, "packages/app/dist");
 const publicRoot = resolve(projectRoot, "public");
 const types: Record<string, string> = {
@@ -122,7 +122,7 @@ const requiredParam = (value: string | null) => {
 };
 
 export const startHttpServer = () => {
-  const mcp = createMcpHandler(createWorkbenchMcpServer, {responseMode: "json"});
+  const mcp = createMcpHandler(createMakeVideoMcpServer, {responseMode: "json"});
   const handleMcp = toNodeHandler(mcp, {onerror: (error) => console.error(error)});
   const validateMcpHost = localhostHostValidation();
   const validateMcpOrigin = localhostOriginValidation();
@@ -172,5 +172,5 @@ export const startHttpServer = () => {
     } catch (error) {
       sendJson(response, 400, {error: error instanceof Error ? error.message : String(error)});
     }
-  }).listen(port(), "127.0.0.1", () => console.log(`Make Video Workbench: http://127.0.0.1:${port()}`));
+  }).listen(port(), "127.0.0.1", () => console.log(`Make Video MCP: http://127.0.0.1:${port()}`));
 };

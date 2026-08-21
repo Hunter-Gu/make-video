@@ -45,7 +45,7 @@ export const getProjectState = (videoId: string) => {
   const sceneIndex = readJson(resolve(context.sourceDir, "SCENE_INDEX.json"), {scenes: [], captions: []});
   const candidates = readJson(resolve(context.sourceDir, "CANDIDATES.json"), {groups: []});
   const deliveries = readJson(resolve(context.sourceDir, "DELIVERABLES.json"), {variants: []});
-  const workbench = readJson(resolve(context.sourceDir, "WORKBENCH.json"), {version: 1, revisionRequests: []});
+  const projectState = readJson(resolve(context.sourceDir, "PROJECT_STATE.json"), {version: 1, revisionRequests: []});
   const remotionTimeline = readJson(resolve(context.sourceDir, "REMOTION_TIMELINE.json"), {version: 1, effects: []});
   const cover = readJson(resolve(context.sourceDir, "COVER.json"), null);
   const script = parseScript(resolve(context.sourceDir, "SCRIPT.md"));
@@ -86,7 +86,7 @@ export const getProjectState = (videoId: string) => {
     cover,
     assets,
     stages,
-    revisions: workbench.revisionRequests ?? [],
+    revisions: projectState.revisionRequests ?? [],
     qa: readJson(resolve(projectRoot, "output", videoId, "qa-report.json"), null),
   };
 };
@@ -139,7 +139,7 @@ export const updateModels = (videoId: string, input: any) => {
 export const createAssetRevision = (videoId: string, input: any) => {
   const context = loadVideoContext(videoId);
   const project = getProjectState(videoId);
-  const stateFile = resolve(context.sourceDir, "WORKBENCH.json");
+  const stateFile = resolve(context.sourceDir, "PROJECT_STATE.json");
   const state = readJson(stateFile, {version: 1, revisionRequests: []});
   const assetId = String(input.assetId ?? "");
   const asset = project.assets.find((item: any) => item.id === assetId && item.kind === "image");

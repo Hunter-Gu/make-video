@@ -10,5 +10,5 @@ if (mode === "stdio") {
 } else if (mode === "check") {
   await runCheck();
 } else {
-  throw new Error(`Unknown MCP mode "${mode}". Use stdio, http, or check.`);
+  throw new Error(`Unknown Make Video MCP mode "${mode}". Use stdio, http, or check.`);
 }

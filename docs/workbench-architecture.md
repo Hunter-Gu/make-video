@@ -54,15 +54,15 @@ boots React and the Astryx theme.
 
 The stdio and `/mcp` Streamable HTTP entries expose the same tools:
 
-- `workbench_list_projects`
-- `workbench_get_project`
-- `workbench_update_caption`
-- `workbench_update_models`
-- `workbench_request_image_revision`
-- `workbench_set_cover`
-- `workbench_generate_video_plan`
+- `make_video_list_projects`
+- `make_video_get_project`
+- `make_video_update_caption`
+- `make_video_update_models`
+- `make_video_request_image_revision`
+- `make_video_set_cover`
+- `make_video_generate_video_plan`
 
-They also expose `workbench://projects` and one read-only project resource per
+They also expose `make-video://projects` and one read-only project resource per
 video. Tool handlers contain no filesystem rules; they delegate to
 the shared MCP application service, just like the REST compatibility routes.
 
