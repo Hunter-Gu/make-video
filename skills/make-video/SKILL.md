@@ -65,6 +65,10 @@ When one long source should become multiple videos, read
 [references/series-workflow.md](references/series-workflow.md) after ingestion
 and obtain approval for the series plan before developing any episode.
 
+When an approved storyboard justifies generated motion, read
+[references/video-generation.md](references/video-generation.md). Generate only
+the selected shots; do not replace the image-led visual plan wholesale.
+
 Approval of the production plan authorizes the planned local production work,
 but does not authorize publishing, paid services beyond the approved scope, or
 overwriting existing generated outputs.
@@ -106,6 +110,7 @@ node --env-file-if-exists=.env scripts/run-video.mjs check <video-id>
 node --env-file-if-exists=.env scripts/qa-video.mjs <video-id>
 node --env-file-if-exists=.env scripts/link-assets.mjs <video-id>
 node --env-file-if-exists=.env scripts/generate-gemini-images.mjs <video-id>
+node --env-file-if-exists=.env scripts/generate-veo-videos.mjs <video-id>
 node --env-file-if-exists=.env scripts/ingest-sources.mjs <video-id>
 node --env-file-if-exists=.env scripts/run-video.mjs studio <video-id>
 node --env-file-if-exists=.env scripts/run-video.mjs still <video-id>

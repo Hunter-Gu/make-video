@@ -42,6 +42,7 @@ npx skills add remotion-dev/skills --skill remotion-best-practices
 | `GEMINI_TTS_MODEL`            | No                                                   | Overrides `voice.model` from `video.config.json` for narration.                                         |
 | `GEMINI_TTS_VOICE`            | No                                                   | Overrides `voice.voiceName` from `video.config.json` for narration.                                     |
 | `GEMINI_IMAGE_MODEL`          | No                                                   | Overrides `imageGeneration.model` for generated still images.                                           |
+| `GEMINI_VIDEO_MODEL`          | No                                                   | Overrides `videoGeneration.model` for generated video shots.                                            |
 | `LYRIA_MODEL`                 | No                                                   | Overrides `music.model` from `video.config.json` for the music bed.                                     |
 | `GEMINI_VERIFY_MODEL`         | No                                                   | Model used to transcribe generated narration for verification (defaults to `gemini-3.6-flash`).         |
 | `TTS_START_AT`                | No                                                   | Resumes narration generation from a given caption id, reusing earlier segment files.                    |
