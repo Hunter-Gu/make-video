@@ -3,6 +3,7 @@ out/
 output/
 public/*/assets/
 public/*/images/
+public/*/videos/
 public/*/audio/music/*.mp3
 public/*/audio/voiceover/*.wav
 public/*/audio/voiceover/manifest.json

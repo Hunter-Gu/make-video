@@ -2,6 +2,7 @@ import type {CSSProperties, ReactNode} from "react";
 import {
   AbsoluteFill,
   Img,
+  OffthreadVideo,
   Sequence,
   interpolate,
   spring,
@@ -12,12 +13,18 @@ import {
 
 export type KnowledgeScene = {
   id: string;
-  type: "chapter" | "image" | "portrait" | "quote" | "timeline" | "comparison" | "statistic" | "chart" | "map" | "document" | "relationship" | "montage";
+  type: "chapter" | "image" | "portrait" | "video" | "quote" | "timeline" | "comparison" | "statistic" | "chart" | "map" | "document" | "relationship" | "montage";
   durationInFrames: number;
   title?: string;
   subtitle?: string;
   narration?: string;
   image?: string;
+  video?: string;
+  videoFit?: "cover" | "contain";
+  videoStartInFrames?: number;
+  videoPlaybackRate?: number;
+  videoMuted?: boolean;
+  videoVolume?: number;
   quote?: string;
   attribution?: string;
   events?: Array<{label: string; detail: string}>;
@@ -95,6 +102,29 @@ const ImageScene = ({scene}: {scene: KnowledgeScene}) => {
     </AbsoluteFill>
   );
 };
+
+const VideoScene = ({scene}: {scene: KnowledgeScene}) => (
+  <AbsoluteFill style={{background: "#000"}}>
+    {scene.video ? (
+      <OffthreadVideo
+        src={staticFile(scene.video)}
+        trimBefore={scene.videoStartInFrames ?? 0}
+        playbackRate={scene.videoPlaybackRate ?? 1}
+        muted={scene.videoMuted ?? true}
+        volume={scene.videoVolume ?? 1}
+        style={{width: "100%", height: "100%", objectFit: scene.videoFit ?? "cover"}}
+      />
+    ) : null}
+    {scene.title || scene.subtitle ? (
+      <AbsoluteFill style={{justifyContent: "end", padding: "120px 140px", background: "linear-gradient(0deg, #080c12cc, transparent 55%)"}}>
+        <Enter>
+          <div style={{fontSize: 62}}>{scene.title}</div>
+          <div style={{fontSize: 30, color: "var(--muted)", marginTop: 18}}>{scene.subtitle}</div>
+        </Enter>
+      </AbsoluteFill>
+    ) : null}
+  </AbsoluteFill>
+);
 
 const QuoteScene = ({scene}: {scene: KnowledgeScene}) => (
   <AbsoluteFill style={{justifyContent: "center", alignItems: "center", padding: 180}}>
@@ -221,6 +251,7 @@ const MontageScene = ({scene}: {scene: KnowledgeScene}) => {
 const Scene = ({scene}: {scene: KnowledgeScene}) => {
   if (scene.type === "chapter") return <ChapterScene scene={scene} />;
   if (scene.type === "image") return <ImageScene scene={scene} />;
+  if (scene.type === "video") return <VideoScene scene={scene} />;
   if (scene.type === "quote") return <QuoteScene scene={scene} />;
   if (scene.type === "timeline") return <TimelineScene scene={scene} />;
   if (scene.type === "comparison") return <ComparisonScene scene={scene} />;
