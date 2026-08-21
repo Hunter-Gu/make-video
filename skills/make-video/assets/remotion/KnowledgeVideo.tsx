@@ -271,7 +271,7 @@ const Caption = ({text}: {text?: string}) =>
     </div>
   ) : null;
 
-export const KnowledgeVideo = ({spec}: {spec: KnowledgeVideoSpec}) => {
+export const KnowledgeVideo = ({spec, showCaptions = true, sceneOverrides = {}}: {spec: KnowledgeVideoSpec; showCaptions?: boolean; sceneOverrides?: Record<string, Partial<KnowledgeScene>>}) => {
   let start = 0;
   return (
     <AbsoluteFill
@@ -284,13 +284,14 @@ export const KnowledgeVideo = ({spec}: {spec: KnowledgeVideoSpec}) => {
         background: "var(--background)",
       } as CSSProperties}
     >
-      {spec.scenes.map((scene) => {
+      {spec.scenes.map((originalScene) => {
+        const scene = {...originalScene, ...sceneOverrides[originalScene.id]};
         const from = start;
         start += scene.durationInFrames;
         return (
           <Sequence key={scene.id} from={from} durationInFrames={scene.durationInFrames} premountFor={30}>
             <Scene scene={scene} />
-            <Caption text={scene.narration} />
+            <Caption text={showCaptions ? scene.narration : undefined} />
           </Sequence>
         );
       })}

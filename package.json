@@ -33,6 +33,7 @@
     "approval:unlock": "node skills/make-video/scripts/approval-lock.mjs unlock",
     "revision:plan": "node skills/make-video/scripts/plan-revision.mjs",
     "candidate:select": "node skills/make-video/scripts/select-candidate.mjs",
+    "deliverables:render": "node skills/make-video/scripts/render-deliverables.mjs",
     "studio": "node skills/make-video/scripts/run-video.mjs studio",
     "still": "node skills/make-video/scripts/run-video.mjs still",
     "render:silent": "node skills/make-video/scripts/run-video.mjs render:silent",

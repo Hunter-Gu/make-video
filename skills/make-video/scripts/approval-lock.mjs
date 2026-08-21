@@ -40,6 +40,7 @@ const candidates = [
   "CLAIMS.json",
   "SCENE_INDEX.json",
   "CANDIDATES.json",
+  "DELIVERABLES.json",
   "content.ts",
   "video.config.json",
   "sources/index.json",
@@ -64,6 +65,15 @@ if (existsSync(candidateFile)) {
     candidates.push(resolve(context.publicDir, group.output));
     for (const candidate of group.candidates ?? []) candidates.push(context.resolveConfiguredPath(candidate.path, `candidate ${candidate.id}`));
   }
+}
+const deliverableFile = resolve(context.sourceDir, "DELIVERABLES.json");
+if (existsSync(deliverableFile)) {
+  const deliverables = JSON.parse(readFileSync(deliverableFile, "utf8"));
+  for (const variant of deliverables.variants ?? []) {
+    candidates.push(context.resolveConfiguredPath(variant.output, `deliverable ${variant.id}`));
+    if (variant.translation) candidates.push(context.resolveConfiguredPath(variant.translation, `deliverable ${variant.id} translation`));
+  }
+  candidates.push(resolve(projectRoot, "output", videoId, "delivery-report.json"));
 }
 const files = [...new Set(candidates)].filter(existsSync).map((file) => ({path: relative(projectRoot, file), sha256: fileHash(file)})).sort((a, b) => a.path.localeCompare(b.path));
 const lock = {version: 1, videoId, active: true, approvedAt: new Date().toISOString(), files};

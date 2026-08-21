@@ -38,11 +38,13 @@ ${section("Narration script", read(resolve(context.sourceDir, "SCRIPT.md")))}
 ${section("Storyboard", read(resolve(context.sourceDir, "STORYBOARD.md")))}
 ${jsonSection("Scene index", resolve(context.sourceDir, "SCENE_INDEX.json"))}
 ${jsonSection("Candidates", resolve(context.sourceDir, "CANDIDATES.json"))}
+${jsonSection("Deliverables", resolve(context.sourceDir, "DELIVERABLES.json"))}
 ${jsonSection("Source index", resolve(context.sourceDir, "sources/index.json"))}
 ${jsonSection("Generated images", resolve(context.publicDir, "images/generated/manifest.json"))}
 ${jsonSection("Generated video", resolve(context.publicDir, "video/generated/manifest.json"))}
 ${jsonSection("Voiceover", resolve(context.publicDir, "audio/voiceover/manifest.json"))}
 ${jsonSection("Technical QA", resolve(projectRoot, "output", videoId, "qa-report.json"))}
+${jsonSection("Delivery report", resolve(projectRoot, "output", videoId, "delivery-report.json"))}
 </main></body></html>`;
 
 mkdirSync(dirname(output), {recursive: true});

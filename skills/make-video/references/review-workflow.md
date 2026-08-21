@@ -53,3 +53,9 @@ Derive variants from the approved master composition where practical. Keep
 captioned and clean, horizontal and vertical, translated, trailer, and short
 extract outputs distinct. Check each actual file with QA; passing the master
 does not prove a differently cropped or translated variant is correct.
+
+Declare requested outputs in `DELIVERABLES.json`, including dimensions,
+caption visibility, optional translation overrides, still frame, or extract
+frame range. Run `scripts/render-deliverables.mjs <video-id>`, or use
+`--variant=<id>` for one output. Every rendered file is probed independently
+and recorded in `delivery-report.json`.
