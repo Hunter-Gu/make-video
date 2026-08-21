@@ -63,6 +63,12 @@ Keep shared, inspectable files under `series/` when they are relevant:
 Update the shared bibles when an approved episode introduces new canonical
 information. Do not let an episode silently contradict them.
 
+Store the machine-checkable plan as `series/<series-id>/series-plan.json` with
+an ordered `episodes` array, project-relative `sourceIndex`, explicit
+`previous`/`next` links, topics, source block IDs, and estimated minutes. Run
+`scripts/verify-series.mjs <series-id>` to detect invalid sources, accidental
+source/topic reuse, broken order links, and to generate `COVERAGE.md`.
+
 ## Regeneration boundaries
 
 Treat each episode and approved asset as independently preservable. A change to

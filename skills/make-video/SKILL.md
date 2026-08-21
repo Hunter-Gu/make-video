@@ -119,6 +119,7 @@ node --env-file-if-exists=.env scripts/generate-gemini-images.mjs <video-id>
 node --env-file-if-exists=.env scripts/generate-veo-videos.mjs <video-id>
 node --env-file-if-exists=.env scripts/ingest-sources.mjs <video-id>
 node --env-file-if-exists=.env scripts/verify-claims.mjs <video-id>
+node scripts/verify-series.mjs <series-id>
 node --env-file-if-exists=.env scripts/run-video.mjs studio <video-id>
 node --env-file-if-exists=.env scripts/run-video.mjs still <video-id>
 node --env-file-if-exists=.env scripts/run-video.mjs render:silent <video-id>
