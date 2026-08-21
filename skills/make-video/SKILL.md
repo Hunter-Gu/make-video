@@ -54,7 +54,8 @@ configuring or running the image generator.
 
 For image-led compositions, reuse or adapt
 [assets/remotion/KnowledgeVideo.tsx](assets/remotion/KnowledgeVideo.tsx). It
-provides chapter, image, quotation, timeline, comparison, and caption scenes;
+provides chapter, image, portrait, quotation, timeline, comparison, statistic,
+chart, map, document, relationship, montage, and caption scenes;
 extend it when the storyboard calls for a visual form it does not cover.
 
 When the request is grounded in supplied documents, books, or web pages, read

@@ -12,7 +12,7 @@ import {
 
 export type KnowledgeScene = {
   id: string;
-  type: "chapter" | "image" | "quote" | "timeline" | "comparison";
+  type: "chapter" | "image" | "portrait" | "quote" | "timeline" | "comparison" | "statistic" | "chart" | "map" | "document" | "relationship" | "montage";
   durationInFrames: number;
   title?: string;
   subtitle?: string;
@@ -23,6 +23,13 @@ export type KnowledgeScene = {
   events?: Array<{label: string; detail: string}>;
   left?: {label: string; detail: string};
   right?: {label: string; detail: string};
+  value?: string;
+  label?: string;
+  items?: Array<{label: string; value: number; detail?: string}>;
+  points?: Array<{label: string; x: number; y: number}>;
+  documentText?: string;
+  relations?: Array<{from: string; to: string; label?: string}>;
+  images?: string[];
 };
 
 export type KnowledgeVideoSpec = {
@@ -141,12 +148,89 @@ const ComparisonScene = ({scene}: {scene: KnowledgeScene}) => (
   </AbsoluteFill>
 );
 
+const StatisticScene = ({scene}: {scene: KnowledgeScene}) => (
+  <AbsoluteFill style={{justifyContent: "center", alignItems: "center", padding: 150}}><Enter>
+    <div style={{fontSize: 190, color: "var(--accent)", lineHeight: 1}}>{scene.value}</div>
+    <div style={{fontSize: 48, marginTop: 30, textAlign: "center"}}>{scene.label}</div>
+    <div style={{fontSize: 28, color: "var(--muted)", marginTop: 24}}>{scene.subtitle}</div>
+  </Enter></AbsoluteFill>
+);
+
+const ChartScene = ({scene}: {scene: KnowledgeScene}) => {
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  const items = scene.items ?? [];
+  const max = Math.max(...items.map((item) => item.value), 1);
+  return <AbsoluteFill style={{justifyContent: "center", padding: 130}}>
+    <div style={{fontSize: 64, marginBottom: 55}}>{scene.title}</div>
+    <div style={{display: "flex", height: 500, alignItems: "end", gap: 34}}>{items.map((item, index) => {
+      const progress = spring({frame: frame - index * 8, fps, config: {damping: 18}});
+      return <div key={item.label} style={{flex: 1, textAlign: "center"}}>
+        <div style={{fontSize: 28, marginBottom: 12}}>{item.value}</div>
+        <div style={{height: `${(item.value / max) * 360 * progress}px`, background: "var(--accent)", minHeight: 2}} />
+        <div style={{fontSize: 24, color: "var(--muted)", marginTop: 16}}>{item.label}</div>
+      </div>;
+    })}</div>
+  </AbsoluteFill>;
+};
+
+const MapScene = ({scene}: {scene: KnowledgeScene}) => {
+  const frame = useCurrentFrame();
+  const progress = interpolate(frame, [10, scene.durationInFrames - 25], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
+  const points = scene.points ?? [];
+  const path = points.map((point) => `${point.x},${point.y}`).join(" ");
+  return <AbsoluteFill style={{padding: 120}}><div style={{fontSize: 62}}>{scene.title}</div>
+    <svg viewBox="0 0 100 55" style={{width: "100%", flex: 1, marginTop: 20}}>
+      <rect width="100" height="55" rx="3" fill="#142131" stroke="#35475d" />
+      <polyline points={path} fill="none" stroke="var(--accent)" strokeWidth="1" pathLength="1" strokeDasharray="1" strokeDashoffset={1 - progress} />
+      {points.map((point, index) => <g key={point.label} opacity={progress * points.length >= index ? 1 : .25}>
+        <circle cx={point.x} cy={point.y} r="1.4" fill="var(--accent)" />
+        <text x={point.x + 2} y={point.y - 1} fill="var(--foreground)" fontSize="3">{point.label}</text>
+      </g>)}
+    </svg></AbsoluteFill>;
+};
+
+const DocumentScene = ({scene}: {scene: KnowledgeScene}) => {
+  const frame = useCurrentFrame();
+  const scale = interpolate(frame, [0, scene.durationInFrames], [1, 1.08]);
+  return <AbsoluteFill style={{justifyContent: "center", alignItems: "center", padding: 110}}>
+    <div style={{width: 1120, minHeight: 610, padding: 75, background: "#e8dcc1", color: "#29231b", boxShadow: "0 30px 90px #0008", transform: `scale(${scale})`}}>
+      <div style={{fontSize: 38, borderBottom: "2px solid #8f8068", paddingBottom: 22}}>{scene.title}</div>
+      <div style={{fontSize: 34, lineHeight: 1.7, marginTop: 48}}>{scene.documentText}</div>
+      <div style={{fontSize: 23, marginTop: 42, color: "#6d604e"}}>{scene.attribution}</div>
+    </div>
+  </AbsoluteFill>;
+};
+
+const RelationshipScene = ({scene}: {scene: KnowledgeScene}) => {
+  const names = [...new Set((scene.relations ?? []).flatMap((relation) => [relation.from, relation.to]))];
+  return <AbsoluteFill style={{justifyContent: "center", padding: 120}}><div style={{fontSize: 62, marginBottom: 60}}>{scene.title}</div>
+    <div style={{display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 34}}>{names.map((name) => <div key={name} style={{padding: "28px 44px", border: "2px solid var(--accent)", borderRadius: 60, fontSize: 30}}>{name}</div>)}</div>
+    <div style={{marginTop: 55, textAlign: "center", color: "var(--muted)", fontSize: 26}}>{(scene.relations ?? []).map((relation) => `${relation.from} → ${relation.to}${relation.label ? ` (${relation.label})` : ""}`).join("  ·  ")}</div>
+  </AbsoluteFill>;
+};
+
+const MontageScene = ({scene}: {scene: KnowledgeScene}) => {
+  const frame = useCurrentFrame();
+  return <AbsoluteFill style={{display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 18, padding: 70}}>
+    {(scene.images ?? []).slice(0, 4).map((image, index) => <Img key={image} src={staticFile(image)} style={{width: "100%", height: "100%", objectFit: "cover", opacity: interpolate(frame - index * 8, [0, 16], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp"})}} />)}
+    <div style={{position: "absolute", left: 110, top: 90, fontSize: 58, textShadow: "0 3px 15px #000"}}>{scene.title}</div>
+  </AbsoluteFill>;
+};
+
 const Scene = ({scene}: {scene: KnowledgeScene}) => {
   if (scene.type === "chapter") return <ChapterScene scene={scene} />;
   if (scene.type === "image") return <ImageScene scene={scene} />;
   if (scene.type === "quote") return <QuoteScene scene={scene} />;
   if (scene.type === "timeline") return <TimelineScene scene={scene} />;
-  return <ComparisonScene scene={scene} />;
+  if (scene.type === "comparison") return <ComparisonScene scene={scene} />;
+  if (scene.type === "statistic") return <StatisticScene scene={scene} />;
+  if (scene.type === "chart") return <ChartScene scene={scene} />;
+  if (scene.type === "map") return <MapScene scene={scene} />;
+  if (scene.type === "document") return <DocumentScene scene={scene} />;
+  if (scene.type === "relationship") return <RelationshipScene scene={scene} />;
+  if (scene.type === "montage") return <MontageScene scene={scene} />;
+  return <ImageScene scene={scene} />;
 };
 
 const Caption = ({text}: {text?: string}) =>
