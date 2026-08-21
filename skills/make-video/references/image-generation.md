@@ -1,7 +1,7 @@
 # Image generation
 
-Use generated images only after the storyboard and its approximate asset count
-are approved. Supplied, licensed, public-domain, map, chart, and document assets
+Use generated images after the storyboard and its approximate asset count are
+ready. Supplied, licensed, public-domain, map, chart, and document assets
 may be more accurate than generated reconstructions.
 
 Add an `imageGeneration` object to the video's `video.config.json`:
@@ -34,9 +34,9 @@ Run one target video from the caller's project root:
 node --env-file-if-exists=.env scripts/ai.mjs images <video-id>
 ```
 
-After an approved revision, append `--asset=<id>` to regenerate only that image.
+Append `--asset=<id>` to regenerate only that image.
 Repeat the option or use comma-separated IDs for a small affected set. Unrelated
-manifest entries remain unchanged, and active approval locks still apply.
+manifest entries remain unchanged.
 
 Keep reusable style rules in `VISUAL_BIBLE.json`, recurring people and life
 stages in `CHARACTER_BIBLE.json`, and historical boundaries in

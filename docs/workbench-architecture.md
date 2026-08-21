@@ -2,7 +2,7 @@
 
 The Workbench is a visual production surface for an agent-driven video project.
 It does not replace planning in Codex or another coding agent. Its first scope
-is asset review, revision requests, timeline inspection, render previews,
+is asset preview, revision requests, timeline inspection, render previews,
 caption editing, model selection, and QA.
 
 ## Architecture boundary
@@ -19,8 +19,8 @@ interface. The browser uses a Streamable HTTP MCP client hidden behind that
 interface. Codex, Claude Code, and other local MCP hosts use the stdio adapter.
 Both call the same application service.
 
-The application service owns validation, path boundaries, approval locks,
-version creation, cost checks, and atomic writes. A future remote backend must
+The application service owns validation, path boundaries, version creation, and
+atomic writes. A future remote backend must
 be able to implement the same service contract. HTTP routes and MCP tools are
 thin adapters around that contract, not separate business logic.
 
@@ -38,8 +38,8 @@ The pnpm workspace keeps runtime boundaries explicit:
 - `packages/ai`: AI SDK provider adapters and the unified media-generation
   command.
 - `packages/mcp`: TypeScript MCP application service and adapters; its build
-  emits one `skills/make-video/scripts/mcp.mjs` entrypoint with `stdio`,
-  `http`, and `check` modes.
+  emits one `skills/make-video/scripts/mcp.mjs` entrypoint with `stdio` and
+  `http` modes.
 - `packages/examples`: reusable media/source fixtures; user project state stays
   local and ignored.
 - `skills/make-video/scripts`: generated skill entrypoints and production
@@ -73,7 +73,6 @@ Inspectable project files remain authoritative:
 - `SCENE_INDEX.json` stores scene and caption timing.
 - `REMOTION_TIMELINE.json` stores absolute-frame Remotion effects for the FX
   track, including effect type, label, parameters, and scene association.
-- `CANDIDATES.json` stores media candidates and the selected version.
 - `WORKBENCH.json` stores revision requests and UI-relevant production state.
 - `COVER.json` stores the selected cover source without overwriting a rendered
   thumbnail.
@@ -84,10 +83,9 @@ second production state.
 
 ## Initial surfaces
 
-1. Asset browser with version history, selection, locking, and edit requests.
+1. Asset browser with version history, selection, and edit requests.
 2. Scene timeline with visual, narration, caption, and production status.
-3. Render-stage player for contact sheet, silent preview, mastered output,
-   trailers, shorts, and QA.
+3. Video player for the cover image, preview video, and final video.
 4. Caption editor with explicit save and narration-mismatch warnings.
 5. Image and voice model selectors backed by a capability registry.
 
@@ -99,6 +97,5 @@ calls never remain blocked for the duration of a render.
 
 - Never overwrite generated media; create a revision and select it explicitly.
 - Never expose provider credentials to the browser.
-- Never let a GUI action bypass approval or cost gates.
 - Scope every path to the selected video project.
 - Keep paid generation separate from inspection and configuration actions.

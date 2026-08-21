@@ -66,7 +66,7 @@ export const Workbench = ({transport}: {transport: WorkbenchTransport}) => {
         <div className="topbar-actions">
           <Badge className="qa-badge" variant={state.qa?.passed ? 'success' : 'warning'} label={state.qa?.passed ? 'QA passed' : 'QA pending'} />
           <Button label="Project settings" variant="secondary" size="sm" onClick={() => setInspectorMode('settings')} />
-          <Button label="Render" variant="primary" size="sm" onClick={() => setPreviewMode('player')} />
+          <Button label="Preview" variant="primary" size="sm" onClick={() => setPreviewMode('player')} />
         </div>
       </header>
       <section className="edit-area">

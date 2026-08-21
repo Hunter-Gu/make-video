@@ -1,4 +1,3 @@
-import {createHash} from "node:crypto";
 import {existsSync, readFileSync} from "node:fs";
 import {isAbsolute, relative, resolve, sep} from "node:path";
 
@@ -97,35 +96,6 @@ export const assertOutputsAvailable = (paths: string[], options: {force: boolean
   if (options.force) return;
   const existingPaths = paths.filter((path) => existsSync(path));
   if (existingPaths.length > 0) throw new Error(`${options.action} stopped because generated output already exists:\n${existingPaths.map((path) => `- ${path}`).join("\n")}\nPass --force only when regeneration was explicitly requested.`);
-};
-
-const approvalLockFile = (context: VideoContext) => resolve(context.sourceDir, "APPROVAL_LOCK.json");
-export const assertTargetsUnlocked = (context: VideoContext, targets: string[]) => {
-  const file = approvalLockFile(context);
-  if (!existsSync(file)) return;
-  const lock = JSON.parse(readFileSync(file, "utf8")) as AnyRecord;
-  if (!lock.active) return;
-  const protectedPaths = new Set((lock.files ?? []).map((item: AnyRecord) => item.path));
-  const blocked = targets.map((target) => relative(projectRoot, target)).filter((target) => protectedPaths.has(target));
-  if (blocked.length > 0) throw new Error(`Approved files are locked: ${blocked.join(", ")}. Record revision approval before unlocking.`);
-};
-
-const stableHash = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
-export const assertGenerationApproved = (context: VideoContext, kind: string, assetIds: string[]) => {
-  const planFile = resolve(context.sourceDir, "GENERATION_PLAN.json");
-  const estimateFile = resolve(context.sourceDir, "GENERATION_ESTIMATE.json");
-  const approvalFile = resolve(context.sourceDir, "GENERATION_APPROVAL.json");
-  if (!existsSync(planFile) || !existsSync(estimateFile) || !existsSync(approvalFile)) throw new Error("Generation plan, estimate, and approval are required before model calls.");
-  const plan = JSON.parse(readFileSync(planFile, "utf8")) as AnyRecord;
-  const estimate = JSON.parse(readFileSync(estimateFile, "utf8")) as AnyRecord;
-  const approval = JSON.parse(readFileSync(approvalFile, "utf8")) as AnyRecord;
-  const planned = new Set((plan.assets ?? []).filter((asset: AnyRecord) => asset.kind === kind).map((asset: AnyRecord) => asset.id));
-  const missing = assetIds.filter((id) => !planned.has(id));
-  if (missing.length > 0) throw new Error(`Generation estimate is missing ${kind} assets: ${missing.join(", ")}`);
-  if (estimate.planHash !== stableHash(plan) || approval.estimateHash !== estimate.planHash) throw new Error("Generation approval does not match the current estimate.");
-  const approved = new Set(approval.approvedAssetIds ?? []);
-  if (assetIds.some((id) => !approved.has(id))) throw new Error(`Generation assets are not approved: ${assetIds.filter((id) => !approved.has(id)).join(", ")}`);
-  return new Map((plan.assets ?? []).map((asset: AnyRecord) => [asset.id, asset]));
 };
 
 export const buildVisualContext = (context: VideoContext, requestedCharacters?: Array<{id: string; stage?: string}>) => {

@@ -5,7 +5,7 @@ may require more than one video.
 
 ## Understand the whole source first
 
-Ingest the material and review its full structure before selecting chapters for
+Ingest the material and inspect its full structure before selecting chapters for
 episode one. Build working indexes for:
 
 - Chapters and major arguments.
@@ -42,10 +42,10 @@ For each proposed episode provide:
 - Material intentionally reserved for later episodes.
 
 Check the plan for unsupported leaps, repeated explanations, missing chronology,
-and episodes that depend on concepts not yet introduced. Obtain user approval
-before writing an episode script.
+and episodes that depend on concepts not yet introduced before writing an episode
+script.
 
-Save the approved overview as `projects/<project-id>/PRODUCTION_PLAN.md`. Give each episode its
+Save the overview as `projects/<project-id>/PRODUCTION_PLAN.md`. Give each episode its
 own directory and the same plan, script, storyboard, configuration, render, and
 QA lifecycle as a standalone video.
 
@@ -60,14 +60,12 @@ Keep shared, inspectable files under `projects/<project-id>/` when they are rele
 - `AUDIO_BIBLE.md` — voices, pronunciation, music, and recurring sound.
 - `COVERAGE.md` — what each episode uses, omits, or reserves.
 
-Update the shared bibles when an approved episode introduces new canonical
+Update the shared bibles when an episode introduces new canonical
 information. Do not let an episode silently contradict them.
 
-Store the machine-checkable plan as `projects/<project-id>/series-plan.json` with
-an ordered `episodes` array, project-relative `sourceIndex`, explicit
-`previous`/`next` links, topics, source block IDs, and estimated minutes. Run
-`scripts/verify-series.mjs <series-id>` to detect invalid sources, accidental
-source/topic reuse, broken order links, and to generate `COVERAGE.md`.
+Store the series plan as `projects/<project-id>/series-plan.json` with an ordered
+`episodes` array, project-relative `sourceIndex`, explicit `previous`/`next`
+links, topics, source block IDs, and estimated minutes.
 
 Keep machine-checkable shared state in `SERIES_BIBLE.json`: adaptation mode,
 words-per-minute assumption, rights and intended use, shared bible paths,
@@ -78,11 +76,10 @@ and silent contradictions, and reports the source-to-narration compression ratio
 
 ## Regeneration boundaries
 
-Treat each episode and approved asset as independently preservable. A change to
+Treat each episode and generated asset as independently preservable. A change to
 one episode must not overwrite another episode, shared reference image, intro,
-outro, or published deliverable. Escalate a change for new approval when it
-alters the series premise, episode boundaries, shared visual identity, or source
-interpretation.
+outro, or published deliverable. Record changes when they alter the series
+premise, episode boundaries, shared visual identity, or source interpretation.
 
 ## Rights
 

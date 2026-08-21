@@ -4,7 +4,7 @@ import {dirname, resolve} from "node:path";
 import {generateSpeech, generateText} from "ai";
 
 import {google, hash, readJson, writeJson} from "./provider";
-import {assertOutputsAvailable, assertTargetsUnlocked, loadVideoContext, parseTargetArgs} from "./project";
+import {assertOutputsAvailable, loadVideoContext, parseTargetArgs} from "./project";
 import type {AnyRecord} from "./types";
 
 const pcmFromAudio = (bytes: Uint8Array) => {
@@ -43,7 +43,6 @@ export const runVoiceover = async (args: string[]) => {
   const model = process.env.GEMINI_TTS_MODEL ?? voice.model;
   const voiceName = process.env.GEMINI_TTS_VOICE ?? voice.voiceName;
   const outputFiles = [...captions.map((segment: AnyRecord) => resolve(outputDir, `${segment.id}.wav`)), resolve(outputDir, "manifest.json")];
-  assertTargetsUnlocked(context, outputFiles);
   assertOutputsAvailable(outputFiles, {force, action: `Voice generation for ${videoId}`});
   const manifest: AnyRecord = {videoId, model, voiceName, segments: {}};
   mkdirSync(outputDir, {recursive: true});
@@ -66,7 +65,6 @@ export const runMusic = async (args: string[]) => {
   const music = (context.config as AnyRecord).music as AnyRecord | undefined;
   if (!music) throw new Error(`${videoId} has no music configuration.`);
   const output = resolve(context.audioDirs.music, "lyria-underscore.mp3");
-  assertTargetsUnlocked(context, [output]);
   assertOutputsAvailable([output], {force, action: `Music generation for ${videoId}`});
   const model = process.env.LYRIA_MODEL ?? music.model;
   // Lyria is exposed through Google's Interactions API in the AI SDK.

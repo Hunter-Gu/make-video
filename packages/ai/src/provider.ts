@@ -4,7 +4,6 @@ import {extname} from "node:path";
 
 import {createGoogleGenerativeAI} from "@ai-sdk/google";
 
-import type {AnyRecord} from "./types";
 
 /** Create the configured Google provider only when a model call is needed. */
 export const google = () => {
@@ -22,11 +21,6 @@ export const writeJson = (file: string, value: any) => {
   const temporary = `${file}.tmp`;
   writeFileSync(temporary, `${JSON.stringify(value, null, 2)}\n`);
   renameSync(temporary, file);
-};
-
-export const estimate = (approved: Map<string, AnyRecord>, id: string) => {
-  const asset = approved.get(id);
-  return asset ? asset.units * asset.costPerUnit : undefined;
 };
 
 export const mediaTypeFor = (file: string) => ({

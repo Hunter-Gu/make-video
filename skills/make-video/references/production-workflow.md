@@ -10,7 +10,7 @@ The user is responsible for:
 
 - Providing local source assets and confirming the right to use them.
 - Defining the audience, channel, objective, and important creative constraints.
-- Reviewing the final creative result.
+- Inspecting the final creative result.
 
 The agent is responsible for:
 
@@ -18,7 +18,7 @@ The agent is responsible for:
 - Writing or updating the composition, scenes, timing, and captions.
 - Generating optional narration, music, and sound effects.
 - Rendering previews and final deliverables.
-- Checking visual quality, audio quality, encoding, and platform requirements.
+- Running deterministic QA for visual, audio, encoding, and platform requirements.
 - Recording material limitations and publication status.
 
 ## Source organization
@@ -55,10 +55,10 @@ its runtime copy.
 
 ## General production workflow
 
-### 1. Approve the production plan
+### 1. Write the production plan
 
 Follow [planning-workflow.md](planning-workflow.md) before editing. Record the
-approved plan in `src/<video-id>/PRODUCTION_PLAN.md`, including:
+production plan in `src/<video-id>/PRODUCTION_PLAN.md`, including:
 
 - Target platform and aspect ratio.
 - Intended duration and frame rate.
@@ -70,19 +70,19 @@ approved plan in `src/<video-id>/PRODUCTION_PLAN.md`, including:
 Keep copy short enough for the intended duration. The video must remain
 understandable without audio when it is intended for an autoplay social feed.
 
-### 2. Approve the narration and storyboard
+### 2. Write the narration and storyboard
 
 For image-led knowledge videos, follow
 [storyboard-workflow.md](storyboard-workflow.md). Save the agreed narration and
 storyboard as `SCRIPT.md` and `STORYBOARD.md` in the composition directory.
-Do not generate media before this review gate.
+Generate media after the narration and storyboard are complete.
 
 ### 3. Inspect the local assets
 
 The agent inventories the supplied files before changing the composition. Use
 `ffprobe` to inspect video and audio streams, frame rate, dimensions, duration,
-and codecs. Use FFmpeg for disposable inspection transcodes, frame extraction,
-or contact sheets. Use SoX when waveform, silence, peak, gain, or other audio
+and codecs. Use FFmpeg for disposable inspection transcodes or frame extraction.
+Use SoX when waveform, silence, peak, gain, or other audio
 analysis is useful.
 
 Inspection commands are production actions performed directly by the agent; they
@@ -124,9 +124,9 @@ Iterate on the composition until the visual story works without narration.
 
 Audio generation is a separate, explicit stage:
 
-- Gemini TTS may generate narration from the approved transcript.
+- Gemini TTS may generate narration from the configured transcript.
 - Gemini verification may transcribe the result and compare it with the script.
-- Lyria may generate a music bed from the approved music direction.
+- Lyria may generate a music bed from the configured music direction.
 - Deterministic UI sound effects may be generated locally or supplied as assets.
 
 Generated speech must fit inside its assigned timeline slots. Music and sound
@@ -193,34 +193,27 @@ otherwise. Every command that reads or produces composition-specific files
 requires exactly one video id:
 
 ```bash
-node --env-file-if-exists=.env scripts/run-video.mjs check <video-id>
 node --env-file-if-exists=.env scripts/qa-video.mjs <video-id>
-node --env-file-if-exists=.env scripts/build-review.mjs <video-id>
 node --env-file-if-exists=.env scripts/link-assets.mjs <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs images <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs video <video-id>
 node --env-file-if-exists=.env scripts/ingest-sources.mjs <video-id>
-node --env-file-if-exists=.env scripts/run-video.mjs studio <video-id>
-node --env-file-if-exists=.env scripts/run-video.mjs still <video-id>
-node --env-file-if-exists=.env scripts/run-video.mjs render:silent <video-id>
+node --env-file-if-exists=.env scripts/render.mjs studio <video-id>
+node --env-file-if-exists=.env scripts/render.mjs still <video-id>
+node --env-file-if-exists=.env scripts/render.mjs preview <video-id>
 node --env-file-if-exists=.env scripts/generate-ui-sfx.mjs <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs voiceover <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs music <video-id>
 node --env-file-if-exists=.env scripts/prepare-audio.mjs <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs verify-voiceover <video-id>
-node --env-file-if-exists=.env scripts/render-final.mjs <video-id>
+node --env-file-if-exists=.env scripts/render.mjs final <video-id>
 ```
-
-`run-video.mjs check` validates and prints the selected config without
-linking assets, generating media, or rendering. Commands fail when the video
-id is missing, does not match the source directory, or points at an invalid
-config.
 
 Generation and render commands refuse to overwrite existing outputs. Use
 `--force` only after regeneration has been explicitly requested:
 
 ```bash
-node --env-file-if-exists=.env scripts/render-final.mjs <video-id> --force
+node --env-file-if-exists=.env scripts/render.mjs final <video-id> --force
 ```
 
 ## Generation safety

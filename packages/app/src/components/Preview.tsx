@@ -40,7 +40,7 @@ export const Preview = ({state, mode, setMode, stage, setStageId, sceneId, selec
         {mode === 'player' && (
           <Selector
             className="stage-selector"
-            label="Preview stage"
+            label="Video"
             isLabelHidden
             options={state.stages.filter((item) => item.exists).map((item) => ({value: item.id, label: item.label}))}
             value={stage?.id ?? ''}

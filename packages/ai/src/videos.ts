@@ -4,8 +4,8 @@ import {spawnSync} from "node:child_process";
 
 import {experimental_generateVideo} from "ai";
 
-import {estimate, google, hash, mediaTypeFor, readJson, writeJson} from "./provider";
-import {assertGenerationApproved, assertOutputsAvailable, assertTargetsUnlocked, buildVisualContext, loadVideoContext, parseGenerationArgs} from "./project";
+import {google, hash, mediaTypeFor, readJson, writeJson} from "./provider";
+import {assertOutputsAvailable, buildVisualContext, loadVideoContext, parseGenerationArgs} from "./project";
 import type {AnyRecord} from "./types";
 
 const frameInput = (context: AnyRecord, configuredPath: unknown, label: string, frameType: "first_frame" | "last_frame") => {
@@ -35,9 +35,7 @@ export const runVideos = async (args: string[]) => {
   if (missing.length > 0) throw new Error(`Unknown generated video assets: ${missing.join(", ")}`);
   const manifestFile = resolve(context.publicDir, "video/generated/manifest.json");
   const operationsFile = resolve(context.publicDir, "video/generated/operations.json");
-  const approved = assertGenerationApproved(context, "video", selected.map((index: number) => generation.assets[index].id)) as Map<string, AnyRecord>;
   const selectedOutputs = selected.map((index: number) => outputs[index]);
-  assertTargetsUnlocked(context, [...selectedOutputs, manifestFile, operationsFile]);
   if (assetIds.length === 0) assertOutputsAvailable([manifestFile], {force, action: `Video generation for ${videoId}`});
   const manifest = assetIds.length > 0 && existsSync(manifestFile)
     ? readJson(manifestFile)
@@ -78,7 +76,7 @@ export const runVideos = async (args: string[]) => {
     writeFileSync(output, bytes);
     const probe = spawnSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "json", output], {encoding: "utf8"});
     if (probe.status !== 0) throw new Error(`Generated video is invalid: ${output}`);
-    const manifestAsset = {id: asset.id, output: relative(context.publicDir, output), duration: Number(JSON.parse(probe.stdout).format?.duration), promptHash: hash(prompt), sha256: hash(bytes), estimatedCost: estimate(approved, asset.id)};
+    const manifestAsset = {id: asset.id, output: relative(context.publicDir, output), duration: Number(JSON.parse(probe.stdout).format?.duration), promptHash: hash(prompt), sha256: hash(bytes)};
     manifest.assets = manifest.assets.filter((item: AnyRecord) => item.id !== asset.id);
     manifest.assets.push(manifestAsset);
     operations.assets[asset.id] = {status: "completed", fingerprint, completedAt: new Date().toISOString(), manifestAsset};

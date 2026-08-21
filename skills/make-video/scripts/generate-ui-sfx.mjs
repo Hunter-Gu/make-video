@@ -6,7 +6,6 @@ import {
   loadVideoContext,
   parseTargetArgs,
 } from "./video-context.mjs";
-import {assertTargetsUnlocked} from "./approval-lock-lib.mjs";
 
 const sampleRate = 48000;
 const {videoId, force} = parseTargetArgs(process.argv.slice(2));
@@ -17,7 +16,6 @@ const outputFiles = ["click.wav", "ding.wav", "whoosh.wav"].map((fileName) =>
   resolve(outputDir, fileName),
 );
 
-assertTargetsUnlocked(context, outputFiles);
 assertOutputsAvailable(outputFiles, {
   force,
   action: `Sound-effect generation for ${videoId}`,

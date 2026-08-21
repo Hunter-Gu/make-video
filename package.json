@@ -18,11 +18,9 @@
     "sources:ingest": "node skills/make-video/scripts/ingest-sources.mjs",
     "audio:verify": "node skills/make-video/scripts/ai.mjs verify-voiceover",
     "audio:prepare": "node skills/make-video/scripts/prepare-audio.mjs",
-    "video:check": "node skills/make-video/scripts/run-video.mjs check",
     "video:qa": "node skills/make-video/scripts/qa-video.mjs",
-    "roadmap:verify": "node skills/make-video/scripts/verify-roadmap.mjs",
-    "render:silent": "node skills/make-video/scripts/run-video.mjs render:silent",
-    "render": "node skills/make-video/scripts/render-final.mjs",
+    "render:preview": "node skills/make-video/scripts/render.mjs preview",
+    "render": "node skills/make-video/scripts/render.mjs final",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json && tsc --noEmit -p tsconfig.workbench.json && tsc --noEmit -p tsconfig.packages.json"
   },
   "dependencies": {

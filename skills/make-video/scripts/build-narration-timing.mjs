@@ -1,7 +1,6 @@
 import {existsSync, readFileSync, writeFileSync} from "node:fs";
 import {dirname, resolve} from "node:path";
 
-import {assertTargetsUnlocked} from "./approval-lock-lib.mjs";
 import {assertOutputsAvailable, loadVideoContext, parseTargetArgs} from "./video-context.mjs";
 
 const {videoId, force} = parseTargetArgs(process.argv.slice(2));
@@ -45,7 +44,6 @@ const indexFile = resolve(context.sourceDir, "SCENE_INDEX.json");
 const segmentFiles = captions.map((caption) => resolve(dirname(manifestFile), `${caption.id}.wav`));
 const canAssembleVoiceover = segmentFiles.length > 0 && segmentFiles.every(existsSync);
 const voiceoverFile = resolve(context.audioDirs.voiceover, "voiceover.wav");
-assertTargetsUnlocked(context, [indexFile, context.configPath, ...(canAssembleVoiceover ? [voiceoverFile] : [])]);
 assertOutputsAvailable([indexFile], {force, action: `Narration timing for ${videoId}`});
 if (canAssembleVoiceover) assertOutputsAvailable([voiceoverFile], {force, action: `Aligned voiceover for ${videoId}`});
 const config = JSON.parse(readFileSync(context.configPath, "utf8"));

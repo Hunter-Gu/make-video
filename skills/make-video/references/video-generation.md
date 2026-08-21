@@ -1,6 +1,6 @@
 # Generated video shots
 
-Use video generation selectively after storyboard approval. Prefer stills,
+Use video generation selectively after the storyboard is ready. Prefer stills,
 maps, timelines, charts, documents, and Remotion animation when they explain the
 material more accurately or cheaply.
 
@@ -9,7 +9,7 @@ outputs under the video's public directory. Each asset needs a stable ID,
 scene-specific prompt, and may specify `aspectRatio`, `resolution`, or
 `durationSeconds`. Set a project-relative `firstFrame` for image-to-video. Set
 both `firstFrame` and `lastFrame` when the shot must interpolate between two
-approved images.
+reference images.
 
 Run `scripts/ai.mjs video <video-id>`. It starts the AI SDK's asynchronous
 Veo operation, polls until completion, downloads the MP4, validates it with
@@ -20,27 +20,16 @@ reuses completed partial outputs after an interrupted batch. Existing unrelated
 outputs are protected. The script defaults to a 20-minute timeout; configure
 `pollSeconds` or `timeoutMinutes` when necessary.
 
-After an approved revision, pass `--asset=<id>` to process only that shot. The
-script preserves unrelated manifest entries and still honors approval locks.
+Pass `--asset=<id>` to process only one shot. The script preserves unrelated
+manifest entries.
 
-Generation may incur substantial cost. Confirm the shot count and provider
-before running it. Inspect subject consistency, unwanted text, historical
-accuracy, continuity, duration, and whether the clip supports its narration.
-
-Before any model call, define units, pricing, and latency bounds in
-`GENERATION_PLAN.json`, then run `scripts/estimate-generation.mjs <video-id>`.
-Record user-approved asset IDs and the estimate's `planHash` in
-`GENERATION_APPROVAL.json`. Image and video generators reject missing, stale,
-or partial approvals. Manifests preserve the estimated per-asset cost.
-
-Use a `video` scene in `KnowledgeVideo.tsx` to mix an approved MP4 into the same
+Use a `video` scene in `KnowledgeVideo.tsx` to mix a generated MP4 into the same
 timeline as stills and programmatic scenes. Configure `video`, and optionally
 `videoFit`, `videoStartInFrames`, `videoPlaybackRate`, `videoMuted`, or
 `videoVolume`. Generated clips default to muted so narration remains the primary
 audio track.
 
 List generated or supplied clips in `CLIP_QA.json`, including expected duration,
-minimum resolution, cut threshold, text policy, and a recorded human review for
-subject consistency, visual continuity, historical suitability, and scene fit.
-Run `scripts/qa-generated-videos.mjs <video-id>` for probe, scene-cut, midpoint
-OCR, and review-gate checks. Keep this report with the production review.
+minimum resolution, cut threshold, and text policy. Run
+`scripts/qa-generated-videos.mjs <video-id>` for ffprobe, scene-cut, midpoint
+OCR, duration, resolution, and text checks. The script does not call an AI model.

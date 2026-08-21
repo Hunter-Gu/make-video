@@ -1,11 +1,11 @@
 # Script and storyboard workflow
 
-Use this reference after the user approves the production plan and before
+Use this reference after the host agent has produced the plan and before
 generating visual assets or audio.
 
 ## Create the narration
 
-Turn the approved narrative structure into spoken language. Preserve its scope,
+Turn the planned narrative structure into spoken language. Preserve its scope,
 audience, tone, source policy, and target runtime.
 
 - Open with the promised hook; do not spend the opening on generic context.
@@ -26,7 +26,7 @@ Narrated scenes derive their duration from measured voice segments plus explicit
 lead/tail handles; non-narrated transitions may keep a fixed duration. The
 script writes `SCENE_INDEX.json` and updates the composition duration.
 
-Save the approved narration as `src/<video-id>/SCRIPT.md`. Give stable IDs to
+Save the narration as `src/<video-id>/SCRIPT.md`. Give stable IDs to
 narration blocks so storyboard scenes and later source citations can refer to
 them without matching prose by position.
 
@@ -69,24 +69,9 @@ Save the storyboard as `src/<video-id>/STORYBOARD.md`. Include an asset summary
 with approximate supplied, sourced, generated, and programmatic counts so the
 user can understand cost and workload.
 
-## Review gate
+## Before generation
 
-Present the script and storyboard at a useful level of detail. Ask the user to
-approve or revise:
-
-- Narrative coverage and omissions.
-- Tone and factual framing.
-- Visual style and repeated characters.
-- Speculative reconstructions.
-- Planned generated-asset count and expected cost.
-
-Do not generate images, video, narration, or music until the storyboard is
-approved. Read-only source research and asset inventory are allowed when needed
-to make the storyboard accurate.
-
-## Quality check
-
-Before requesting approval, verify that:
+Before generating media, make sure that:
 
 - The narration fits the target runtime.
 - Every planned section appears in the script.

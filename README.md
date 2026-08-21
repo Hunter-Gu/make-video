@@ -69,8 +69,8 @@ Get a key from [Google AI Studio](https://aistudio.google.com/apikey), then eith
   file when present and is a no-op otherwise. Add `.env` to your project's
   `.gitignore`; never commit it.
 
-Video plans are produced by the main agent. The AI package only handles approved
-media generation and audio verification.
+Video plans are produced by the host agent. The AI package only handles media
+generation and audio verification.
 
 ## Roadmap
 
@@ -81,12 +81,11 @@ The repository includes a reproducible Library of Alexandria acceptance case.
 After installing project dependencies, render and verify it with:
 
 ```bash
-pnpm render:silent library-of-alexandria
-pnpm roadmap:verify library-of-alexandria
+pnpm render:preview library-of-alexandria
 ```
 
 Model-backed image, video, voice, and music generation stays separate from
-this local acceptance path and requires explicit cost approval.
+this local acceptance path and requires the caller's API credentials.
 
 The local production GUI is documented in
 [docs/workbench-architecture.md](docs/workbench-architecture.md). Its screens
@@ -112,7 +111,6 @@ Expose the same Workbench operations to Codex, Claude Code, or another local
 MCP host over stdio:
 
 ```bash
-node skills/make-video/scripts/mcp.mjs check
 codex mcp add make-video -- node "$PWD/skills/make-video/scripts/mcp.mjs"
 claude mcp add make-video --scope project -- node "$PWD/skills/make-video/scripts/mcp.mjs"
 ```

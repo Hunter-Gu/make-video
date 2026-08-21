@@ -28,12 +28,8 @@ for (const clip of config.clips ?? []) {
     resolution: video?.width >= clip.minWidth && video?.height >= clip.minHeight,
     sceneCuts: sceneCuts <= (clip.maxSceneCuts ?? 0),
     unwantedText: clip.allowText === true || detectedText.length === 0,
-    subjectConsistency: clip.review?.subjectConsistent === true,
-    visualContinuity: clip.review?.visualContinuity === true,
-    historicalSuitability: clip.review?.historicallySuitable === true,
-    sceneSuitability: clip.review?.suitableForScene === true,
   };
-  results.push({id: clip.id, path: clip.path, duration, width: video?.width, height: video?.height, sceneCuts, detectedText, review: clip.review, checks, passed: Object.values(checks).every(Boolean)});
+  results.push({id: clip.id, path: clip.path, duration, width: video?.width, height: video?.height, sceneCuts, detectedText, checks, passed: Object.values(checks).every(Boolean)});
 }
 const report = {videoId, checkedAt: new Date().toISOString(), passed: results.every((result) => result.passed), clips: results};
 const output = resolve(projectRoot, "output", videoId, "clip-qa-report.json");

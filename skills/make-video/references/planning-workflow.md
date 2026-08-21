@@ -26,7 +26,7 @@ they are low risk and state them in the plan. Ask a concise question only when
 different answers would substantially change the scope, cost, rights, or
 creative result.
 
-## Check feasibility
+## Scope feasibility
 
 Match the content to the runtime. Use the configured voice and language when
 known; otherwise estimate narration conservatively and label the estimate.
@@ -54,33 +54,24 @@ request. Usually include:
 6. **Sources and accuracy** — research boundaries, citation expectations, and
    claims that need special care.
 7. **Risks and assumptions** — only material limitations or decisions.
-8. **Execution and review gates** — script, storyboard, asset generation,
+8. **Execution steps** — script, storyboard, asset generation,
    silent preview, audio, final render, and QA as applicable.
 
 Keep the plan proportional. A 60-second explainer may need one screen of text;
 a book-derived series needs episode boundaries, source ranges, consistency
 rules, and a cost-aware generation strategy.
 
-## Approval gate
+Save the plan as `src/<video-id>/PRODUCTION_PLAN.md` and keep later changes
+visible there.
 
-End with a direct request to approve or revise the plan. Do not start research,
-write the full narration, call generation models, or implement the composition
-until the user approves it. Read-only inspection of supplied files is allowed
-when needed to make the plan accurate.
-
-After approval, save the agreed plan as `src/<video-id>/PRODUCTION_PLAN.md` and
-keep later changes visible there. A small clarification does not require a new
-approval; a material change to subject, scope, duration, sources, cost, or
-visual direction does.
-
-## Planning quality check
+## Planning quality
 
 Before presenting the plan, verify that:
 
 - The content fits the proposed runtime.
 - Every section advances the explanation.
 - The visuals explain or add evidence instead of merely decorating narration.
-- Expensive generation is bounded and occurs after an appropriate review gate.
+- Expensive generation is bounded by the configured asset list.
 - Important factual claims have a source strategy.
 - Assumptions are visible and editable.
 - The user can understand what will be made without reading implementation

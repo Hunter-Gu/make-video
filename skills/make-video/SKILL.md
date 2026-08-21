@@ -23,12 +23,11 @@ alongside Remotion.
    [references/planning-workflow.md](references/planning-workflow.md). Resolve
    the intended subject, audience, scope, duration, format, narrative approach,
    visual direction, sources, audio, and output. Present the plan in plain
-   language and obtain approval before research, scripting, asset generation,
-   or composition work.
-2. **Develop the approved plan.** For image-led knowledge videos, read
+   language before research, scripting, asset generation, or composition work.
+2. **Develop the plan.** For image-led knowledge videos, read
    [references/storyboard-workflow.md](references/storyboard-workflow.md).
    Write the narration and visual storyboard, check their pacing and factual
-   coverage, and obtain storyboard approval before generating visual assets.
+   coverage before generating visual assets.
 3. **Inspect supplied assets** with `ffprobe`/`ffmpeg`/`sox` before touching
    the composition — know the real duration, codecs, resolution of what you
    were given.
@@ -48,7 +47,7 @@ alongside Remotion.
    `ffprobe`/`sox`: duration, resolution, fps, codecs, loudness, true peak,
    audio presence/sync. Record results.
 
-When the approved storyboard uses Gemini-generated stills, read
+When the storyboard uses Gemini-generated stills, read
 [references/image-generation.md](references/image-generation.md) before
 configuring or running the image generator.
 
@@ -64,29 +63,18 @@ sources before writing the final narration.
 
 When one long source should become multiple videos, read
 [references/series-workflow.md](references/series-workflow.md) after ingestion
-and obtain approval for the series plan before developing any episode.
+before developing any episode.
 
-When an approved storyboard justifies generated motion, read
+When the storyboard justifies generated motion, read
 [references/video-generation.md](references/video-generation.md). Generate only
 the selected shots; do not replace the image-led visual plan wholesale.
 
-For storyboard approval, candidate selection, locked scenes, incremental
-changes, and delivery variants, read
-[references/review-workflow.md](references/review-workflow.md).
-
-When visual review or manual production adjustments are useful, build and run
-the local Workbench. It previews assets and render stages, records versioned
-image revision requests, edits captions, inspects the scene timeline, and
+When manual production adjustments are useful, use the local Workbench. It
+previews assets and videos, edits captions, inspects the scene timeline, and
 selects image and voice models without starting paid generation.
 
 Expose the same operations to a local MCP host with:
 `node skills/make-video/scripts/mcp.mjs` (stdio is the default mode).
-Validate its tools, resources, and stdio calls with:
-`node skills/make-video/scripts/mcp.mjs check`.
-
-Approval of the production plan authorizes the planned local production work,
-but does not authorize publishing, paid services beyond the approved scope, or
-overwriting existing generated outputs.
 
 ## Generation safety (read before running any script)
 
@@ -95,7 +83,7 @@ overwriting existing generated outputs.
 - Generated audio and rendered outputs are **not disposable caches**. Every
   generation/render command refuses to overwrite an existing output; pass
   `--force` only when regeneration was explicitly requested.
-- Never run a generator just to check something else works (e.g. don't
+- Never run a generator just to inspect something else (e.g. don't
   regenerate audio to verify a file move).
 
 ## Project setup (this skill carries no project of its own)
@@ -121,24 +109,20 @@ files takes exactly one video id. Prefix with `--env-file-if-exists=.env` so
 without erroring when it isn't:
 
 ```bash
-node --env-file-if-exists=.env scripts/run-video.mjs check <video-id>
 node --env-file-if-exists=.env scripts/qa-video.mjs <video-id>
-node --env-file-if-exists=.env scripts/build-review.mjs <video-id>
 node --env-file-if-exists=.env scripts/link-assets.mjs <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs images <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs video <video-id>
 node --env-file-if-exists=.env scripts/ingest-sources.mjs <video-id>
-node --env-file-if-exists=.env scripts/verify-claims.mjs <video-id>
-node scripts/verify-series.mjs <series-id>
-node --env-file-if-exists=.env scripts/run-video.mjs studio <video-id>
-node --env-file-if-exists=.env scripts/run-video.mjs still <video-id>
-node --env-file-if-exists=.env scripts/run-video.mjs render:silent <video-id>
+node --env-file-if-exists=.env scripts/render.mjs studio <video-id>
+node --env-file-if-exists=.env scripts/render.mjs still <video-id>
+node --env-file-if-exists=.env scripts/render.mjs preview <video-id>
 node --env-file-if-exists=.env scripts/generate-ui-sfx.mjs <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs voiceover <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs music <video-id>
 node --env-file-if-exists=.env scripts/prepare-audio.mjs <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs verify-voiceover <video-id>
-node --env-file-if-exists=.env scripts/render-final.mjs <video-id>
+node --env-file-if-exists=.env scripts/render.mjs final <video-id>
 ```
 
 Full detail on the config schema, per-composition README convention, and

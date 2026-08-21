@@ -1,7 +1,7 @@
 # Source-grounded videos
 
 Configure source material in `video.config.json` after the production plan is
-approved:
+ready:
 
 ```json
 {
@@ -37,8 +37,5 @@ allowed, caption, and evidence status. Run `scripts/build-source-catalog.mjs
 Canonical illustrations must remain outside `public/`; use `assetLinks` for the
 runtime copy or hard link.
 
-Record claims in `src/<video-id>/CLAIMS.json`. Each claim has a stable ID,
-`direct`, `paraphrase`, or `inference` type, covered `narrationIds`, and source
-block IDs. Inferences may omit sources but need a disclosure. Run
-`scripts/verify-claims.mjs <video-id>` to require coverage for every stable ID
-in `SCRIPT.md`, validate references, and generate `SOURCES.md`.
+Record claims in `src/<video-id>/CLAIMS.json` when source traceability is needed.
+Each claim has a stable ID, type, covered `narrationIds`, and source block IDs.

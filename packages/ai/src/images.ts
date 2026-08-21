@@ -3,8 +3,8 @@ import {dirname, extname, relative, resolve, sep} from "node:path";
 
 import {generateImage} from "ai";
 
-import {estimate, google, hash, mediaTypeFor, readJson, writeJson} from "./provider";
-import {assertGenerationApproved, assertOutputsAvailable, assertTargetsUnlocked, buildVisualContext, loadVideoContext, parseGenerationArgs} from "./project";
+import {google, hash, mediaTypeFor, readJson, writeJson} from "./provider";
+import {assertOutputsAvailable, buildVisualContext, loadVideoContext, parseGenerationArgs} from "./project";
 import type {AnyRecord} from "./types";
 
 export const runImages = async (args: string[]) => {
@@ -34,9 +34,7 @@ export const runImages = async (args: string[]) => {
   const missing = assetIds.filter((id) => !seen.has(id));
   if (missing.length > 0) throw new Error(`Unknown generated image assets: ${missing.join(", ")}`);
   const manifestFile = resolve(context.publicDir, "images/generated/manifest.json");
-  const approved = assertGenerationApproved(context, "image", selected.map((index: number) => imageGeneration.assets[index].id)) as Map<string, AnyRecord>;
   const selectedOutputs = selected.map((index: number) => outputs[index]);
-  assertTargetsUnlocked(context, [...selectedOutputs, manifestFile]);
   if (assetIds.length === 0) assertOutputsAvailable([...selectedOutputs, manifestFile], {force, action: `Image generation for ${videoId}`});
 
   const manifest = assetIds.length > 0 && existsSync(manifestFile)
@@ -55,7 +53,7 @@ export const runImages = async (args: string[]) => {
     mkdirSync(dirname(output), {recursive: true});
     writeFileSync(output, bytes);
     manifest.assets = manifest.assets.filter((item: AnyRecord) => item.id !== asset.id);
-    manifest.assets.push({id: asset.id, output: relative(context.publicDir, output), mimeType, promptHash: hash(prompt), sha256: hash(bytes), estimatedCost: estimate(approved, asset.id)});
+    manifest.assets.push({id: asset.id, output: relative(context.publicDir, output), mimeType, promptHash: hash(prompt), sha256: hash(bytes)});
     console.log(`Generated ${asset.id}`);
   }
   const order = new Map(imageGeneration.assets.map((asset: AnyRecord, index: number) => [asset.id, index]));

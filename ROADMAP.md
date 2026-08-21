@@ -2,29 +2,21 @@
 
 ## Implementation status
 
-All six phases are implemented. The reproducible acceptance case is
-`library-of-alexandria`: 14 scenes, 1,551 frames, seven delivery variants, a
-rendered 51.754-second master, and deterministic source, series, media, and
-final-video QA.
-
-Run the release gate after rendering the example:
-
-```bash
-pnpm roadmap:verify library-of-alexandria
-```
+The current implementation covers the core image-led video loop: project
+configuration, media generation, Remotion rendering, captions, audio, and
+deterministic QA.
 
 | Phase | Shipped evidence |
 | --- | --- |
-| Topic to video | Approved plan, script, storyboard, narration-derived timing, Remotion render, captions, configurable audio mix, and final-file QA |
+| Topic to video | Plan, script, storyboard, narration-derived timing, Remotion render, captions, configurable audio mix, and final-file QA |
 | Visual storytelling | Fourteen scene examples, 2.5D/focus motion, visual and character bibles, historical constraints, image QA, and render QA |
-| Source to video | Markdown/text/web/PDF/DOCX/EPUB ingestion, location-preserving index, annotations, claim checks, catalog, rights, and source list |
-| Book to series | Adaptation modes, compression estimate, episode/source allocation, continuity checks, and shared series bibles |
-| Hybrid scenes | Replaceable image/video adapters, conditioning and resume support, estimates and approval, provenance, clip QA, and Remotion video scenes |
-| Review and delivery | Contact sheet, interactive review, candidates, locks, revision mapping, review package, and seven delivery variants |
+| Source to video | Markdown/text/web/PDF/DOCX/EPUB ingestion, location-preserving index, annotations, source catalog, rights, and source list |
+| Book to series | Adaptation modes, compression estimate, episode/source allocation, continuity tracking, and shared series bibles |
+| Hybrid scenes | Replaceable image/video adapters, conditioning and resume support, provenance, clip QA, and Remotion video scenes |
+| Iteration and delivery | Timeline editing, targeted asset regeneration, preview/final exports, captions, thumbnails, and source metadata |
 
-Paid model calls remain explicit approval steps and require the caller's API
-credentials. The acceptance gate uses checked local fixtures, so verifying the
-workflow cannot create model charges.
+Paid model calls require the caller's API credentials. Deterministic local
+fixtures keep QA runs from creating model charges.
 
 ## Product direction
 
@@ -106,7 +98,7 @@ model generation.
   claims, and supplied illustrations.
 - Attach source references to important narration claims and storyboard scenes.
 - Distinguish direct source statements, paraphrases, and model inferences.
-- Check the completed script against the source and flag unsupported claims.
+- Keep important narration claims traceable to the source.
 - Produce a human-readable source list alongside the final video.
 - Reuse illustrations and figures from the source when permitted, while keeping
   canonical files separate from runtime assets.
@@ -131,7 +123,7 @@ Scale source-grounded production from one video to a coherent series.
 - Share character, visual, pronunciation, music, intro, outro, and citation
   bibles across the series.
 - Allow one episode or scene to be regenerated without rebuilding completed
-  episodes or replacing approved assets.
+  episodes or replacing unrelated assets.
 - Record rights and intended-use status for supplied books and source assets;
   do not assume possession of a file grants publication or adaptation rights.
 
@@ -143,8 +135,6 @@ Add video models only where motion materially improves the explanation.
   first/last-frame-controlled generation through replaceable adapters.
 - Let the planner choose among a still image, map, timeline, chart, document,
   Remotion motion graphic, supplied footage, or generated video for each scene.
-- Estimate cost and latency before generation and require approval for expensive
-  batches.
 - Preserve prompt, model, parameters, reference assets, cost, and provenance for
   each generated shot.
 - Verify generated clips for duration, resolution, unwanted text, visual
@@ -152,25 +142,23 @@ Add video models only where motion materially improves the explanation.
 - Mix generated clips with the existing image-led Remotion composition rather
   than turning every scene into generated video.
 
-## Phase 6 — Review, iteration, and delivery
+## Phase 6 — Iteration and delivery
 
 Make collaboration with the agent practical for long videos and series.
 
-- Generate a storyboard/contact sheet before expensive asset generation.
-- Present multiple image, voice, music, caption, or motion candidates and allow
-  the user to approve one.
-- Lock approved scenes and assets so later changes cannot replace them by
-  accident.
+- Show the storyboard, timeline, and generated media before export.
+- Let the user choose image, voice, music, caption, and motion settings in the
+  workbench.
 - Support time- and region-specific feedback that maps back to the relevant
   scene, source claim, asset, and composition code.
 - Rebuild only the affected outputs after a script, prompt, asset, or styling
   change.
-- Provide a review package containing the storyboard, narration, sources,
-  asset provenance, generation costs, technical QA, and known limitations.
+- Keep the storyboard, narration, sources, asset provenance, technical QA, and
+  known limitations with the project.
 - Export multiple aspect ratios, captioned and clean versions, translated
   versions, thumbnails, trailers, and short-form extracts where requested.
-- Add an interactive review interface on top of the same project files and
-  production state; the interface must not become a second source of truth.
+- Keep the workbench as a view and editor for the same project files; it must
+  not become a second source of truth.
 
 ## Cross-cutting principles
 
@@ -181,8 +169,8 @@ Make collaboration with the agent practical for long videos and series.
 - Preserve provenance for supplied, sourced, and generated assets.
 - Prefer deterministic Remotion and FFmpeg operations where an AI call is not
   necessary.
-- Separate planning, approval, generation, composition, rendering, and QA so an
-  inexpensive check cannot accidentally trigger an expensive generation step.
+- Separate planning, generation, composition, rendering, and QA so an
+  inexpensive local command cannot trigger an expensive generation step.
 - Optimize for source faithfulness, narrative clarity, visual consistency, and
   a checked final file—not the number of integrated model providers.
 

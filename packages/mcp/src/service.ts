@@ -43,8 +43,6 @@ export const getProjectState = (videoId: string) => {
   prepareProjectAssets(videoId);
   const context = loadVideoContext(videoId);
   const sceneIndex = readJson(resolve(context.sourceDir, "SCENE_INDEX.json"), {scenes: [], captions: []});
-  const candidates = readJson(resolve(context.sourceDir, "CANDIDATES.json"), {groups: []});
-  const deliveries = readJson(resolve(context.sourceDir, "DELIVERABLES.json"), {variants: []});
   const projectState = readJson(resolve(context.sourceDir, "PROJECT_STATE.json"), {version: 1, revisionRequests: []});
   const remotionTimeline = readJson(resolve(context.sourceDir, "REMOTION_TIMELINE.json"), {version: 1, effects: []});
   const cover = readJson(resolve(context.sourceDir, "COVER.json"), null);
@@ -58,21 +56,9 @@ export const getProjectState = (videoId: string) => {
       assets.push({id, sceneId: sceneIndex.scenes.find((scene: any) => scene.assetIds?.includes(id))?.id ?? null, kind: "image", selected: true, path: relative(projectRoot, file), url: mediaUrl(file)});
     }
   }
-  for (const group of candidates.groups ?? []) {
-    for (const candidate of group.candidates ?? []) {
-      const file = context.resolveConfiguredPath(candidate.path, `candidate ${candidate.id}`);
-      if (existsSync(file)) {
-        assets.push({id: candidate.id, groupId: group.id, sceneId: group.sceneId, kind: group.kind === "motion" ? "video" : "image", selected: candidate.id === group.selectedId, provider: candidate.provider, path: relative(projectRoot, file), url: mediaUrl(file)});
-      }
-    }
-  }
-
+  const outputLabels: Record<string, string> = {still: "Cover image", silent: "Preview video", unmastered: "Intermediate render", final: "Final video"};
   const stages = [
-    ...Object.entries(context.outputs).map(([id, file]) => ({id, label: id, path: relative(projectRoot, file), exists: existsSync(file), url: existsSync(file) ? mediaUrl(file) : null})),
-    ...deliveries.variants.map((variant: any) => {
-      const file = context.resolveConfiguredPath(variant.output, `deliverable ${variant.id}`);
-      return {id: variant.id, label: variant.id, kind: variant.kind, path: relative(projectRoot, file), exists: existsSync(file), url: existsSync(file) ? mediaUrl(file) : null};
-    }),
+    ...Object.entries(context.outputs).filter(([id]) => id !== "unmastered").map(([id, file]) => ({id, label: outputLabels[id] ?? id, path: relative(projectRoot, file), exists: existsSync(file), url: existsSync(file) ? mediaUrl(file) : null})),
   ].filter((stage, index, all) => all.findIndex((item) => item.path === stage.path) === index);
 
   return {
