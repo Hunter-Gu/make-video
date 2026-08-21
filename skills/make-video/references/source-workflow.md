@@ -28,3 +28,9 @@ Use block IDs when recording support for narration claims and storyboard
 scenes. Mark model interpretation separately from sourced fact. Do not treat an
 illustrative reconstruction as documentary evidence, and record the supplied
 rights status without inferring publication permission.
+
+Record claims in `src/<video-id>/CLAIMS.json`. Each claim has a stable ID,
+`direct`, `paraphrase`, or `inference` type, covered `narrationIds`, and source
+block IDs. Inferences may omit sources but need a disclosure. Run
+`scripts/verify-claims.mjs <video-id>` to require coverage for every stable ID
+in `SCRIPT.md`, validate references, and generate `SOURCES.md`.

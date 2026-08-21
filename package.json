@@ -18,6 +18,7 @@
     "assets:images": "node skills/make-video/scripts/generate-gemini-images.mjs",
     "assets:videos": "node skills/make-video/scripts/generate-veo-videos.mjs",
     "sources:ingest": "node skills/make-video/scripts/ingest-sources.mjs",
+    "sources:verify": "node skills/make-video/scripts/verify-claims.mjs",
     "audio:sfx": "node skills/make-video/scripts/generate-ui-sfx.mjs",
     "audio:voiceover": "node skills/make-video/scripts/generate-gemini-voiceover.mjs",
     "audio:music": "node skills/make-video/scripts/generate-lyria-music.mjs",
