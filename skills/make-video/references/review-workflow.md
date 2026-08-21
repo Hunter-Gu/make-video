@@ -27,6 +27,12 @@ until the user approves disposal.
 Trace feedback from timestamp to scene ID, then to narration blocks, sources,
 and assets. Classify the change before rebuilding:
 
+Maintain this mapping in `src/<video-id>/SCENE_INDEX.json`. Each scene records
+its exact frame range plus narration, source-block, asset, and composition-code
+IDs. Run `scripts/plan-revision.mjs <video-id> --time=<seconds>` for timestamped
+feedback, or select by `--scene`, `--asset`, or `--source`. Add
+`--region=x,y,w,h` to retain spatial feedback in the report.
+
 - Copy changes affect script, captions, narration, and scenes using that text.
 - Visual changes affect only the named asset and its scene.
 - Timing changes affect the scene and later timeline offsets.

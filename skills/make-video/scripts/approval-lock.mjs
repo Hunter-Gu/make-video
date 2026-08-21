@@ -38,6 +38,7 @@ const candidates = [
   "SCRIPT.md",
   "STORYBOARD.md",
   "CLAIMS.json",
+  "SCENE_INDEX.json",
   "content.ts",
   "video.config.json",
   "sources/index.json",

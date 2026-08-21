@@ -36,6 +36,7 @@ body{margin:0;background:#0b1018;color:#eee7dc;font:16px/1.55 system-ui,sans-ser
 ${section("Production plan", read(resolve(context.sourceDir, "PRODUCTION_PLAN.md")))}
 ${section("Narration script", read(resolve(context.sourceDir, "SCRIPT.md")))}
 ${section("Storyboard", read(resolve(context.sourceDir, "STORYBOARD.md")))}
+${jsonSection("Scene index", resolve(context.sourceDir, "SCENE_INDEX.json"))}
 ${jsonSection("Source index", resolve(context.sourceDir, "sources/index.json"))}
 ${jsonSection("Generated images", resolve(context.publicDir, "images/generated/manifest.json"))}
 ${jsonSection("Generated video", resolve(context.publicDir, "video/generated/manifest.json"))}
