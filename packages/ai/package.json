@@ -3,17 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit && esbuild src/cli.ts --bundle --minify --platform=node --format=esm --target=node22 --outfile=../../skills/make-video/scripts/ai.mjs --banner:js='import {createRequire} from \"node:module\"; const require = createRequire(import.meta.url);'"
+  },
   "exports": {
     ".": {
       "types": "./src/index.ts",
       "import": "./src/index.ts"
-    },
-    "./server": "./src/generator.mjs"
+    }
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.49",
-    "@make-video/contracts": "workspace:*",
-    "ai": "^7.0.0",
-    "zod": "^4.4.3"
+    "ai": "^7.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1",
+    "typescript": "^5.9.3"
   }
 }

@@ -14,5 +14,8 @@
     "types": ["node"]
   },
   "include": ["skills/make-video/scripts"],
-  "exclude": ["skills/make-video/scripts/mcp.mjs"]
+  "exclude": [
+    "skills/make-video/scripts/mcp.mjs",
+    "skills/make-video/scripts/ai.mjs"
+  ]
 }

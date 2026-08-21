@@ -35,8 +35,8 @@ The pnpm workspace keeps runtime boundaries explicit:
 
 - `packages/app`: React/Vite editor shell and browser transports.
 - `packages/contracts`: shared project and transport types.
-- `packages/ai`: AI SDK provider seam, the versioned video-plan schema, and the
-  server-side plan generator.
+- `packages/ai`: AI SDK provider adapters and the unified media-generation
+  command.
 - `packages/mcp`: TypeScript MCP application service and adapters; its build
   emits one `skills/make-video/scripts/mcp.mjs` entrypoint with `stdio`,
   `http`, and `check` modes.
@@ -60,7 +60,6 @@ The stdio and `/mcp` Streamable HTTP entries expose the same tools:
 - `make_video_update_models`
 - `make_video_request_image_revision`
 - `make_video_set_cover`
-- `make_video_generate_video_plan`
 
 They also expose `make-video://projects` and one read-only project resource per
 video. Tool handlers contain no filesystem rules; they delegate to

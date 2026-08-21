@@ -1,5 +1,4 @@
 import type {Caption, WorkbenchTransport} from "@make-video/contracts";
-import type {PlanGenerationResult} from "@make-video/ai";
 
 const request = async <T,>(path: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(path, {...init, headers: {"content-type": "application/json", ...init?.headers}});
@@ -15,5 +14,4 @@ export const httpTransport: WorkbenchTransport = {
   updateModels: async (videoId, models) => { await request("/api/models", {method: "PATCH", body: JSON.stringify({videoId, ...models})}); },
   createAssetRevision: async (videoId, input) => { await request("/api/assets/revisions", {method: "POST", body: JSON.stringify({videoId, ...input})}); },
   setCover: async (videoId, assetId) => { await request("/api/cover", {method: "PUT", body: JSON.stringify({videoId, assetId})}); },
-  generatePlan: (brief, videoId, modelId) => request<PlanGenerationResult>("/api/plan", {method: "POST", body: JSON.stringify({brief, videoId, modelId})}),
 };

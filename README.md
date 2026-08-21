@@ -38,9 +38,7 @@ npx skills add remotion-dev/skills --skill remotion-best-practices
 
 | Variable                      | Required                                             | Purpose                                                                                                 |
 | ----------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `GEMINI_API_KEY`              | Generation, verification, or Workbench plans         | Gemini API key; Workbench plans use the AI SDK Google provider when this is present.                    |
-| `AI_GATEWAY_API_KEY`          | Workbench plans without Gemini                      | Server-only AI SDK Gateway key; never exposed to the browser.                                          |
-| `AI_PLAN_MODEL`               | No                                                   | Plan model; Gemini uses `gemini-*`, Gateway uses provider/model ids.                                    |
+| `GEMINI_API_KEY`              | Generation or verification                           | Server-only Gemini key used by the AI package; never exposed to the browser.                            |
 | `GEMINI_TTS_MODEL`            | No                                                   | Overrides `voice.model` from `video.config.json` for narration.                                         |
 | `GEMINI_TTS_VOICE`            | No                                                   | Overrides `voice.voiceName` from `video.config.json` for narration.                                     |
 | `GEMINI_IMAGE_MODEL`          | No                                                   | Overrides `imageGeneration.model` for generated still images.                                           |
@@ -71,9 +69,8 @@ Get a key from [Google AI Studio](https://aistudio.google.com/apikey), then eith
   file when present and is a no-op otherwise. Add `.env` to your project's
   `.gitignore`; never commit it.
 
-Workbench plan generation uses the AI SDK on the server. It prefers
-`GEMINI_API_KEY` through the Google provider and falls back to
-`AI_GATEWAY_API_KEY`; the browser never receives either key.
+Video plans are produced by the main agent. The AI package only handles approved
+media generation and audio verification.
 
 ## Roadmap
 

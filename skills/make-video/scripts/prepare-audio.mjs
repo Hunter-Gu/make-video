@@ -13,11 +13,11 @@ const {production} = loadVideoContext(videoId);
 const audio = production.audio ?? {};
 const targetArgs = [videoId, ...(force ? ["--force"] : [])];
 
-/** @type {Array<[string, boolean | undefined]>} */
+/** @type {Array<[string, boolean | undefined, (string | undefined)?]>} */
 const allSteps = [
   ["generate-ui-sfx.mjs", audio.sfx],
-  ["generate-gemini-voiceover.mjs", audio.voiceover],
-  ["generate-lyria-music.mjs", audio.music],
+  ["ai.mjs", audio.voiceover, "voiceover"],
+  ["ai.mjs", audio.music, "music"],
 ];
 const steps = allSteps.filter(([, enabled]) => enabled === true);
 
@@ -25,10 +25,10 @@ if (steps.length === 0) {
   throw new Error(`${videoId} has no enabled audio generation steps.`);
 }
 
-for (const [script] of steps) {
+for (const [script, , mode] of steps) {
   const result = spawnSync(
     process.execPath,
-    [resolve(scriptsDir, script), ...targetArgs],
+    [resolve(scriptsDir, script), ...(mode ? [mode] : []), ...targetArgs],
     {
       cwd: projectRoot,
       env: process.env,

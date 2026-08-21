@@ -8,7 +8,6 @@ import {StdioClientTransport} from "@modelcontextprotocol/client/stdio";
 
 const entry = resolve(process.argv[1] ?? "mcp.mjs");
 const expectedTools = [
-  "make_video_generate_video_plan",
   "make_video_get_project",
   "make_video_list_projects",
   "make_video_request_image_revision",

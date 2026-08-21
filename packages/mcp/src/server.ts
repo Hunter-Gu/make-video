@@ -2,7 +2,6 @@ import {createReadStream, existsSync, readFileSync, statSync} from "node:fs";
 import {createServer, type IncomingMessage, type ServerResponse} from "node:http";
 import {extname, relative, resolve, sep} from "node:path";
 
-import {generateVideoPlan} from "@make-video/ai/server";
 import {localhostHostValidation, localhostOriginValidation, toNodeHandler} from "@modelcontextprotocol/node";
 import {createMcpHandler, McpServer} from "@modelcontextprotocol/server";
 import {z} from "zod";
@@ -68,12 +67,6 @@ export const createMakeVideoMcpServer = () => {
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: true},
   }, ({videoId, assetId}) => run(() => setCover(videoId, {assetId})));
 
-  server.registerTool("make_video_generate_video_plan", {
-    description: "Generate a validated scene plan from a brief using the server-side AI SDK. This may incur model costs.",
-    inputSchema: z.object({brief: z.string().min(1), videoId: z.string().min(1).optional(), modelId: z.string().min(1).optional()}),
-    annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: false},
-  }, ({brief, videoId, modelId}) => run(() => generateVideoPlan({brief, modelId, project: videoId ? getProjectState(videoId) : undefined})));
-
   server.registerResource("make-video-projects", "make-video://projects", {
     title: "Make Video projects",
     description: "Available Make Video project identifiers.",
@@ -138,7 +131,6 @@ export const startHttpServer = () => {
       if (url.pathname === "/api/project" && request.method === "GET") return sendJson(response, 200, getProjectState(requiredParam(url.searchParams.get("videoId"))));
       if (url.pathname.startsWith("/api/captions/") && request.method === "PATCH") { const input = await readBody(request); return sendJson(response, 200, updateCaption(input.videoId, decodeURIComponent(url.pathname.slice(14)), input)); }
       if (url.pathname === "/api/models" && request.method === "PATCH") { const input = await readBody(request); return sendJson(response, 200, updateModels(input.videoId, input)); }
-      if (url.pathname === "/api/plan" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 200, await generateVideoPlan({brief: input.brief, modelId: input.modelId, project: input.videoId ? getProjectState(input.videoId) : undefined})); }
       if (url.pathname === "/api/assets/revisions" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 201, createAssetRevision(input.videoId, input)); }
       if (url.pathname === "/api/cover" && request.method === "PUT") { const input = await readBody(request); return sendJson(response, 200, setCover(input.videoId, input)); }
       if (url.pathname === "/media" && request.method === "GET") {

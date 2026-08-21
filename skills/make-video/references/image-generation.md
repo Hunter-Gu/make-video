@@ -31,7 +31,7 @@ video's configured public directory.
 Run one target video from the caller's project root:
 
 ```bash
-node --env-file-if-exists=.env scripts/generate-gemini-images.mjs <video-id>
+node --env-file-if-exists=.env scripts/ai.mjs images <video-id>
 ```
 
 After an approved revision, append `--asset=<id>` to regenerate only that image.

@@ -1,6 +1,5 @@
 import {Client, StreamableHTTPClientTransport} from "@modelcontextprotocol/client";
 
-import type {PlanGenerationResult} from "@make-video/ai";
 import type {Caption, ProjectState, WorkbenchTransport} from "@make-video/contracts";
 
 let connection: Promise<Client> | null = null;
@@ -31,5 +30,4 @@ export const mcpTransport: WorkbenchTransport = {
   updateModels: async (videoId, models) => { await call("make_video_update_models", {videoId, ...models}); },
   createAssetRevision: async (videoId, input) => { await call("make_video_request_image_revision", {videoId, ...input}); },
   setCover: async (videoId, assetId) => { await call("make_video_set_cover", {videoId, assetId}); },
-  generatePlan: (brief, videoId, modelId) => call<PlanGenerationResult>("make_video_generate_video_plan", {brief, videoId, modelId}),
 };

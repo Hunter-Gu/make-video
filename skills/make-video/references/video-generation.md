@@ -11,7 +11,7 @@ scene-specific prompt, and may specify `aspectRatio`, `resolution`, or
 both `firstFrame` and `lastFrame` when the shot must interpolate between two
 approved images.
 
-Run `scripts/generate-veo-videos.mjs <video-id>`. It starts Gemini's asynchronous
+Run `scripts/ai.mjs video <video-id>`. It starts the AI SDK's asynchronous
 Veo operation, polls until completion, downloads the MP4, validates it with
 ffprobe, and records operation, prompt, file hash, and duration in a manifest.
 It also records each operation immediately in `operations.json`. A rerun resumes

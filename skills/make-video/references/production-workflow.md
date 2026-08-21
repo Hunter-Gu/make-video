@@ -197,17 +197,17 @@ node --env-file-if-exists=.env scripts/run-video.mjs check <video-id>
 node --env-file-if-exists=.env scripts/qa-video.mjs <video-id>
 node --env-file-if-exists=.env scripts/build-review.mjs <video-id>
 node --env-file-if-exists=.env scripts/link-assets.mjs <video-id>
-node --env-file-if-exists=.env scripts/generate-gemini-images.mjs <video-id>
-node --env-file-if-exists=.env scripts/generate-veo-videos.mjs <video-id>
+node --env-file-if-exists=.env scripts/ai.mjs images <video-id>
+node --env-file-if-exists=.env scripts/ai.mjs video <video-id>
 node --env-file-if-exists=.env scripts/ingest-sources.mjs <video-id>
 node --env-file-if-exists=.env scripts/run-video.mjs studio <video-id>
 node --env-file-if-exists=.env scripts/run-video.mjs still <video-id>
 node --env-file-if-exists=.env scripts/run-video.mjs render:silent <video-id>
 node --env-file-if-exists=.env scripts/generate-ui-sfx.mjs <video-id>
-node --env-file-if-exists=.env scripts/generate-gemini-voiceover.mjs <video-id>
-node --env-file-if-exists=.env scripts/generate-lyria-music.mjs <video-id>
+node --env-file-if-exists=.env scripts/ai.mjs voiceover <video-id>
+node --env-file-if-exists=.env scripts/ai.mjs music <video-id>
 node --env-file-if-exists=.env scripts/prepare-audio.mjs <video-id>
-node --env-file-if-exists=.env scripts/verify-voiceover.mjs <video-id>
+node --env-file-if-exists=.env scripts/ai.mjs verify-voiceover <video-id>
 node --env-file-if-exists=.env scripts/render-final.mjs <video-id>
 ```
 
