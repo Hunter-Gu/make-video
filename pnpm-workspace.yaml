@@ -1,0 +1,5 @@
+packages:
+  - packages/*
+
+sharedWorkspaceLockfile: true
+saveWorkspaceProtocol: rolling

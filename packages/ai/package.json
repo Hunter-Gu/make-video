@@ -1,0 +1,14 @@
+{
+  "name": "@make-video/ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@make-video/contracts": "workspace:*",
+    "ai": "^7.0.0",
+    "zod": "^4.4.3"
+  }
+}

@@ -6,11 +6,11 @@ import {localhostHostValidation, localhostOriginValidation, toNodeHandler} from 
 import {createMcpHandler} from "@modelcontextprotocol/server";
 
 import {createWorkbenchMcpServer} from "./workbench-mcp.mjs";
-import {createAssetRevision, getProjectState, listProjects, resolveMediaPath, updateCaption, updateModels} from "./workbench-service.mjs";
+import {createAssetRevision, getProjectState, listProjects, resolveMediaPath, setCover, updateCaption, updateModels} from "./workbench-service.mjs";
 import {projectRoot} from "./video-context.mjs";
 
 const port = Number(process.env.MAKE_VIDEO_WORKBENCH_PORT ?? 4317);
-const dist = resolve(projectRoot, "workbench/dist");
+const dist = resolve(projectRoot, "packages/app/dist");
 const mcp = createMcpHandler(createWorkbenchMcpServer, {responseMode: "json"});
 const handleMcp = toNodeHandler(mcp, {onerror: (error) => console.error(error)});
 const validateMcpHost = localhostHostValidation();
@@ -40,6 +40,7 @@ createServer(async (request, response) => {
     if (url.pathname.startsWith("/api/captions/") && request.method === "PATCH") { const input = await body(request); return json(response, 200, updateCaption(input.videoId, decodeURIComponent(url.pathname.slice(14)), input)); }
     if (url.pathname === "/api/models" && request.method === "PATCH") { const input = await body(request); return json(response, 200, updateModels(input.videoId, input)); }
     if (url.pathname === "/api/assets/revisions" && request.method === "POST") { const input = await body(request); return json(response, 201, createAssetRevision(input.videoId, input)); }
+    if (url.pathname === "/api/cover" && request.method === "PUT") { const input = await body(request); return json(response, 200, setCover(input.videoId, input)); }
     if (url.pathname === "/media" && request.method === "GET") {
       const file = resolveMediaPath(requiredParam(url.searchParams.get("path")));
       const size = statSync(file).size;

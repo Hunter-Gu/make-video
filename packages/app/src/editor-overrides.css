@@ -1,0 +1,98 @@
+.editor {
+  grid-template-rows: 52px minmax(330px, 1fr) 282px;
+}
+
+.preview-zone {
+  grid-template-rows: 44px minmax(0, 1fr) 42px;
+}
+
+.preview-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border-top: 1px solid #20242b;
+  background: #101318;
+}
+
+.preview-controls button {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: #939ca7;
+}
+
+.preview-controls .preview-play {
+  background: #f0f1f2;
+  color: #15171a;
+}
+
+.preview-controls span {
+  margin-left: 8px;
+  color: #727b86;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.timeline-header > div > span {
+  width: 38px;
+  color: #737c87;
+  font-size: 9px;
+  text-align: right;
+}
+
+.timeline-scroll {
+  overscroll-behavior-x: contain;
+  scrollbar-color: #59616c #171b20;
+  scrollbar-width: auto;
+}
+
+.timeline-canvas {
+  min-width: 800px;
+}
+
+.absolute-track > div {
+  position: relative;
+  display: block;
+}
+
+.absolute-track button {
+  position: absolute;
+  min-width: 24px;
+}
+
+.absolute-track button.voice {
+  top: 7px;
+  margin-top: 0;
+}
+
+.absolute-track button.caption {
+  top: 10px;
+  margin-top: 0;
+}
+
+.effect-track button.effect {
+  top: 7px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 6px;
+  border-color: #386677;
+  background: #234453;
+}
+
+.effect-track button.effect-camera {background: #244b53;border-color: #3c7882}
+.effect-track button.effect-draw {background: #28513f;border-color: #3e7b5e}
+.effect-track button.effect-media {background: #4d354f;border-color: #79527b}
+.effect-track button.effect-reveal {background: #384663;border-color: #566d9a}
+.effect-track button.effect i,.effect-dot {width: 6px;height: 6px;flex: 0 0 6px;border-radius: 50%;background: #82c9dc}
+.effect-track button.effect-camera i,.effect-dot.effect-camera {background:#73c7ce}
+.effect-track button.effect-draw i,.effect-dot.effect-draw {background:#70cf99}
+.effect-track button.effect-media i,.effect-dot.effect-media {background:#cf8dcc}
+.effect-track button.effect-reveal i,.effect-dot.effect-reveal {background:#91aee8}
+.effect-summary{margin-top:24px;padding-top:16px;border-top:1px solid #252a31}.effect-summary>div{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px;background:#171b21;border-radius:6px}.effect-summary strong,.effect-summary small{display:block;margin:0}.effect-summary strong{font-size:10px}.effect-summary small{margin-top:3px;color:#737c87;font-size:8px}
+.asset-grid button {position:relative}
+.asset-grid button>em{position:absolute;top:9px;right:9px;padding:3px 5px;border-radius:4px;background:#d68b46;color:#17100a;font-size:7px;font-style:normal;font-weight:800;text-transform:uppercase}
+.inspector-image-wrap{position:relative}.inspector-image-wrap>em{position:absolute;top:8px;right:8px;padding:4px 7px;border-radius:5px;background:#d68b46;color:#17100a;font-size:8px;font-style:normal;font-weight:800;text-transform:uppercase}
+.cover-button{width:100%;margin-top:9px;padding:9px;border:1px solid #4a5260;border-radius:6px;background:#1c2128;font-size:10px}.cover-button:hover{border-color:#d68b46}.cover-button.selected{border-color:#6e5236;color:#d8a16b;background:#261d15}

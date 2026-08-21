@@ -42,7 +42,8 @@
     "timing:build": "node skills/make-video/scripts/build-narration-timing.mjs",
     "generation:estimate": "node skills/make-video/scripts/estimate-generation.mjs",
     "roadmap:verify": "node skills/make-video/scripts/verify-roadmap.mjs",
-    "workbench:build": "vite build --config workbench/vite.config.ts",
+    "workbench:dev": "pnpm --filter @make-video/app dev",
+    "workbench:build": "pnpm --filter @make-video/app build",
     "workbench:server": "node skills/make-video/scripts/workbench-server.mjs",
     "workbench:mcp": "node skills/make-video/scripts/workbench-mcp.mjs",
     "workbench:mcp:check": "node skills/make-video/scripts/check-workbench-mcp.mjs",
@@ -50,7 +51,7 @@
     "still": "node skills/make-video/scripts/run-video.mjs still",
     "render:silent": "node skills/make-video/scripts/run-video.mjs render:silent",
     "render": "node skills/make-video/scripts/render-final.mjs",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json && tsc --noEmit -p tsconfig.workbench.json"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json && tsc --noEmit -p tsconfig.workbench.json && tsc --noEmit -p tsconfig.packages.json"
   },
   "dependencies": {
     "@modelcontextprotocol/client": "^2.0.0",

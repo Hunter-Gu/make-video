@@ -37,6 +37,8 @@ export const getProjectState = (videoId) => {
   const candidates = readJson(resolve(context.sourceDir, "CANDIDATES.json"), {groups: []});
   const deliveries = readJson(resolve(context.sourceDir, "DELIVERABLES.json"), {variants: []});
   const workbench = readJson(resolve(context.sourceDir, "WORKBENCH.json"), {version: 1, revisionRequests: []});
+  const remotionTimeline = readJson(resolve(context.sourceDir, "REMOTION_TIMELINE.json"), {version: 1, effects: []});
+  const cover = readJson(resolve(context.sourceDir, "COVER.json"), null);
   const script = parseScript(resolve(context.sourceDir, "SCRIPT.md"));
   const captions = sceneIndex.captions.map((/** @type {any} */ caption) => ({...caption, text: script.get(caption.id) ?? ""}));
   /** @type {any[]} */
@@ -62,14 +64,28 @@ export const getProjectState = (videoId) => {
     videoId,
     composition: context.composition,
     models: {image: context.config.imageGeneration?.model ?? null, voice: context.config.voice?.model ?? null},
-    registry: readJson(resolve(projectRoot, "workbench/model-registry.json"), {image: [], voice: []}),
+    registry: readJson(resolve(projectRoot, "packages/app/model-registry.json"), {image: [], voice: []}),
     scenes: sceneIndex.scenes,
     captions,
+    effects: (remotionTimeline.effects ?? []).filter((/** @type {any} */ effect) => Number.isInteger(effect.startFrame) && Number.isInteger(effect.endFrame) && effect.startFrame >= 0 && effect.endFrame > effect.startFrame && effect.endFrame <= context.composition.durationInFrames),
+    cover,
     assets,
     stages,
     revisions: workbench.revisionRequests ?? [],
     qa: readJson(resolve(projectRoot, "output", videoId, "qa-report.json"), null),
   };
+};
+
+/** @param {string} videoId @param {any} input */
+export const setCover = (videoId, input) => {
+  const context = loadVideoContext(videoId);
+  const project = getProjectState(videoId);
+  const assetId = String(input.assetId ?? "");
+  const asset = project.assets.find((item) => item.id === assetId && item.kind === "image");
+  if (!asset) throw new Error("Cover must reference an existing image asset.");
+  const cover = {version: 1, assetId: asset.id, sceneId: asset.sceneId, path: asset.path, selectedAt: new Date().toISOString()};
+  writeJson(resolve(context.sourceDir, "COVER.json"), cover);
+  return cover;
 };
 
 /** @param {string} videoId @param {string} id @param {any} input */
@@ -99,7 +115,7 @@ export const updateCaption = (videoId, id, input) => {
 export const updateModels = (videoId, input) => {
   const context = loadVideoContext(videoId);
   const config = readJson(context.configPath);
-  const registry = readJson(resolve(projectRoot, "workbench/model-registry.json"), {image: [], voice: []});
+  const registry = readJson(resolve(projectRoot, "packages/app/model-registry.json"), {image: [], voice: []});
   if (input.image && !registry.image.some((/** @type {any} */ model) => model.id === input.image)) throw new Error("Unknown image model.");
   if (input.voice && !registry.voice.some((/** @type {any} */ model) => model.id === input.voice)) throw new Error("Unknown voice model.");
   if (input.image) config.imageGeneration = {...(config.imageGeneration ?? {}), model: input.image, assets: config.imageGeneration?.assets ?? []};

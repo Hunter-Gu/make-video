@@ -5,7 +5,7 @@ import {McpServer} from "@modelcontextprotocol/server";
 import {serveStdio} from "@modelcontextprotocol/server/stdio";
 import {z} from "zod";
 
-import {createAssetRevision, getProjectState, listProjects, updateCaption, updateModels} from "./workbench-service.mjs";
+import {createAssetRevision, getProjectState, listProjects, setCover, updateCaption, updateModels} from "./workbench-service.mjs";
 
 /** @typedef {import("@modelcontextprotocol/server").CallToolResult} CallToolResult */
 
@@ -56,6 +56,12 @@ export const createWorkbenchMcpServer = () => {
     inputSchema: z.object({videoId: z.string().min(1), assetId: z.string().min(1), modelId: z.string().min(1).nullable().optional(), instruction: z.string().min(1)}),
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: false},
   }, ({videoId, ...input}) => run(() => createAssetRevision(videoId, input)));
+
+  server.registerTool("workbench_set_cover", {
+    description: "Select an existing project image as the cover source without rendering or overwriting thumbnail output.",
+    inputSchema: z.object({videoId: z.string().min(1), assetId: z.string().min(1)}),
+    annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: true},
+  }, ({videoId, assetId}) => run(() => setCover(videoId, {assetId})));
 
   server.registerResource("workbench-projects", "workbench://projects", {
     title: "Make Video projects",

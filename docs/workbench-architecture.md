@@ -29,6 +29,16 @@ access; React components only call `WorkbenchTransport`. Agent hosts spawn the
 stdio MCP server. A future remote backend can implement the same transport and
 service contracts without changing components or production rules.
 
+## Workspace layout
+
+The pnpm workspace keeps runtime boundaries explicit:
+
+- `packages/app`: React/Vite editor shell and browser transports.
+- `packages/contracts`: shared project and transport types.
+- `packages/ai`: AI SDK provider seam and the versioned video-plan schema.
+- `skills/make-video/scripts`: current local application service and MCP
+  adapters; this is the next extraction target for a backend package.
+
 ## MCP surface
 
 The stdio and `/mcp` Streamable HTTP entries expose the same tools:
@@ -38,6 +48,7 @@ The stdio and `/mcp` Streamable HTTP entries expose the same tools:
 - `workbench_update_caption`
 - `workbench_update_models`
 - `workbench_request_image_revision`
+- `workbench_set_cover`
 
 They also expose `workbench://projects` and one read-only project resource per
 video. Tool handlers contain no filesystem rules; they delegate to
@@ -49,8 +60,12 @@ Inspectable project files remain authoritative:
 
 - `video.config.json` stores selected image and voice models.
 - `SCENE_INDEX.json` stores scene and caption timing.
+- `REMOTION_TIMELINE.json` stores absolute-frame Remotion effects for the FX
+  track, including effect type, label, parameters, and scene association.
 - `CANDIDATES.json` stores media candidates and the selected version.
 - `WORKBENCH.json` stores revision requests and UI-relevant production state.
+- `COVER.json` stores the selected cover source without overwriting a rendered
+  thumbnail.
 - Rendered media and QA reports remain under `output/<video-id>/`.
 
 Browser state is limited to presentation preferences. It must not become a

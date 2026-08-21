@@ -12,5 +12,5 @@
     "skipLibCheck": true,
     "types": ["vite/client"]
   },
-  "include": ["workbench/src", "workbench/vite.config.ts"]
+  "include": ["packages/app/src", "packages/app/vite.config.ts", "packages/contracts/src"]
 }
