@@ -6,8 +6,9 @@ let cached: {expiresAt: number; value: ModelCatalog} | null = null;
 export const getModelCatalog = async (): Promise<ModelCatalog> => {
   if (cached && cached.expiresAt > Date.now()) return cached.value;
   const catalog = await Models.make().catalog();
-  const geminiModels = Object.entries(catalog.providers).flatMap(([providerId, provider]) => {
-    const models = Object.entries(provider.models).map(([modelId, model]) => ({
+  const geminiModels = Object.entries(catalog.providers).flatMap(([providerId, provider]) => Object.entries(provider.models)
+    .filter(([modelId, model]) => `${providerId}/${modelId}`.startsWith('google/gemini-') && model.status !== 'deprecated')
+    .map(([modelId, model]) => ({
       id: `${providerId}/${modelId}`,
       label: model.name || modelId,
       provider: provider.name || providerId,
@@ -15,10 +16,10 @@ export const getModelCatalog = async (): Promise<ModelCatalog> => {
       modalities: model.modalities,
       contextWindow: model.limit.context,
       status: model.status,
-    }));
-    return models;
-  }).filter((model) => model.id.startsWith('google/gemini-') && model.status !== 'deprecated')
-    .sort((left, right) => left.label.localeCompare(right.label));
+      releaseDate: model.release_date || model.last_updated || '',
+    }))
+    .sort((left, right) => right.releaseDate.localeCompare(left.releaseDate) || left.label.localeCompare(right.label))
+    .map(({releaseDate: _releaseDate, ...model}) => model));
   const value = {
     image: geminiModels.filter((model) => model.modalities?.output.includes('image')),
     voice: geminiModels.filter((model) => model.modalities?.output.includes('audio')),
