@@ -3,7 +3,7 @@ import {dirname, isAbsolute, relative, resolve, sep} from "node:path";
 import {fileURLToPath} from "node:url";
 
 export const scriptsDir = dirname(fileURLToPath(import.meta.url));
-export const projectRoot = process.cwd();
+export const projectRoot = resolve(scriptsDir, "../../..");
 
 type JsonObject = Record<string, any>;
 
