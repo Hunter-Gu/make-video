@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "tsx watch src/index.ts http",
     "build": "tsc --noEmit && esbuild src/index.ts --bundle --minify --platform=node --format=esm --target=node22 --outfile=../../skills/make-video/scripts/mcp.mjs --banner:js='import {createRequire} from \"node:module\"; const require = createRequire(import.meta.url);'"
   },
   "dependencies": {
@@ -16,6 +17,7 @@
   "devDependencies": {
     "@types/node": "^26.1.1",
     "esbuild": "^0.28.1",
+    "tsx": "^4.19.3",
     "typescript": "^5.9.3"
   }
 }
