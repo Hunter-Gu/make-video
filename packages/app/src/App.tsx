@@ -5,6 +5,7 @@ import {Selector} from '@astryxdesign/core/Selector';
 import type {Asset, ProjectState, ProjectTransport} from '@make-video/contracts';
 import {AssetBin} from './components/AssetBin';
 import {Inspector} from './components/Inspector';
+import {ModelSettingsDialog} from './components/ModelSettingsDialog';
 import {Preview} from './components/Preview';
 import {Timeline} from './components/Timeline';
 import type {InspectorMode, PreviewMode, TimelineSelection} from './types';
@@ -20,6 +21,7 @@ export const App = ({transport}: {transport: ProjectTransport}) => {
   const [playheadFrame, setPlayheadFrame] = useState(0);
   const [previewMode, setPreviewMode] = useState<PreviewMode>('player');
   const [inspectorMode, setInspectorMode] = useState<InspectorMode>('scene');
+  const [modelSettingsOpen, setModelSettingsOpen] = useState(false);
   const [notice, setNotice] = useState('Loading project…');
 
   const refresh = useCallback(async (id: string) => {
@@ -104,7 +106,7 @@ export const App = ({transport}: {transport: ProjectTransport}) => {
         <div />
         <div className="topbar-actions">
           <Badge className="qa-badge" variant={state.qa?.passed ? 'success' : 'warning'} label={state.qa?.passed ? 'QA passed' : 'QA pending'} />
-          <Button label="Model settings" variant="secondary" size="sm" onClick={() => setInspectorMode('settings')} />
+          <Button label="Model settings" variant="secondary" size="sm" onClick={() => setModelSettingsOpen(true)} />
           <Button label="Preview" variant="primary" size="sm" onClick={() => setPreviewMode('player')} />
         </div>
       </header>
@@ -114,6 +116,7 @@ export const App = ({transport}: {transport: ProjectTransport}) => {
         <Inspector state={state} mode={inspectorMode} setMode={setInspectorMode} scene={scene} caption={caption} asset={asset} effect={selection?.type === 'effect' ? state.effects.find((item) => item.id === selection.id) ?? null : null} audioSelection={selection?.type === 'music' ? selection : null} transport={transport} refresh={refreshCurrent} notice={setNotice} />
       </section>
       <Timeline state={state} selection={selection} playheadFrame={playheadFrame} onSelect={selectTimeline} onSeek={setPlayheadFrame} onRangeChange={handleRangeChange} />
+      {modelSettingsOpen && <ModelSettingsDialog state={state} transport={transport} refresh={refreshCurrent} notice={setNotice} onClose={() => setModelSettingsOpen(false)} />}
       {notice && <div className="toast">{notice}</div>}
     </main>
   );
