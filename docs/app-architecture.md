@@ -1,6 +1,6 @@
-# Make Video Workbench
+# Make Video App
 
-The Workbench is a visual production surface for an agent-driven video project.
+The app is a visual production surface for an agent-driven video project.
 It does not replace planning in Codex or another coding agent. Its first scope
 is asset preview, revision requests, timeline inspection, render previews,
 caption editing, model selection, and QA.
@@ -8,13 +8,13 @@ caption editing, model selection, and QA.
 ## Architecture boundary
 
 ```text
-Workbench UI -> Transport -> MCP Streamable HTTP -> Application service
+App UI -> Transport -> MCP Streamable HTTP -> Application service
 Agent host ----------------> MCP stdio -----------> Application service
 REST compatibility adapter ----------------------> Application service
 ```
 
 GUI components must never call MCP, `fetch`, the filesystem, shell commands,
-or model providers directly. Components depend only on the `WorkbenchTransport`
+or model providers directly. Components depend only on the `ProjectTransport`
 interface. The browser uses a Streamable HTTP MCP client hidden behind that
 interface. Codex, Claude Code, and other local MCP hosts use the stdio adapter.
 Both call the same application service.
@@ -25,7 +25,7 @@ be able to implement the same service contract. HTTP routes and MCP tools are
 thin adapters around that contract, not separate business logic.
 
 The frontend server owns the Streamable HTTP MCP endpoint and local filesystem
-access; React components only call `WorkbenchTransport`. Agent hosts spawn the
+access; React components only call `ProjectTransport`. Agent hosts spawn the
 stdio MCP server. A future remote backend can implement the same transport and
 service contracts without changing components or production rules.
 
@@ -54,7 +54,7 @@ The pnpm workspace keeps runtime boundaries explicit:
 - `skills/make-video/scripts`: generated skill entrypoints and production
   scripts; MCP source code does not live here.
 
-The app keeps UI responsibilities separate: `app/Workbench.tsx` owns project
+The app keeps UI responsibilities separate: `app/App.tsx` owns project
 selection and editor state; `components/` owns the asset bin, preview,
 inspector, and timeline; `lib/` contains presentation helpers. `main.tsx` only
 boots React and the Astryx theme.
@@ -82,7 +82,7 @@ Inspectable project files remain authoritative:
 - `SCENE_INDEX.json` stores scene and caption timing.
 - `REMOTION_TIMELINE.json` stores absolute-frame Remotion effects for the FX
   track, including effect type, label, parameters, and scene association.
-- `WORKBENCH.json` stores revision requests and UI-relevant production state.
+- `PROJECT_STATE.json` stores revision requests and UI-relevant production state.
 - `COVER.json` stores the selected cover source without overwriting a rendered
   thumbnail.
 - Rendered media and QA reports remain under `output/<video-id>/`.

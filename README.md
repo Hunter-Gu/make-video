@@ -87,13 +87,13 @@ Model-backed image, video, voice, and music generation stays separate from
 this local acceptance path and requires the caller's API credentials.
 
 The local production GUI is documented in
-[docs/workbench-architecture.md](docs/workbench-architecture.md). Its screens
+[docs/app-architecture.md](docs/app-architecture.md). Its screens
 depend on a transport interface rather than calling MCP directly. The current
 transport invokes the frontend server's Streamable HTTP MCP endpoint. Browser,
 stdio MCP, and REST adapters share one application service, so they do not
 duplicate project validation or production rules.
 
-Build and open the local Workbench with:
+Build and open the local app with:
 
 ```bash
 cd packages/app
@@ -106,7 +106,7 @@ node skills/make-video/scripts/mcp.mjs http
 
 Then visit `http://127.0.0.1:4317`.
 
-Expose the same Workbench operations to Codex, Claude Code, or another local
+Expose the same project operations to Codex, Claude Code, or another local
 MCP host over stdio:
 
 ```bash

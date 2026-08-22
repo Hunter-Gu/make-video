@@ -20,7 +20,7 @@
     "video:qa": "node skills/make-video/scripts/qa.mjs video",
     "render:preview": "node skills/make-video/scripts/render.mjs preview",
     "render": "node skills/make-video/scripts/render.mjs final",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.workbench.json && tsc --noEmit -p tsconfig.packages.json"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.packages.json"
   },
   "dependencies": {
     "@remotion/captions": "^4.0.499",

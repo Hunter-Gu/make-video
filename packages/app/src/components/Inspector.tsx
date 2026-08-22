@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
 import {Button} from '@astryxdesign/core/Button';
 import {Selector} from '@astryxdesign/core/Selector';
-import type {Asset, Caption, ProjectState, RemotionEffect, WorkbenchTransport} from '@make-video/contracts';
+import type {Asset, Caption, ProjectState, ProjectTransport, RemotionEffect} from '@make-video/contracts';
 import type {InspectorMode} from '../types';
 import {formatTime} from '../lib/format-time';
 
@@ -12,7 +12,7 @@ type InspectorProps = {
   scene: ProjectState['scenes'][number] | null;
   caption: Caption | null;
   asset: Asset | null;
-  transport: WorkbenchTransport;
+  transport: ProjectTransport;
   refresh: () => Promise<void>;
   notice: (value: string) => void;
 };
@@ -82,7 +82,7 @@ const CaptionEditor = ({caption, fps, save}: {caption: Caption; fps: number; sav
   );
 };
 
-const ImageInspector = ({state, asset, transport, refresh, notice}: {state: ProjectState; asset: Asset | null; transport: WorkbenchTransport; refresh: () => Promise<void>; notice: (value: string) => void}) => {
+const ImageInspector = ({state, asset, transport, refresh, notice}: {state: ProjectState; asset: Asset | null; transport: ProjectTransport; refresh: () => Promise<void>; notice: (value: string) => void}) => {
   const [instruction, setInstruction] = useState('');
   const isCover = Boolean(asset && state.cover?.assetId === asset.id);
   return (
@@ -107,7 +107,7 @@ const ImageInspector = ({state, asset, transport, refresh, notice}: {state: Proj
   );
 };
 
-const ModelSettings = ({state, transport, refresh, notice}: {state: ProjectState; transport: WorkbenchTransport; refresh: () => Promise<void>; notice: (value: string) => void}) => {
+const ModelSettings = ({state, transport, refresh, notice}: {state: ProjectState; transport: ProjectTransport; refresh: () => Promise<void>; notice: (value: string) => void}) => {
   const [image, setImage] = useState(state.models.image ?? state.registry.image[0]?.id);
   const [voice, setVoice] = useState(state.models.voice ?? state.registry.voice[0]?.id);
   useEffect(() => {

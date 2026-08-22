@@ -2,14 +2,14 @@ import {useCallback, useEffect, useState} from 'react';
 import {Badge} from '@astryxdesign/core/Badge';
 import {Button} from '@astryxdesign/core/Button';
 import {Selector} from '@astryxdesign/core/Selector';
-import type {Asset, ProjectState, WorkbenchTransport} from '@make-video/contracts';
+import type {Asset, ProjectState, ProjectTransport} from '@make-video/contracts';
 import {AssetBin} from './components/AssetBin';
 import {Inspector} from './components/Inspector';
 import {Preview} from './components/Preview';
 import {Timeline} from './components/Timeline';
 import type {InspectorMode, PreviewMode} from './types';
 
-export const Workbench = ({transport}: {transport: WorkbenchTransport}) => {
+export const App = ({transport}: {transport: ProjectTransport}) => {
   const [projects, setProjects] = useState<string[]>([]);
   const [videoId, setVideoId] = useState('');
   const [state, setState] = useState<ProjectState | null>(null);

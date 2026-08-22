@@ -148,7 +148,7 @@ Make collaboration with the agent practical for long videos and series.
 
 - Show the storyboard, timeline, and generated media before export.
 - Let the user choose image, voice, music, caption, and motion settings in the
-  workbench.
+  app.
 - Support time- and region-specific feedback that maps back to the relevant
   scene, source claim, asset, and composition code.
 - Rebuild only the affected outputs after a script, prompt, asset, or styling
@@ -157,7 +157,7 @@ Make collaboration with the agent practical for long videos and series.
   known limitations with the project.
 - Export multiple aspect ratios, captioned and clean versions, translated
   versions, thumbnails, trailers, and short-form extracts where requested.
-- Keep the workbench as a view and editor for the same project files; it must
+- Keep the app as a view and editor for the same project files; it must
   not become a second source of truth.
 
 ## Cross-cutting principles

@@ -69,7 +69,7 @@ When the storyboard justifies generated motion, read
 [references/video-generation.md](references/video-generation.md). Generate only
 the selected shots; do not replace the image-led visual plan wholesale.
 
-When manual production adjustments are useful, use the local Workbench. It
+When manual production adjustments are useful, use the local app. It
 previews assets and videos, edits captions, inspects the scene timeline, and
 selects image and voice models without starting paid generation.
 

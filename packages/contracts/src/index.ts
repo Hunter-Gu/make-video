@@ -7,7 +7,7 @@ export type Model = {id: string; label: string; provider: string; capabilities: 
 export type Cover = {assetId: string; sceneId: string | null; path: string; selectedAt: string};
 export type ProjectState = {videoId: string; composition: {fps: number; durationInFrames: number; width: number; height: number}; models: {image: string | null; voice: string | null}; registry: {image: Model[]; voice: Model[]}; scenes: Scene[]; captions: Caption[]; effects: RemotionEffect[]; cover: Cover | null; assets: Asset[]; stages: Stage[]; revisions: Array<{id: string; assetId: string; instruction: string; status: string}>; qa: {passed: boolean} | null};
 
-export interface WorkbenchTransport {
+export interface ProjectTransport {
   listProjects(): Promise<string[]>;
   getProject(videoId: string): Promise<ProjectState>;
   updateCaption(videoId: string, caption: Caption): Promise<void>;
