@@ -3,7 +3,6 @@ import {Button} from '@astryxdesign/core/Button';
 import {Dialog, DialogHeader} from '@astryxdesign/core/Dialog';
 import {Heading} from '@astryxdesign/core/Heading';
 import {HStack} from '@astryxdesign/core/HStack';
-import {Item} from '@astryxdesign/core/Item';
 import {Layout, LayoutContent, LayoutFooter} from '@astryxdesign/core/Layout';
 import {Selector} from '@astryxdesign/core/Selector';
 import {Text} from '@astryxdesign/core/Text';
@@ -24,13 +23,10 @@ export const ModelSettingsDialog = ({state, transport, listModels, refresh, noti
   const [voice, setVoice] = useState(state.models.voice ?? state.registry.voice[0]?.id ?? '');
   const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
   const [catalog, setCatalog] = useState<ModelCatalog | null>(null);
-  const [query, setQuery] = useState('');
   useEffect(() => { void listModels().then(setCatalog).catch((error) => notice(error instanceof Error ? error.message : String(error))); }, [listModels, notice]);
   const imageModels = catalog?.image.length ? catalog.image : state.registry.image;
   const voiceModels = catalog?.voice.length ? catalog.voice : state.registry.voice;
-  const allModels = catalog?.all ?? [];
   const providers = useMemo(() => Array.from(new Set([...imageModels, ...voiceModels].map((model) => model.provider))), [imageModels, voiceModels]);
-  const filteredModels = allModels.filter((model) => `${model.provider} ${model.label} ${model.id}`.toLowerCase().includes(query.toLowerCase())).slice(0, 250);
 
   useEffect(() => {
     setImage(state.models.image ?? state.registry.image[0]?.id ?? '');
@@ -67,19 +63,10 @@ export const ModelSettingsDialog = ({state, transport, listModels, refresh, noti
   return (
     <Dialog isOpen onOpenChange={(open) => { if (!open) onClose(); }} purpose="form" width="min(560px, calc(100vw - 32px))" maxHeight="80vh">
       <Layout
-        header={<DialogHeader title="Generation models" subtitle="Active Gemini models and local provider keys" onOpenChange={() => onClose()} hasDivider />}
+        header={<DialogHeader title="Generation models" subtitle="Gemini image and voice models plus local provider keys" onOpenChange={() => onClose()} hasDivider />}
         content={<LayoutContent>
           <ModelList title="Image models" models={imageModels} selected={image} onSelect={setImage} />
           <ModelList title="Voice models" models={voiceModels} selected={voice} onSelect={setVoice} />
-          <section className="mt-6">
-            <HStack hAlign="between" vAlign="center" gap={2}>
-              <Heading level={3}>Active Gemini models</Heading>
-              <Text type="supporting" size="2xs">{allModels.length ? `${allModels.length.toLocaleString()} available` : 'Loading catalog…'}</Text>
-            </HStack>
-            <TextInput label="Search Gemini models" isLabelHidden placeholder="Search model or id" value={query} onChange={setQuery} />
-            {allModels.length > 0 && <div className="max-h-48 overflow-auto rounded-md border border-[#2d3540] bg-[#0e1217]">{filteredModels.map((model) => <Item key={model.id} className="border-b border-[#202731] last:border-b-0" label={model.label} description={`${model.provider} · ${model.id}`} density="compact" />)}</div>}
-            {allModels.length > filteredModels.length && <Text type="supporting" size="2xs" display="block">Showing {filteredModels.length.toLocaleString()} matching models. Refine the search to browse the full catalog.</Text>}
-          </section>
           <div className="mt-5 border-t border-[#252a31] pt-4"><Text type="supporting" size="3xs">PROVIDER KEYS</Text></div>
           {providers.map((provider) => <TextInput key={provider} label={`${provider} API key`} type="password" value={apiKeys[provider] ?? ''} placeholder="Stored only in this browser" onChange={(value) => setApiKeys((current) => ({...current, [provider]: value}))} />)}
           <Text type="supporting" size="2xs" display="block">API keys stay in this browser and are not sent through MCP. Saving model selection does not start generation.</Text>
