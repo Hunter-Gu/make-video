@@ -1,5 +1,9 @@
 import {useEffect, useMemo, useState} from 'react';
 import {Button} from '@astryxdesign/core/Button';
+import {Dialog, DialogHeader} from '@astryxdesign/core/Dialog';
+import {Layout, LayoutContent, LayoutFooter} from '@astryxdesign/core/Layout';
+import {SelectableCard} from '@astryxdesign/core/SelectableCard';
+import {TextInput} from '@astryxdesign/core/TextInput';
 import type {Model, ModelCatalog, ProjectState, ProjectTransport} from '@make-video/contracts';
 
 type ModelSettingsDialogProps = {
@@ -57,28 +61,26 @@ export const ModelSettingsDialog = ({state, transport, listModels, refresh, noti
   };
 
   return (
-    <div className="modal-layer" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <section className="model-settings-dialog" role="dialog" aria-modal="true" aria-labelledby="model-settings-title">
-        <header className="dialog-header">
-          <div><span className="kicker">MODEL SETTINGS</span><h2 id="model-settings-title">Generation models</h2></div>
-          <button className="dialog-close" aria-label="Close model settings" onClick={onClose}>×</button>
-        </header>
-        <div className="dialog-body">
+    <Dialog isOpen onOpenChange={(open) => { if (!open) onClose(); }} purpose="form" width="min(720px, calc(100vw - 48px))" maxHeight="calc(100vh - 48px)" padding={0}>
+      <Layout
+        className="model-settings-layout"
+        header={<DialogHeader title="Generation models" subtitle="Active Gemini models and local provider keys" onOpenChange={(open) => { if (!open) onClose(); }} hasDivider />}
+        content={<LayoutContent className="dialog-body" padding={6}>
           <ModelList title="Image models" models={imageModels} selected={image} onSelect={setImage} />
           <ModelList title="Voice models" models={voiceModels} selected={voice} onSelect={setVoice} />
           <section className="model-list-section">
             <div className="model-list-heading"><h3>Active Gemini models</h3><span>{allModels.length ? `${allModels.length.toLocaleString()} available` : 'Loading catalog…'}</span></div>
-            <input aria-label="Search Gemini models" placeholder="Search model or id" value={query} onChange={(event) => setQuery(event.target.value)} />
+            <TextInput label="Search Gemini models" isLabelHidden placeholder="Search model or id" value={query} onChange={setQuery} />
             {allModels.length > 0 && <div className="model-catalog-list">{filteredModels.map((model) => <div key={model.id} className="model-catalog-row"><strong>{model.label}</strong><small>{model.provider} · {model.id}</small></div>)}</div>}
             {allModels.length > filteredModels.length && <small>Showing {filteredModels.length.toLocaleString()} matching models. Refine the search to browse the full catalog.</small>}
           </section>
           <div className="settings-divider"><span className="kicker">PROVIDER KEYS</span></div>
-          {providers.map((provider) => <label key={provider}>{provider} API key<input type="password" autoComplete="off" value={apiKeys[provider] ?? ''} placeholder="Stored only in this browser" onChange={(event) => setApiKeys((value) => ({...value, [provider]: event.target.value}))} /></label>)}
+          {providers.map((provider) => <TextInput key={provider} label={`${provider} API key`} type="password" value={apiKeys[provider] ?? ''} placeholder="Stored only in this browser" onChange={(value) => setApiKeys((current) => ({...current, [provider]: value}))} />)}
           <small>API keys stay in this browser and are not sent through MCP. Saving model selection does not start generation.</small>
-        </div>
-        <footer className="dialog-footer"><Button label="Cancel" variant="secondary" onClick={onClose} /><Button label="Save settings" variant="primary" onClick={save} /></footer>
-      </section>
-    </div>
+        </LayoutContent>}
+        footer={<LayoutFooter hasDivider className="dialog-footer"><Button label="Cancel" variant="secondary" onClick={onClose} /><Button label="Save settings" variant="primary" onClick={save} /></LayoutFooter>}
+      />
+    </Dialog>
   );
 };
 
@@ -86,10 +88,10 @@ const ModelList = ({title, models, selected, onSelect}: {title: string; models: 
   <section className="model-list-section">
     <div className="model-list-heading"><h3>{title}</h3><span>{models.length} available</span></div>
     <div className="model-list">
-      {models.map((model) => <button key={model.id} className={selected === model.id ? 'selected' : ''} onClick={() => onSelect(model.id)}>
+      {models.map((model) => <SelectableCard key={model.id} className="model-option" label={`Select ${model.label}`} isSelected={selected === model.id} onChange={(isSelected) => { if (isSelected) onSelect(model.id); }} padding={3}>
         <span><strong>{model.label}</strong><small>{model.provider} · {model.capabilities.join(' · ')}</small></span>
         {selected === model.id && <em>Selected</em>}
-      </button>)}
+      </SelectableCard>)}
     </div>
   </section>
 );

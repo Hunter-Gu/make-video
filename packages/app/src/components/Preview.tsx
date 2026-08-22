@@ -1,4 +1,6 @@
 import {useEffect, useMemo, useRef, useState} from 'react';
+import {Button} from '@astryxdesign/core/Button';
+import {SegmentedControl, SegmentedControlItem} from '@astryxdesign/core/SegmentedControl';
 import {Selector} from '@astryxdesign/core/Selector';
 import type {ProjectState} from '@make-video/contracts';
 import type {PreviewMode} from '../types';
@@ -40,10 +42,10 @@ export const Preview = ({state, mode, setMode, stage, setStageId, sceneId, selec
   return (
     <section className="preview-zone">
       <div className="preview-toolbar">
-        <div className="view-switch">
-          <button className={mode === 'player' ? 'active' : ''} onClick={() => setMode('player')}>Player</button>
-          <button className={mode === 'storyboard' ? 'active' : ''} onClick={() => setMode('storyboard')}>Storyboard</button>
-        </div>
+        <SegmentedControl className="view-switch" label="Preview mode" value={mode} onChange={(value) => setMode(value as PreviewMode)} size="sm">
+          <SegmentedControlItem value="player" label="Player" />
+          <SegmentedControlItem value="storyboard" label="Storyboard" />
+        </SegmentedControl>
         {mode === 'player' && (
           <Selector
             className="stage-selector"
@@ -79,9 +81,9 @@ export const Preview = ({state, mode, setMode, stage, setStageId, sceneId, selec
         </div>
       )}
       <div className="preview-controls">
-        <button disabled={selectedIndex <= 0} onClick={() => selectScene(state.scenes[selectedIndex - 1].id)}>◀</button>
-        <button className="preview-play" disabled={!isVideo || mode !== 'player'} onClick={togglePlayback}>{playing ? 'Ⅱ' : '▶'}</button>
-        <button disabled={selectedIndex < 0 || selectedIndex >= state.scenes.length - 1} onClick={() => selectScene(state.scenes[selectedIndex + 1].id)}>▶</button>
+        <Button label="Previous scene" variant="ghost" size="sm" isIconOnly icon={<span>◀</span>} isDisabled={selectedIndex <= 0} onClick={() => selectScene(state.scenes[selectedIndex - 1].id)} />
+        <Button label={playing ? 'Pause' : 'Play'} variant="primary" size="sm" isIconOnly icon={<span>{playing ? 'Ⅱ' : '▶'}</span>} isDisabled={!isVideo || mode !== 'player'} onClick={togglePlayback} />
+        <Button label="Next scene" variant="ghost" size="sm" isIconOnly icon={<span>▶</span>} isDisabled={selectedIndex < 0 || selectedIndex >= state.scenes.length - 1} onClick={() => selectScene(state.scenes[selectedIndex + 1].id)} />
         <span>{selectedScene ? formatTime(selectedScene.startFrame, state.composition.fps) : '00:00.00'} / {formatTime(state.composition.durationInFrames, state.composition.fps)}</span>
       </div>
     </section>

@@ -1,5 +1,8 @@
 import {useEffect, useRef, useState} from 'react';
 import {Button} from '@astryxdesign/core/Button';
+import {NumberInput} from '@astryxdesign/core/NumberInput';
+import {SegmentedControl, SegmentedControlItem} from '@astryxdesign/core/SegmentedControl';
+import {TextArea} from '@astryxdesign/core/TextArea';
 import type {Asset, AudioTrack, Caption, ProjectState, ProjectTransport, RemotionEffect} from '@make-video/contracts';
 import type {InspectorMode} from '../types';
 import {formatTime} from '../lib/format-time';
@@ -20,13 +23,9 @@ type InspectorProps = {
 
 export const Inspector = ({state, mode, setMode, scene, caption, asset, effect, audioSelection, transport, refresh, notice}: InspectorProps) => (
   <aside className="inspector panel">
-    <div className="inspector-tabs">
-      {(['scene', 'caption', 'voice', 'effect', 'audio', 'image'] as const).map((tab) => (
-        <button className={mode === tab ? 'active' : ''} onClick={() => setMode(tab)} key={tab}>
-          {tab === 'image' ? 'Visual' : tab === 'audio' ? 'Music' : tab[0].toUpperCase() + tab.slice(1)}
-        </button>
-      ))}
-    </div>
+    <SegmentedControl className="inspector-tabs" label="Inspector view" value={mode} onChange={(value) => setMode(value as InspectorMode)} layout="fill" size="sm">
+      {(['scene', 'caption', 'voice', 'effect', 'audio', 'image'] as const).map((tab) => <SegmentedControlItem key={tab} value={tab} label={tab === 'image' ? 'Visual' : tab === 'audio' ? 'Music' : tab[0].toUpperCase() + tab.slice(1)} />)}
+    </SegmentedControl>
     {mode === 'scene' && <SceneInspector scene={scene} asset={asset} fps={state.composition.fps} effects={state.effects.filter((item) => item.sceneId === scene?.id)} />}
     {mode === 'caption' && (caption ? (
       <CaptionEditor
@@ -111,10 +110,10 @@ const CaptionEditor = ({caption, fps, save}: {caption: Caption; fps: number; sav
   return (
     <div className="inspector-body">
       <span className="kicker">CAPTION</span><h2>{caption.id}</h2>
-      <label>Narration<textarea value={draft.text} onChange={(event) => setDraft({...draft, text: event.target.value})} /></label>
+      <TextArea label="Narration" value={draft.text} rows={4} onChange={(value) => setDraft({...draft, text: value})} />
       <div className="two-fields">
-        <label>Start frame<input type="number" value={draft.startFrame} onChange={(event) => setDraft({...draft, startFrame: Number(event.target.value)})} /></label>
-        <label>End frame<input type="number" value={draft.endFrame} onChange={(event) => setDraft({...draft, endFrame: Number(event.target.value)})} /></label>
+        <NumberInput label="Start frame" value={draft.startFrame} onChange={(value) => setDraft({...draft, startFrame: value})} isIntegerOnly />
+        <NumberInput label="End frame" value={draft.endFrame} onChange={(value) => setDraft({...draft, endFrame: value})} isIntegerOnly />
       </div>
       <small>{(draft.startFrame / fps).toFixed(2)}s – {(draft.endFrame / fps).toFixed(2)}s</small>
       <Button label="Save caption" variant="primary" width="100%" onClick={() => save(draft)} />
@@ -134,7 +133,7 @@ const ImageInspector = ({state, asset, transport, refresh, notice}: {state: Proj
         try { await transport.setCover(state.videoId, asset.id); await refresh(); notice('Cover image selected'); }
         catch (error) { notice(error instanceof Error ? error.message : String(error)); }
       }} />
-      <label>Revision instruction<textarea value={instruction} onChange={(event) => setInstruction(event.target.value)} placeholder="Describe what should change…" /></label>
+      <TextArea label="Revision instruction" value={instruction} rows={4} onChange={setInstruction} placeholder="Describe what should change…" />
       <Button label="Request revision" variant="primary" width="100%" isDisabled={!asset || asset.kind !== 'image' || !instruction.trim()} onClick={async () => {
         if (!asset) return;
         try {

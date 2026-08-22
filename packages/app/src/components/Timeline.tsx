@@ -1,4 +1,6 @@
 import {useEffect, useRef, useState} from 'react';
+import {Button} from '@astryxdesign/core/Button';
+import {Slider} from '@astryxdesign/core/Slider';
 import type {ProjectState, RemotionEffect} from '@make-video/contracts';
 import type {TimelineSelection} from '../types';
 import {formatTime} from '../lib/format-time';
@@ -78,9 +80,9 @@ export const Timeline = ({state, selection, playheadFrame, onSelect, onSeek, onR
       <div className="timeline-header">
         <strong>Timeline</strong>
         <div>
-          <button aria-label="Zoom out" onClick={() => setSafeZoom(zoom - 25)}>−</button>
-          <input aria-label="Timeline zoom" type="range" min="50" max="250" value={zoom} onChange={(event) => setSafeZoom(Number(event.target.value))} />
-          <button aria-label="Zoom in" onClick={() => setSafeZoom(zoom + 25)}>＋</button>
+          <Button label="Zoom out" variant="ghost" size="sm" isIconOnly icon={<span>−</span>} onClick={() => setSafeZoom(zoom - 25)} />
+          <Slider className="timeline-zoom-slider" label="Timeline zoom" isLabelHidden min={50} max={250} value={zoom} onChange={setSafeZoom} valueDisplay="none" />
+          <Button label="Zoom in" variant="ghost" size="sm" isIconOnly icon={<span>＋</span>} onClick={() => setSafeZoom(zoom + 25)} />
           <span>{zoom}%</span>
         </div>
       </div>

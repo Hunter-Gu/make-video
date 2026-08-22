@@ -24,9 +24,7 @@
   .asset-bin { @apply overflow-auto border-r border-[#242830] p-3; }
   .panel-heading { @apply flex h-8 items-center justify-between text-xs; }
   .panel-heading button { @apply text-lg text-[#aab0b9]; }
-  .mini-tabs, .inspector-tabs, .view-switch { @apply my-2 mb-3 flex rounded-md bg-[#0b0e12] p-1; }
-  .mini-tabs button, .inspector-tabs button, .view-switch button { @apply flex-1 rounded px-1.5 py-1.5 text-[10px] text-[#7f8792]; }
-  .mini-tabs button.active, .inspector-tabs button.active, .view-switch button.active { @apply bg-[#242a33] text-white; }
+  .mini-tabs, .inspector-tabs, .view-switch { @apply my-2 mb-3; }
   .asset-grid { @apply grid grid-cols-2 gap-2; }
   .asset-grid button { @apply relative min-w-0 rounded-md border border-transparent bg-[#171b21] p-1.5 text-left; }
   .asset-grid button.selected { @apply border-[#d68b46]; }
@@ -77,26 +75,22 @@
   .cover-button.selected { @apply border-[#6e5236] bg-[#261d15] text-[#d8a16b]; }
   .toast { @apply fixed bottom-[270px] right-[18px] rounded-md border border-[#4b535e] bg-[#20252d] px-3 py-2.5 text-[11px] text-[#e8eaed] shadow-[0_8px_24px_#0008]; }
   .loading { @apply grid min-h-screen place-items-center text-[#858e99]; }
-  .modal-layer { @apply fixed inset-0 z-50 grid place-items-center bg-[#000b] p-6; }
-  .model-settings-dialog { @apply flex max-h-[calc(100vh-48px)] w-[min(720px,calc(100vw-48px))] flex-col overflow-hidden rounded-xl border border-[#3a424d] bg-[#11151b] shadow-[0_24px_80px_#000c]; }
-  .dialog-header { @apply flex items-start justify-between border-b border-[#2b323c] px-6 py-5; }
-  .dialog-header h2 { @apply mb-0 mt-1 font-serif text-[24px] font-medium; }
-  .dialog-close { @apply rounded-md px-2 text-2xl leading-none text-[#8d97a3] hover:bg-[#242a33] hover:text-white; }
-  .dialog-body { @apply min-h-0 overflow-auto px-6 py-5; }
+  .model-settings-layout { @apply min-h-0; }
+  .dialog-body { @apply min-h-0; }
   .dialog-body small { @apply my-3 block text-[10px] leading-[1.45] text-[#737c87]; }
-  .dialog-footer { @apply flex justify-end gap-2 border-t border-[#2b323c] px-6 py-4; }
+  .dialog-footer { @apply flex justify-end gap-2; }
   .model-list-section + .model-list-section { @apply mt-6; }
   .model-list-heading { @apply mb-2 flex items-center justify-between; }
   .model-list-heading h3 { @apply m-0 text-[12px] font-medium; }
   .model-list-heading span { @apply text-[10px] text-[#737c87]; }
   .model-list { @apply grid gap-2; }
-  .model-list button { @apply flex items-center justify-between rounded-md border border-[#2d3540] bg-[#181d24] p-3 text-left hover:border-[#789cc6]; }
-  .model-list button.selected { @apply border-[#d68b46] bg-[#2a2119] shadow-[0_0_0_1px_#d68b4666]; }
-  .model-list button strong, .model-list button small { @apply block; }
-  .model-list button strong { @apply text-[11px]; }
-  .model-list button small { @apply mt-1 text-[9px] text-[#7d8793]; }
-  .model-list button em { @apply rounded bg-[#d68b46] px-2 py-1 text-[9px] font-bold not-italic text-[#17100a]; }
+  .model-option { @apply flex items-center justify-between text-left; }
+  .model-option strong, .model-option small { @apply block; }
+  .model-option strong { @apply text-[11px]; }
+  .model-option small { @apply mt-1 text-[9px] text-[#7d8793]; }
+  .model-option em { @apply rounded bg-[#d68b46] px-2 py-1 text-[9px] font-bold not-italic text-[#17100a]; }
   .model-list-section > input { @apply mb-2 mt-1.5 block w-full; }
+  .model-list-section > [data-astryx-component] { @apply mb-2 mt-1.5 w-full; }
   .model-catalog-list { @apply max-h-48 overflow-auto rounded-md border border-[#2d3540] bg-[#0e1217]; }
   .model-catalog-row { @apply border-b border-[#202731] px-3 py-2 last:border-b-0; }
   .model-catalog-row strong, .model-catalog-row small { @apply block truncate; }

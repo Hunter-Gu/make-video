@@ -1,4 +1,6 @@
 import {useState} from 'react';
+import {Button} from '@astryxdesign/core/Button';
+import {SegmentedControl, SegmentedControlItem} from '@astryxdesign/core/SegmentedControl';
 import type {Asset, ProjectState} from '@make-video/contracts';
 
 type AssetBinProps = {
@@ -14,16 +16,12 @@ export const AssetBin = ({state, selected, onSelect}: AssetBinProps) => {
     <aside className="asset-bin panel">
       <div className="panel-heading">
         <strong>Project media</strong>
-        <button>＋</button>
+        <Button label="Add media" variant="ghost" size="sm" isIconOnly icon={<span>＋</span>} />
       </div>
-      <div className="mini-tabs">
-        <button className={tab === 'media' ? 'active' : ''} onClick={() => setTab('media')}>
-          Assets
-        </button>
-        <button className={tab === 'renders' ? 'active' : ''} onClick={() => setTab('renders')}>
-          Outputs
-        </button>
-      </div>
+      <SegmentedControl className="mini-tabs" label="Project media view" value={tab} onChange={(value) => setTab(value as 'media' | 'renders')} layout="fill" size="sm">
+        <SegmentedControlItem value="media" label="Assets" />
+        <SegmentedControlItem value="renders" label="Outputs" />
+      </SegmentedControl>
       {tab === 'media' ? (
         <div className="asset-grid">
           {state.assets.map((asset) => (
