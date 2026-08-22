@@ -4,10 +4,6 @@
   :root { font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-synthesis: none; }
   *, ::before, ::after { @apply box-border; }
   html, body, #root { @apply m-0 min-h-screen bg-[#090b0e] text-[#e8eaed]; }
-  button, select, input, textarea { font: inherit; }
-  button { @apply cursor-pointer border-0 bg-transparent text-inherit; }
-  button:disabled { @apply cursor-not-allowed opacity-40; }
-  select, input, textarea { @apply rounded-md border border-[#303640] bg-[#171a20] p-2 text-[#e8eaed]; }
 }
 
 @layer components {
@@ -18,12 +14,10 @@
   .brand strong { @apply text-[13px]; }
   .topbar > .project-selector { @apply min-w-0; }
   .topbar-actions { @apply flex items-center gap-2; }
-  .topbar-actions button { @apply rounded-md bg-[#1c2027] px-2.5 py-2 text-[11px]; }
   .edit-area { @apply grid min-h-0 grid-cols-[220px_minmax(460px,1fr)_300px]; }
   .panel { @apply min-h-0 bg-[#101318]; }
   .asset-bin { @apply overflow-auto border-r border-[#242830] p-3; }
   .panel-heading { @apply flex h-8 items-center justify-between text-xs; }
-  .panel-heading button { @apply text-lg text-[#aab0b9]; }
   .mini-tabs, .inspector-tabs, .view-switch { @apply my-2 mb-3; }
   .asset-grid { @apply grid grid-cols-2 gap-2; }
   .asset-grid button { @apply relative min-w-0 rounded-md border border-transparent bg-[#171b21] p-1.5 text-left; }
@@ -60,19 +54,11 @@
   .inspector-body dl { @apply grid grid-cols-[1fr_1.2fr] gap-3 text-[11px]; }
   .inspector-body dt { @apply text-[#737c87]; }
   .inspector-body dd { @apply m-0 text-right; overflow-wrap: anywhere; }
-  .inspector-body label { @apply my-3 block text-[10px] text-[#8b949f]; }
-  .inspector-body textarea, .inspector-body select, .inspector-body label > input { @apply mt-1.5 block w-full; }
-  .inspector-body .model-selector { @apply mt-1.5 w-full; }
   .settings-divider { @apply mt-5 border-t border-[#252a31] pt-4; }
-  .inspector-body textarea { @apply min-h-[110px] resize-y leading-[1.45]; }
   .inspector-body small { @apply my-2.5 block text-[9px] leading-[1.45] text-[#737c87]; }
   .two-fields { @apply grid grid-cols-2 gap-2; }
-  .two-fields input { @apply mt-1.5 w-full; }
   .inspector-image-wrap { @apply relative; }
   .inspector-image { @apply aspect-[16/10] w-full rounded-md bg-[#080a0d] object-contain; }
-  .cover-button { @apply mt-2 w-full rounded-md border border-[#4a5260] bg-[#1c2128] p-2 text-[10px]; }
-  .cover-button:hover { @apply border-[#d68b46]; }
-  .cover-button.selected { @apply border-[#6e5236] bg-[#261d15] text-[#d8a16b]; }
   .toast { @apply fixed bottom-[270px] right-[18px] rounded-md border border-[#4b535e] bg-[#20252d] px-3 py-2.5 text-[11px] text-[#e8eaed] shadow-[0_8px_24px_#0008]; }
   .loading { @apply grid min-h-screen place-items-center text-[#858e99]; }
   .model-settings-layout { @apply min-h-0; }
@@ -89,8 +75,6 @@
   .model-option strong { @apply text-[11px]; }
   .model-option small { @apply mt-1 text-[9px] text-[#7d8793]; }
   .model-option em { @apply rounded bg-[#d68b46] px-2 py-1 text-[9px] font-bold not-italic text-[#17100a]; }
-  .model-list-section > input { @apply mb-2 mt-1.5 block w-full; }
-  .model-list-section > [data-astryx-component] { @apply mb-2 mt-1.5 w-full; }
   .model-catalog-list { @apply max-h-48 overflow-auto rounded-md border border-[#2d3540] bg-[#0e1217]; }
   .model-catalog-row { @apply border-b border-[#202731] px-3 py-2 last:border-b-0; }
   .model-catalog-row strong, .model-catalog-row small { @apply block truncate; }

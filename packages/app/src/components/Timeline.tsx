@@ -81,7 +81,7 @@ export const Timeline = ({state, selection, playheadFrame, onSelect, onSeek, onR
         <strong>Timeline</strong>
         <div>
           <Button label="Zoom out" variant="ghost" size="sm" isIconOnly icon={<span>−</span>} onClick={() => setSafeZoom(zoom - 25)} />
-          <Slider className="timeline-zoom-slider" label="Timeline zoom" isLabelHidden min={50} max={250} value={zoom} onChange={setSafeZoom} valueDisplay="none" />
+          <Slider className="timeline-zoom-slider" label="Timeline zoom" isLabelHidden min={50} max={250} value={zoom} onChange={setSafeZoom} valueDisplay="none" width={100} />
           <Button label="Zoom in" variant="ghost" size="sm" isIconOnly icon={<span>＋</span>} onClick={() => setSafeZoom(zoom + 25)} />
           <span>{zoom}%</span>
         </div>

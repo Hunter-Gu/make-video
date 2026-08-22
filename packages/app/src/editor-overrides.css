@@ -6,7 +6,6 @@
   .timeline-panel { @apply grid min-h-0 grid-rows-[38px_1fr] border-t border-[#2a2f37] bg-[#0d1014]; }
   .timeline-header { @apply flex items-center justify-between border-b border-[#20242a] px-3.5 text-[11px]; }
   .timeline-header > div { @apply flex items-center gap-[5px]; }
-  .timeline-header input { @apply h-[3px] w-[100px] p-0; }
   .timeline-header > div > span { @apply w-[38px] text-right text-[9px] text-[#737c87]; }
   .timeline-scroll { @apply min-h-0 overflow-auto; overscroll-behavior-x: contain; scrollbar-color: #59616c #171b20; }
   .timeline-canvas { @apply relative min-w-[1100px] cursor-crosshair select-none px-3 pb-3; }
@@ -51,5 +50,4 @@
   .inspector-quote { @apply rounded-md border-l-2 border-[#d68b46] bg-[#171b21] p-3 text-[11px] leading-[1.5] text-[#c7cdd4]; }
   .effect-parameters { @apply mt-5 max-h-48 overflow-auto rounded-md bg-[#0a0d11] p-3 text-[9px] leading-[1.45] text-[#aab6c2]; }
   .inspector-tabs { @apply flex-wrap; }
-  .inspector-tabs button { @apply min-w-[24%]; }
 }
