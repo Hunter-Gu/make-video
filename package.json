@@ -14,6 +14,7 @@
     "url": "https://github.com/Hunter-Gu/make-video/issues"
   },
   "scripts": {
+    "dev": "pnpm --filter @make-video/app build && pnpm --filter @make-video/mcp build && node skills/make-video/scripts/mcp.mjs http",
     "assets:link": "node skills/make-video/scripts/assets.mjs link",
     "sources:ingest": "node skills/make-video/scripts/sources.mjs ingest",
     "audio:prepare": "node skills/make-video/scripts/audio.mjs prepare",
