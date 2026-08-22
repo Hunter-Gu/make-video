@@ -11,6 +11,7 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
+import {TimelineEffectFrame, timelineEffectForScene, timelineImageTransform, type TimelineEffect} from "@make-video/remotion";
 
 export type KnowledgeScene = {
   id: string;
@@ -98,19 +99,18 @@ const ChapterScene = ({scene}: {scene: KnowledgeScene}) => (
   </AbsoluteFill>
 );
 
-const ImageScene = ({scene}: {scene: KnowledgeScene}) => {
+const ImageScene = ({scene, effect, globalStartFrame}: {scene: KnowledgeScene; effect: TimelineEffect | null; globalStartFrame: number}) => {
   const frame = useCurrentFrame();
-  const scale = interpolate(frame, [0, scene.durationInFrames], [scene.zoomFrom ?? 1.02, scene.zoomTo ?? 1.12], {
-    extrapolateRight: "clamp",
-  });
+  const globalFrame = frame + globalStartFrame;
   const x = interpolate(frame, [0, scene.durationInFrames], [0, scene.panX ?? 0]);
   const y = interpolate(frame, [0, scene.durationInFrames], [0, scene.panY ?? 0]);
+  const sceneProgress = interpolate(frame, [0, scene.durationInFrames], [0, 1], {extrapolateRight: "clamp"});
   return (
     <AbsoluteFill>
       {scene.image ? (
         <Img
           src={staticFile(scene.image)}
-          style={{width: "100%", height: "100%", objectFit: "cover", objectPosition: scene.imagePosition ?? "center", transform: `translate(${x}px, ${y}px) scale(${scale})`, filter: scene.archival ? "sepia(.3) saturate(.72) contrast(1.08)" : undefined}}
+          style={{width: "100%", height: "100%", objectFit: "cover", objectPosition: scene.imagePosition ?? "center", transform: `translate(${x}px, ${y}px) ${timelineImageTransform(globalFrame, effect, sceneProgress, scene.zoomFrom ?? 1.02, scene.zoomTo ?? 1.12)}`, filter: scene.archival ? "sepia(.3) saturate(.72) contrast(1.08)" : undefined}}
         />
       ) : null}
       <AbsoluteFill style={{background: "linear-gradient(90deg, rgba(8,12,18,.94) 0%, rgba(8,12,18,.42) 58%, transparent 100%)"}} />
@@ -294,9 +294,9 @@ const MontageScene = ({scene}: {scene: KnowledgeScene}) => {
   </AbsoluteFill>;
 };
 
-const Scene = ({scene}: {scene: KnowledgeScene}) => {
+const Scene = ({scene, effect, globalStartFrame}: {scene: KnowledgeScene; effect: TimelineEffect | null; globalStartFrame: number}) => {
   if (scene.type === "chapter") return <ChapterScene scene={scene} />;
-  if (scene.type === "image") return <ImageScene scene={scene} />;
+  if (scene.type === "image") return <ImageScene scene={scene} effect={effect} globalStartFrame={globalStartFrame} />;
   if (scene.type === "portrait") return <PortraitScene scene={scene} />;
   if (scene.type === "depth") return <DepthScene scene={scene} />;
   if (scene.type === "video") return <VideoScene scene={scene} />;
@@ -309,7 +309,7 @@ const Scene = ({scene}: {scene: KnowledgeScene}) => {
   if (scene.type === "document") return <DocumentScene scene={scene} />;
   if (scene.type === "relationship") return <RelationshipScene scene={scene} />;
   if (scene.type === "montage") return <MontageScene scene={scene} />;
-  return <ImageScene scene={scene} />;
+  return <ImageScene scene={scene} effect={effect} globalStartFrame={globalStartFrame} />;
 };
 
 const Caption = ({text, start = 0, end = Infinity}: {text?: string; start?: number; end?: number}) => {
@@ -321,7 +321,7 @@ const Caption = ({text, start = 0, end = Infinity}: {text?: string; start?: numb
   ) : null;
 };
 
-export const KnowledgeVideo = ({spec, showCaptions = true, sceneOverrides = {}, audioTracks = []}: {spec: KnowledgeVideoSpec; showCaptions?: boolean; sceneOverrides?: Record<string, Partial<KnowledgeScene>>; audioTracks?: KnowledgeAudioTrack[]}) => {
+export const KnowledgeVideo = ({spec, showCaptions = true, sceneOverrides = {}, audioTracks = [], effects = []}: {spec: KnowledgeVideoSpec; showCaptions?: boolean; sceneOverrides?: Record<string, Partial<KnowledgeScene>>; audioTracks?: KnowledgeAudioTrack[]; effects?: TimelineEffect[]}) => {
   let start = 0;
   return (
     <AbsoluteFill
@@ -338,9 +338,12 @@ export const KnowledgeVideo = ({spec, showCaptions = true, sceneOverrides = {}, 
         const scene = {...originalScene, ...sceneOverrides[originalScene.id]};
         const from = start;
         start += scene.durationInFrames;
+        const effect = timelineEffectForScene(effects, scene.id, from);
         return (
           <Sequence key={scene.id} from={from} durationInFrames={scene.durationInFrames} premountFor={30}>
-            <Scene scene={scene} />
+            <TimelineEffectFrame effects={effects} sceneId={scene.id} globalStartFrame={from}>
+              <Scene scene={scene} effect={effect} globalStartFrame={from} />
+            </TimelineEffectFrame>
             <Caption text={showCaptions ? scene.narration : undefined} start={scene.captionStartInFrames} end={scene.captionEndInFrames} />
           </Sequence>
         );
