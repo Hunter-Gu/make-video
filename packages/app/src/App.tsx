@@ -106,7 +106,7 @@ export const App = ({transport}: {transport: ProjectTransport}) => {
         <div />
         <div className="flex items-center gap-2">
           <Badge className="max-[1120px]:hidden" variant={state.qa?.passed ? 'success' : 'warning'} label={state.qa?.passed ? 'QA passed' : 'QA pending'} />
-          <Button label="Model settings" variant="secondary" size="sm" onClick={() => setModelSettingsOpen(true)} />
+          <Button label="Model settings" variant="secondary" size="sm" className="!bg-[#20252d] !text-[#e8eaed] hover:!bg-[#2b323d]" onClick={() => setModelSettingsOpen(true)} />
           <Button label="Preview" variant="primary" size="sm" onClick={() => setPreviewMode('player')} />
         </div>
       </header>
