@@ -9,7 +9,7 @@
   .timeline-header input { @apply h-[3px] w-[100px] p-0; }
   .timeline-header > div > span { @apply w-[38px] text-right text-[9px] text-[#737c87]; }
   .timeline-scroll { @apply min-h-0 overflow-auto; overscroll-behavior-x: contain; scrollbar-color: #59616c #171b20; }
-  .timeline-canvas { @apply relative min-w-[1100px] select-none px-3 pb-3; }
+  .timeline-canvas { @apply relative min-w-[1100px] cursor-crosshair select-none px-3 pb-3; }
   .time-ruler { @apply ml-20 flex h-[27px] cursor-crosshair items-center justify-between border-b border-[#252a31] text-[8px] text-[#59626d]; }
   .playhead { @apply absolute top-[27px] bottom-3 z-20 w-0.5 cursor-ew-resize bg-[#e09a57] shadow-[0_0_8px_#e09a5799]; }
   .playhead i { @apply absolute -left-1.5 -top-1 h-0 w-0 border-x-[7px] border-t-[8px] border-x-transparent border-t-[#e09a57]; }

@@ -85,11 +85,11 @@ export const Timeline = ({state, selection, playheadFrame, onSelect, onSeek, onR
         </div>
       </div>
       <div className="timeline-scroll">
-        <div className="timeline-canvas" style={{width: canvasWidth}}>
-          <div className="time-ruler" ref={rulerRef} onPointerDown={beginSeek}>
+        <div className="timeline-canvas" style={{width: canvasWidth}} onPointerDown={beginSeek}>
+          <div className="time-ruler" ref={rulerRef} onPointerDown={(event) => { event.stopPropagation(); beginSeek(event); }}>
             <span>00:00</span><span>{formatTime(total / 4, state.composition.fps)}</span><span>{formatTime(total / 2, state.composition.fps)}</span><span>{formatTime(total * 0.75, state.composition.fps)}</span><span>{formatTime(total, state.composition.fps)}</span>
           </div>
-          <div className="playhead" style={{left: `calc(92px + (100% - 104px) * ${Math.max(0, Math.min(total, playheadFrame)) / total})`}} onPointerDown={beginSeek} role="slider" aria-label="Playhead" aria-valuemin={0} aria-valuemax={total} aria-valuenow={playheadFrame} tabIndex={0}><i /></div>
+          <div className="playhead" style={{left: `calc(92px + (100% - 104px) * ${Math.max(0, Math.min(total, playheadFrame)) / total})`}} onPointerDown={(event) => { event.stopPropagation(); beginSeek(event); }} role="slider" aria-label="Playhead" aria-valuemin={0} aria-valuemax={total} aria-valuenow={playheadFrame} tabIndex={0}><i /></div>
           <AbsoluteTrack label="Visual" className="visual" total={total} items={state.scenes.map((scene) => ({id: scene.id, label: scene.id, range: rangeFor('scene', scene.id, {startFrame: scene.startFrame, endFrame: scene.endFrame})}))} selection={selection} type="scene" onSelect={onSelect} onResize={beginResize} />
           <EffectTrack effects={state.effects} total={total} selection={selection} onSelect={onSelect} onResize={beginResize} rangeFor={rangeFor} />
           <AbsoluteTrack label="Voice" className="voice" total={total} items={state.captions.map((caption) => ({id: caption.id, label: `VO · ${caption.id}`, range: rangeFor('voice', caption.id, caption)}))} selection={selection} type="voice" onSelect={onSelect} onResize={beginResize} />
@@ -118,7 +118,7 @@ const EffectTrack = ({effects, total, selection, onSelect, onResize, rangeFor}: 
 );
 
 const TimelineBlock = ({item, type, className, total, selected, onSelect, onResize, resizable = true}: {item: {id: string; label: string; range: Range}; type: TimelineSelection['type']; className: string; total: number; selected: boolean; onSelect: (selection: TimelineSelection) => void; onResize: (event: React.PointerEvent, type: TimelineSelection['type'], id: string, edge: 'start' | 'end', range: Range) => void; resizable?: boolean}) => (
-  <button className={`${className} ${selected ? 'selected' : ''}`} style={{left: `${(item.range.startFrame / total) * 100}%`, width: `${((item.range.endFrame - item.range.startFrame) / total) * 100}%`}} onClick={() => onSelect({type, id: item.id} as TimelineSelection)} title={item.label}>
+  <button className={`${className} ${selected ? 'selected' : ''}`} style={{left: `${(item.range.startFrame / total) * 100}%`, width: `${((item.range.endFrame - item.range.startFrame) / total) * 100}%`}} onPointerDown={(event) => event.stopPropagation()} onClick={() => onSelect({type, id: item.id} as TimelineSelection)} title={item.label}>
     {resizable && <span className="resize-handle start" aria-label="Resize start" onClick={(event) => event.stopPropagation()} onPointerDown={(event) => onResize(event, type, item.id, 'start', item.range)} />}
     <span className="block-label">{item.label}</span>
     {resizable && <span className="resize-handle end" aria-label="Resize end" onClick={(event) => event.stopPropagation()} onPointerDown={(event) => onResize(event, type, item.id, 'end', item.range)} />}
