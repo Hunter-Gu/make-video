@@ -1,4 +1,4 @@
-export type PreviewMode = 'player' | 'storyboard';
+export type PreviewMode = 'player' | 'rendered' | 'storyboard';
 export type InspectorMode = 'scene' | 'caption' | 'voice' | 'effect' | 'audio' | 'image';
 export type TimelineSelection =
   | {type: 'scene'; id: string}

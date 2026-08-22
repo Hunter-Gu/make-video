@@ -1,10 +1,12 @@
 import {useEffect, useMemo, useRef, useState} from 'react';
+import {Player, type PlayerRef} from '@remotion/player';
 import {Button} from '@astryxdesign/core/Button';
 import {SegmentedControl, SegmentedControlItem} from '@astryxdesign/core/SegmentedControl';
 import {Selector} from '@astryxdesign/core/Selector';
 import type {ProjectState} from '@make-video/contracts';
 import type {PreviewMode} from '../types';
 import {formatTime} from '../lib/format-time';
+import {RemotionComposition} from './RemotionComposition';
 
 type PreviewProps = {
   state: ProjectState;
@@ -23,33 +25,69 @@ export const Preview = ({state, mode, setMode, stage, setStageId, sceneId, selec
     () => new Map(state.assets.filter((item) => item.sceneId).map((item) => [item.sceneId, item])),
     [state.assets],
   );
+  const playerRef = useRef<PlayerRef>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const selectedIndex = state.scenes.findIndex((scene) => scene.id === sceneId);
-  const selectedScene = state.scenes[selectedIndex];
-  const isVideo = Boolean(stage?.url && stage.kind !== 'still' && !stage.path.endsWith('.png'));
-  const togglePlayback = async () => {
+  const isRenderedVideo = Boolean(stage?.url && stage.kind !== 'still' && !stage.path.endsWith('.png'));
+  const isPlayable = mode === 'player' || (mode === 'rendered' && isRenderedVideo);
+
+  useEffect(() => {
+    const player = playerRef.current;
+    if (!player) return;
+    const onFrameUpdate = (event: {detail: {frame: number}}) => onPlayheadChange(event.detail.frame);
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
+    const onEnded = () => setPlaying(false);
+    player.addEventListener('frameupdate', onFrameUpdate);
+    player.addEventListener('play', onPlay);
+    player.addEventListener('pause', onPause);
+    player.addEventListener('ended', onEnded);
+    return () => {
+      player.removeEventListener('frameupdate', onFrameUpdate);
+      player.removeEventListener('play', onPlay);
+      player.removeEventListener('pause', onPause);
+      player.removeEventListener('ended', onEnded);
+    };
+  }, [onPlayheadChange]);
+
+  useEffect(() => {
+    const player = playerRef.current;
+    if (mode !== 'player' || !player || Math.abs(player.getCurrentFrame() - playheadFrame) < 1) return;
+    player.seekTo(playheadFrame);
+  }, [mode, playheadFrame]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (mode !== 'rendered' || !video) return;
+    const target = playheadFrame / state.composition.fps;
+    if (Math.abs(video.currentTime - target) > 0.1) video.currentTime = target;
+  }, [mode, playheadFrame, state.composition.fps]);
+
+  const togglePlayback = () => {
+    if (mode === 'player') {
+      if (!playerRef.current) return;
+      if (playerRef.current.isPlaying()) playerRef.current.pause();
+      else playerRef.current.play();
+      return;
+    }
     if (!videoRef.current) return;
-    if (videoRef.current.paused) await videoRef.current.play();
+    if (videoRef.current.paused) void videoRef.current.play();
     else videoRef.current.pause();
   };
-  useEffect(() => {
-    if (!videoRef.current) return;
-    const target = playheadFrame / state.composition.fps;
-    if (Math.abs(videoRef.current.currentTime - target) > 0.1) videoRef.current.currentTime = target;
-  }, [playheadFrame, state.composition.fps]);
 
   return (
     <section className="grid min-h-0 min-w-0 grid-rows-[44px_minmax(0,1fr)_42px] bg-[#0b0e12]">
-      <div className="grid grid-cols-[180px_170px_1fr] items-center gap-2.5 border-b border-[#20242b] px-3.5 py-1">
+      <div className="grid grid-cols-[250px_170px_1fr] items-center gap-2.5 border-b border-[#20242b] px-3.5 py-1">
         <SegmentedControl className="m-0" label="Preview mode" value={mode} onChange={(value) => setMode(value as PreviewMode)} size="sm">
           <SegmentedControlItem value="player" label="Player" />
+          <SegmentedControlItem value="rendered" label="Rendered" />
           <SegmentedControlItem value="storyboard" label="Storyboard" />
         </SegmentedControl>
-        {mode === 'player' && (
+        {mode === 'rendered' && (
           <Selector
             className="min-w-0 text-[10px]"
-            label="Video"
+            label="Rendered stage"
             isLabelHidden
             options={state.stages.filter((item) => item.exists).map((item) => ({value: item.id, label: item.label}))}
             value={stage?.id ?? ''}
@@ -59,6 +97,23 @@ export const Preview = ({state, mode, setMode, stage, setStageId, sceneId, selec
         <span className="text-right text-[10px] text-[#626b76]">{state.composition.width} × {state.composition.height}</span>
       </div>
       {mode === 'player' ? (
+        <div className="grid min-h-0 place-items-center bg-[radial-gradient(circle,#181c22,#090b0e_68%)] p-[18px]">
+          <Player
+            ref={playerRef}
+            component={RemotionComposition}
+            inputProps={{state}}
+            durationInFrames={state.composition.durationInFrames}
+            fps={state.composition.fps}
+            compositionWidth={state.composition.width}
+            compositionHeight={state.composition.height}
+            initialFrame={playheadFrame}
+            controls={false}
+            clickToPlay
+            acknowledgeRemotionLicense
+            style={{width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%', background: '#000', boxShadow: '0 14px 45px #000b'}}
+          />
+        </div>
+      ) : mode === 'rendered' ? (
         <div className="grid min-h-0 place-items-center bg-[radial-gradient(circle,#181c22,#090b0e_68%)] p-[18px]">
           {stage?.url ? (
             stage.kind === 'still' || stage.path.endsWith('.png') ? <img className="block aspect-video max-h-full max-w-full bg-black object-contain shadow-[0_14px_45px_#000b]" src={stage.url} /> : (
@@ -82,9 +137,9 @@ export const Preview = ({state, mode, setMode, stage, setStageId, sceneId, selec
       )}
       <div className="flex items-center justify-center gap-2 border-t border-[#20242b] bg-[#0b0e12] px-3.5 text-[10px] text-[#737c87]">
         <Button label="Previous scene" variant="ghost" size="sm" isIconOnly icon={<span>◀</span>} isDisabled={selectedIndex <= 0} onClick={() => selectScene(state.scenes[selectedIndex - 1].id)} />
-        <Button label={playing ? 'Pause' : 'Play'} variant="primary" size="sm" isIconOnly icon={<span>{playing ? 'Ⅱ' : '▶'}</span>} isDisabled={!isVideo || mode !== 'player'} onClick={togglePlayback} />
+        <Button label={playing ? 'Pause' : 'Play'} variant="primary" size="sm" isIconOnly icon={<span>{playing ? 'Ⅱ' : '▶'}</span>} isDisabled={!isPlayable} onClick={togglePlayback} />
         <Button label="Next scene" variant="ghost" size="sm" isIconOnly icon={<span>▶</span>} isDisabled={selectedIndex < 0 || selectedIndex >= state.scenes.length - 1} onClick={() => selectScene(state.scenes[selectedIndex + 1].id)} />
-        <span>{selectedScene ? formatTime(selectedScene.startFrame, state.composition.fps) : '00:00.00'} / {formatTime(state.composition.durationInFrames, state.composition.fps)}</span>
+        <span>{formatTime(playheadFrame, state.composition.fps)} / {formatTime(state.composition.durationInFrames, state.composition.fps)}</span>
       </div>
     </section>
   );
