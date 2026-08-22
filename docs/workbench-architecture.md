@@ -38,8 +38,14 @@ The pnpm workspace keeps runtime boundaries explicit:
 - `packages/ai`: AI SDK provider adapters and the unified media-generation
   command.
 - `packages/assets`: canonical project asset linking and preparation.
+- `packages/audio`: audio preparation, narration timing, and deterministic UI
+  sound effects; its build emits one `skills/make-video/scripts/audio.mjs`.
 - `packages/qa`: deterministic media and timeline QA; its build emits one
   `skills/make-video/scripts/qa.mjs` entrypoint with mode arguments.
+- `packages/render`: Remotion and FFmpeg rendering; its build emits one
+  `skills/make-video/scripts/render.mjs` entrypoint with mode arguments.
+- `packages/sources`: source ingestion and catalog generation; its build emits
+  one `skills/make-video/scripts/sources.mjs` entrypoint with mode arguments.
 - `packages/mcp`: TypeScript MCP application service and adapters; its build
   emits one `skills/make-video/scripts/mcp.mjs` entrypoint with `stdio` and
   `http` modes.

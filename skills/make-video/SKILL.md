@@ -113,14 +113,14 @@ node --env-file-if-exists=.env scripts/qa.mjs video <video-id>
 node --env-file-if-exists=.env scripts/assets.mjs link <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs images <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs video <video-id>
-node --env-file-if-exists=.env scripts/ingest-sources.mjs <video-id>
+node --env-file-if-exists=.env scripts/sources.mjs ingest <video-id>
 node --env-file-if-exists=.env scripts/render.mjs studio <video-id>
 node --env-file-if-exists=.env scripts/render.mjs still <video-id>
 node --env-file-if-exists=.env scripts/render.mjs preview <video-id>
-node --env-file-if-exists=.env scripts/generate-ui-sfx.mjs <video-id>
+node --env-file-if-exists=.env scripts/audio.mjs sfx <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs voiceover <video-id>
 node --env-file-if-exists=.env scripts/ai.mjs music <video-id>
-node --env-file-if-exists=.env scripts/prepare-audio.mjs <video-id>
+node --env-file-if-exists=.env scripts/audio.mjs prepare <video-id>
 node --env-file-if-exists=.env scripts/render.mjs final <video-id>
 ```
 

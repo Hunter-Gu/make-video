@@ -15,12 +15,12 @@
   },
   "scripts": {
     "assets:link": "node skills/make-video/scripts/assets.mjs link",
-    "sources:ingest": "node skills/make-video/scripts/ingest-sources.mjs",
-    "audio:prepare": "node skills/make-video/scripts/prepare-audio.mjs",
+    "sources:ingest": "node skills/make-video/scripts/sources.mjs ingest",
+    "audio:prepare": "node skills/make-video/scripts/audio.mjs prepare",
     "video:qa": "node skills/make-video/scripts/qa.mjs video",
     "render:preview": "node skills/make-video/scripts/render.mjs preview",
     "render": "node skills/make-video/scripts/render.mjs final",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json && tsc --noEmit -p tsconfig.workbench.json && tsc --noEmit -p tsconfig.packages.json"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.workbench.json && tsc --noEmit -p tsconfig.packages.json"
   },
   "dependencies": {
     "@remotion/captions": "^4.0.499",

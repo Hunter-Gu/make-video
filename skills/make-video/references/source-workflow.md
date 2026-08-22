@@ -20,7 +20,7 @@ Supported local types are Markdown, text, PDF, DOCX, and EPUB. Web sources use
 `type: "web"` and `url`. PDF ingestion requires `pdftotext`; DOCX and EPUB
 require `unzip`.
 
-Run `scripts/ingest-sources.mjs <video-id>` from the project root. It writes
+Run `scripts/sources.mjs ingest <video-id>` from the project root. It writes
 `src/<video-id>/sources/index.json`, preserving page or section locators and
 paragraph IDs. Existing indexes are protected unless regeneration is explicit.
 
@@ -32,7 +32,7 @@ rights status without inferring publication permission.
 Record people, places, dates, events, concepts, verbatim quotations, and source
 illustrations in `SOURCE_ANNOTATIONS.json`. Every entry references stable source
 blocks. Illustrations also record canonical path, rights, whether reuse is
-allowed, caption, and evidence status. Run `scripts/build-source-catalog.mjs
+allowed, caption, and evidence status. Run `scripts/sources.mjs catalog
 <video-id>` to validate the annotations and write `sources/catalog.json`.
 Canonical illustrations must remain outside `public/`; use `assetLinks` for the
 runtime copy or hard link.
