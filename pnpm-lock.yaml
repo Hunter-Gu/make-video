@@ -76,9 +76,6 @@ importers:
       '@make-video/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@modelcontextprotocol/client':
-        specifier: ^2.0.0
-        version: 2.0.0
       '@stylexjs/stylex':
         specifier: ^0.19.0
         version: 0.19.0

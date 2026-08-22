@@ -17,6 +17,7 @@
   "exclude": [
     "skills/make-video/scripts/mcp.mjs",
     "skills/make-video/scripts/ai.mjs",
-    "skills/make-video/scripts/qa.mjs"
+    "skills/make-video/scripts/qa.mjs",
+    "skills/make-video/scripts/assets.mjs"
   ]
 }
