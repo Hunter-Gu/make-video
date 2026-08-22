@@ -3,7 +3,7 @@ import {Button} from '@astryxdesign/core/Button';
 import {Dialog, DialogHeader} from '@astryxdesign/core/Dialog';
 import {Item} from '@astryxdesign/core/Item';
 import {Layout, LayoutContent, LayoutFooter} from '@astryxdesign/core/Layout';
-import {RadioList, RadioListItem} from '@astryxdesign/core/RadioList';
+import {Selector} from '@astryxdesign/core/Selector';
 import {TextInput} from '@astryxdesign/core/TextInput';
 import type {Model, ModelCatalog, ProjectState, ProjectTransport} from '@make-video/contracts';
 
@@ -62,11 +62,11 @@ export const ModelSettingsDialog = ({state, transport, listModels, refresh, noti
   };
 
   return (
-    <Dialog isOpen onOpenChange={(open) => { if (!open) onClose(); }} purpose="form" width="min(720px, calc(100vw - 48px))" maxHeight="calc(100vh - 48px)" padding={0}>
+    <Dialog isOpen onOpenChange={(open) => { if (!open) onClose(); }} purpose="form" width="min(560px, calc(100vw - 32px))" maxHeight="80vh" padding={0}>
       <Layout
         className="min-h-0"
         header={<DialogHeader title="Generation models" subtitle="Active Gemini models and local provider keys" onOpenChange={(open) => { if (!open) onClose(); }} hasDivider />}
-        content={<LayoutContent className="min-h-0" padding={6}>
+        content={<LayoutContent className="min-h-0" padding={4}>
           <ModelList title="Image models" models={imageModels} selected={image} onSelect={setImage} />
           <ModelList title="Voice models" models={voiceModels} selected={voice} onSelect={setVoice} />
           <section className="mt-6">
@@ -88,9 +88,7 @@ export const ModelSettingsDialog = ({state, transport, listModels, refresh, noti
 const ModelList = ({title, models, selected, onSelect}: {title: string; models: Model[]; selected: string; onSelect: (id: string) => void}) => (
   <section className="mb-6 last:mb-0">
     <div className="mb-2 flex items-center justify-between"><h3 className="m-0 text-[12px] font-medium">{title}</h3><span className="text-[10px] text-[#737c87]">{models.length} available</span></div>
-    <RadioList label={title} isLabelHidden value={selected} onChange={onSelect} size="sm">
-      {models.map((model) => <RadioListItem key={model.id} label={model.label} value={model.id} description={`${model.provider} · ${model.capabilities.join(' · ')}`} />)}
-    </RadioList>
+    <Selector label={title} isLabelHidden options={models.map((model) => ({value: model.id, label: `${model.label} · ${model.id}`}))} value={selected} onChange={onSelect} width="100%" hasSearch searchPlaceholder="Search models" />
   </section>
 );
 
