@@ -74,7 +74,7 @@ export const getProjectState = (videoId: string) => {
     videoId,
     composition: context.composition,
     models: {image: context.config.imageGeneration?.model ?? null, voice: context.config.voice?.model ?? null},
-    registry: readJson(resolve(projectRoot, "packages/app/model-registry.json"), {image: [], voice: []}),
+    registry: {image: [], voice: []},
     scenes: sceneIndex.scenes,
     captions,
     effects: (remotionTimeline.effects ?? []).filter((effect: any) => Number.isInteger(effect.startFrame) && Number.isInteger(effect.endFrame) && effect.startFrame >= 0 && effect.endFrame > effect.startFrame && effect.endFrame <= context.composition.durationInFrames),
@@ -162,14 +162,15 @@ export const updateCaption = (videoId: string, id: string, input: any) => {
 export const updateModels = (videoId: string, input: any) => {
   const context = loadVideoContext(videoId);
   const config = readJson(context.configPath);
-  const registry = readJson(resolve(projectRoot, "packages/app/model-registry.json"), {image: [], voice: []});
-  if (input.image && !registry.image.some((model: any) => model.id === input.image)) throw new Error("Unknown image model.");
-  if (input.voice && !registry.voice.some((model: any) => model.id === input.voice)) throw new Error("Unknown voice model.");
-  if (input.image) config.imageGeneration = {...(config.imageGeneration ?? {}), model: input.image, assets: config.imageGeneration?.assets ?? []};
-  if (input.voice) config.voice = {...(config.voice ?? {}), model: input.voice, voiceName: config.voice?.voiceName ?? "Kore", direction: config.voice?.direction ?? "Clear documentary narration.", timingMode: config.voice?.timingMode ?? "narration"};
+  const image = normalizeGoogleModel(input.image);
+  const voice = normalizeGoogleModel(input.voice);
+  if (image) config.imageGeneration = {...(config.imageGeneration ?? {}), model: image, assets: config.imageGeneration?.assets ?? []};
+  if (voice) config.voice = {...(config.voice ?? {}), model: voice, voiceName: config.voice?.voiceName ?? "Kore", direction: config.voice?.direction ?? "Clear documentary narration.", timingMode: config.voice?.timingMode ?? "narration"};
   writeJson(context.configPath, config);
   return {image: config.imageGeneration?.model ?? null, voice: config.voice?.model ?? null};
 };
+
+const normalizeGoogleModel = (value: unknown) => typeof value === "string" && value.startsWith("google/") ? value.slice("google/".length) : value;
 
 export const createAssetRevision = (videoId: string, input: any) => {
   const context = loadVideoContext(videoId);
@@ -179,7 +180,6 @@ export const createAssetRevision = (videoId: string, input: any) => {
   const assetId = String(input.assetId ?? "");
   const asset = project.assets.find((item: any) => item.id === assetId && item.kind === "image");
   if (!asset) throw new Error("Unknown image asset.");
-  if (input.modelId && !project.registry.image.some((model: any) => model.id === input.modelId)) throw new Error("Unknown image model.");
   const instruction = String(input.instruction ?? "").trim();
   if (!instruction) throw new Error("An edit instruction is required.");
   const request = {id: randomUUID(), assetId, sceneId: asset.sceneId, modelId: input.modelId ?? null, instruction, status: "pending", createdAt: new Date().toISOString()};

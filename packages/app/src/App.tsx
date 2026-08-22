@@ -116,7 +116,7 @@ export const App = ({transport}: {transport: ProjectTransport}) => {
         <Inspector state={state} mode={inspectorMode} setMode={setInspectorMode} scene={scene} caption={caption} asset={asset} effect={selection?.type === 'effect' ? state.effects.find((item) => item.id === selection.id) ?? null : null} audioSelection={selection?.type === 'music' ? selection : null} transport={transport} refresh={refreshCurrent} notice={setNotice} />
       </section>
       <Timeline state={state} selection={selection} playheadFrame={playheadFrame} onSelect={selectTimeline} onSeek={setPlayheadFrame} onRangeChange={handleRangeChange} />
-      {modelSettingsOpen && <ModelSettingsDialog state={state} transport={transport} refresh={refreshCurrent} notice={setNotice} onClose={() => setModelSettingsOpen(false)} />}
+      {modelSettingsOpen && <ModelSettingsDialog state={state} transport={transport} listModels={transport.listModels} refresh={refreshCurrent} notice={setNotice} onClose={() => setModelSettingsOpen(false)} />}
       {notice && <div className="toast">{notice}</div>}
     </main>
   );

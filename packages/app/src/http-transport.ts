@@ -9,6 +9,7 @@ const request = async <T,>(path: string, init?: RequestInit): Promise<T> => {
 
 export const httpTransport: ProjectTransport = {
   listProjects: () => request("/api/projects"),
+  listModels: () => request("/api/models"),
   getProject: (videoId) => request(`/api/project?videoId=${encodeURIComponent(videoId)}`),
   updateCaption: async (videoId, caption: Caption) => { await request(`/api/captions/${encodeURIComponent(caption.id)}`, {method: "PATCH", body: JSON.stringify({...caption, videoId})}); },
   updateTimelineRange: async (videoId, input) => { await request("/api/timeline", {method: "PATCH", body: JSON.stringify({videoId, ...input})}); },

@@ -158,6 +158,9 @@ importers:
       '@make-video/assets':
         specifier: workspace:*
         version: link:../assets
+      '@make-video/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@modelcontextprotocol/client':
         specifier: ^2.0.0
         version: 2.0.0
@@ -167,6 +170,9 @@ importers:
       '@modelcontextprotocol/server':
         specifier: ^2.0.0
         version: 2.0.0
+      '@opencode-ai/models':
+        specifier: ^0.0.51
+        version: 0.0.51
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -723,6 +729,15 @@ packages:
 
   '@napi-rs/wasm-runtime@1.0.7':
     resolution: {integrity: sha512-SeDnOO0Tk7Okiq6DbXmmBODgOAb9dp9gjlphokTUxmt8U3liIP1ZsozBahH69j/RJv+Rfs6IwUKHTgQYJ/HBAw==}
+
+  '@opencode-ai/models@0.0.51':
+    resolution: {integrity: sha512-6MyIH9s2ztVMb+xWi4dbNebzbsHukcEG0s67s/xniIIrIKBlsj/neJtUHqK1C7/jYZcyIs+xeFlW8aZBk7dI5g==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      effect: 4.0.0-beta.83
+    peerDependenciesMeta:
+      effect:
+        optional: true
 
   '@oxc-project/types@0.146.0':
     resolution: {integrity: sha512-XC0QsnnhVe7sLIWmYmdPw7x5P0h4W8vUU3Nv1ySgWXtvCz8NizoAEpGXA0sOYoJQV2Rl13LgURAHQ5cI5ILCSA==}
@@ -2983,6 +2998,8 @@ snapshots:
       '@emnapi/runtime': 1.11.3
       '@tybys/wasm-util': 0.10.3
     optional: true
+
+  '@opencode-ai/models@0.0.51': {}
 
   '@oxc-project/types@0.146.0': {}
 

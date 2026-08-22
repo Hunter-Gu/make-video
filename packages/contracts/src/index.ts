@@ -3,7 +3,8 @@ export type Caption = {id: string; sceneId: string; startFrame: number; endFrame
 export type RemotionEffect = {id: string; sceneId: string; type: string; label: string; startFrame: number; endFrame: number; parameters?: Record<string, unknown>};
 export type Asset = {id: string; groupId?: string; sceneId: string | null; kind: "image" | "video"; selected: boolean; provider?: string; path: string; url: string};
 export type Stage = {id: string; label: string; kind?: string; path: string; exists: boolean; url: string | null};
-export type Model = {id: string; label: string; provider: string; capabilities: string[]};
+export type Model = {id: string; label: string; provider: string; capabilities: string[]; modalities?: {input: string[]; output: string[]}; contextWindow?: number; status?: string};
+export type ModelCatalog = {all: Model[]; image: Model[]; voice: Model[]};
 export type Cover = {assetId: string; sceneId: string | null; path: string; selectedAt: string};
 export type AudioTrack = {id: string; label: string; path: string; exists: boolean; url: string | null};
 export type ProjectAudio = {voiceover: AudioTrack; music: AudioTrack; sfx: AudioTrack[]};
@@ -11,6 +12,7 @@ export type ProjectState = {videoId: string; composition: {fps: number; duration
 
 export interface ProjectTransport {
   listProjects(): Promise<string[]>;
+  listModels(): Promise<ModelCatalog>;
   getProject(videoId: string): Promise<ProjectState>;
   updateCaption(videoId: string, caption: Caption): Promise<void>;
   updateTimelineRange(videoId: string, input: {type: 'scene' | 'caption' | 'voice' | 'effect' | 'music'; id: string; startFrame: number; endFrame: number}): Promise<void>;

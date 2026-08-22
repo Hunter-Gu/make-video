@@ -96,6 +96,12 @@
   .model-list button strong { @apply text-[11px]; }
   .model-list button small { @apply mt-1 text-[9px] text-[#7d8793]; }
   .model-list button em { @apply rounded bg-[#d68b46] px-2 py-1 text-[9px] font-bold not-italic text-[#17100a]; }
+  .model-list-section > input { @apply mb-2 mt-1.5 block w-full; }
+  .model-catalog-list { @apply max-h-48 overflow-auto rounded-md border border-[#2d3540] bg-[#0e1217]; }
+  .model-catalog-row { @apply border-b border-[#202731] px-3 py-2 last:border-b-0; }
+  .model-catalog-row strong, .model-catalog-row small { @apply block truncate; }
+  .model-catalog-row strong { @apply text-[10px]; }
+  .model-catalog-row small { @apply mt-0.5 text-[8px] text-[#737c87]; }
 }
 
 @media (max-width: 1120px) {

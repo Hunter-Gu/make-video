@@ -7,6 +7,7 @@ import {createMcpHandler, McpServer} from "@modelcontextprotocol/server";
 import {z} from "zod";
 
 import {projectRoot} from "./context";
+import {getModelCatalog} from "./models";
 import {createAssetRevision, getProjectState, listProjects, resolveMediaPath, setCover, updateCaption, updateModels, updateTimelineRange} from "./service";
 
 type CallToolResult = {
@@ -128,6 +129,7 @@ export const startHttpServer = () => {
         return handleMcp(request, response);
       }
       if (url.pathname === "/api/projects" && request.method === "GET") return sendJson(response, 200, listProjects());
+      if (url.pathname === "/api/models" && request.method === "GET") return sendJson(response, 200, await getModelCatalog());
       if (url.pathname === "/api/project" && request.method === "GET") return sendJson(response, 200, getProjectState(requiredParam(url.searchParams.get("videoId"))));
       if (url.pathname.startsWith("/api/captions/") && request.method === "PATCH") { const input = await readBody(request); return sendJson(response, 200, updateCaption(input.videoId, decodeURIComponent(url.pathname.slice(14)), input)); }
       if (url.pathname === "/api/timeline" && request.method === "PATCH") { const input = await readBody(request); return sendJson(response, 200, updateTimelineRange(input.videoId, input)); }
