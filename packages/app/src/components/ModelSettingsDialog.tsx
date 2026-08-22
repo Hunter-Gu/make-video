@@ -19,8 +19,8 @@ type ModelSettingsDialogProps = {
 };
 
 export const ModelSettingsDialog = ({state, transport, listModels, refresh, notice, onClose}: ModelSettingsDialogProps) => {
-  const [image, setImage] = useState(state.models.image ?? state.registry.image[0]?.id ?? '');
-  const [voice, setVoice] = useState(state.models.voice ?? state.registry.voice[0]?.id ?? '');
+  const [image, setImage] = useState(() => readModelSetting('image', state.models.image ?? state.registry.image[0]?.id ?? ''));
+  const [voice, setVoice] = useState(() => readModelSetting('voice', state.models.voice ?? state.registry.voice[0]?.id ?? ''));
   const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
   const [catalog, setCatalog] = useState<ModelCatalog | null>(null);
   useEffect(() => { void listModels().then(setCatalog).catch((error) => notice(error instanceof Error ? error.message : String(error))); }, [listModels, notice]);
@@ -29,15 +29,15 @@ export const ModelSettingsDialog = ({state, transport, listModels, refresh, noti
   const providers = useMemo(() => Array.from(new Set([...imageModels, ...voiceModels].map((model) => model.provider))), [imageModels, voiceModels]);
 
   useEffect(() => {
-    setImage(state.models.image ?? state.registry.image[0]?.id ?? '');
-    setVoice(state.models.voice ?? state.registry.voice[0]?.id ?? '');
-  }, [state.models.image, state.models.voice, state.registry.image, state.registry.voice]);
+    setImage(readModelSetting('image', state.models.image ?? state.registry.image[0]?.id ?? ''));
+    setVoice(readModelSetting('voice', state.models.voice ?? state.registry.voice[0]?.id ?? ''));
+  }, [state.videoId, state.models.image, state.models.voice, state.registry.image, state.registry.voice]);
 
   useEffect(() => {
     if (!catalog) return;
-    setImage(resolveModelId(state.models.image, imageModels));
-    setVoice(resolveModelId(state.models.voice, voiceModels));
-  }, [catalog, imageModels, voiceModels, state.models.image, state.models.voice]);
+    setImage((current) => resolveModelId(current, imageModels));
+    setVoice((current) => resolveModelId(current, voiceModels));
+  }, [catalog, imageModels, voiceModels]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -46,6 +46,8 @@ export const ModelSettingsDialog = ({state, transport, listModels, refresh, noti
 
   const save = async () => {
     try {
+      writeModelSetting('image', image);
+      writeModelSetting('voice', voice);
       await transport.updateModels(state.videoId, {image: image || undefined, voice: voice || undefined});
       if (typeof window !== 'undefined') providers.forEach((provider) => {
         const key = apiKeyStorageKey(provider);
@@ -88,4 +90,12 @@ const ModelList = ({title, models, selected, onSelect}: {title: string; models: 
 );
 
 const apiKeyStorageKey = (provider: string) => `make-video.api-key.${provider.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+const modelStorageKey = (kind: 'image' | 'voice') => `make-video.model.${kind}`;
+const readModelSetting = (kind: 'image' | 'voice', fallback: string) => {
+  if (typeof window === 'undefined') return fallback;
+  return window.localStorage.getItem(modelStorageKey(kind)) ?? fallback;
+};
+const writeModelSetting = (kind: 'image' | 'voice', value: string) => {
+  if (typeof window !== 'undefined' && value) window.localStorage.setItem(modelStorageKey(kind), value);
+};
 const resolveModelId = (current: string | null, models: Model[]) => models.find((model) => model.id === current || model.id.endsWith(`/${current ?? ''}`))?.id ?? models[0]?.id ?? current ?? '';
