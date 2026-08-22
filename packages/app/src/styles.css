@@ -63,8 +63,9 @@
   .inspector-body dt { @apply text-[#737c87]; }
   .inspector-body dd { @apply m-0 text-right; overflow-wrap: anywhere; }
   .inspector-body label { @apply my-3 block text-[10px] text-[#8b949f]; }
-  .inspector-body textarea, .inspector-body select { @apply mt-1.5 block w-full; }
+  .inspector-body textarea, .inspector-body select, .inspector-body label > input { @apply mt-1.5 block w-full; }
   .inspector-body .model-selector { @apply mt-1.5 w-full; }
+  .settings-divider { @apply mt-5 border-t border-[#252a31] pt-4; }
   .inspector-body textarea { @apply min-h-[110px] resize-y leading-[1.45]; }
   .inspector-body small { @apply my-2.5 block text-[9px] leading-[1.45] text-[#737c87]; }
   .two-fields { @apply grid grid-cols-2 gap-2; }

@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from 'react';
+import {useEffect, useMemo, useRef, useState} from 'react';
 import {Button} from '@astryxdesign/core/Button';
 import {Selector} from '@astryxdesign/core/Selector';
 import type {Asset, AudioTrack, Caption, ProjectState, ProjectTransport, RemotionEffect} from '@make-video/contracts';
@@ -152,22 +152,40 @@ const ImageInspector = ({state, asset, transport, refresh, notice}: {state: Proj
 const ModelSettings = ({state, transport, refresh, notice}: {state: ProjectState; transport: ProjectTransport; refresh: () => Promise<void>; notice: (value: string) => void}) => {
   const [image, setImage] = useState(state.models.image ?? state.registry.image[0]?.id);
   const [voice, setVoice] = useState(state.models.voice ?? state.registry.voice[0]?.id);
+  const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
+  const providers = useMemo(() => Array.from(new Set([...state.registry.image, ...state.registry.voice].map((model) => model.provider))), [state.registry.image, state.registry.voice]);
   useEffect(() => {
     setImage(state.models.image ?? state.registry.image[0]?.id);
     setVoice(state.models.voice ?? state.registry.voice[0]?.id);
   }, [state.videoId, state.models.image, state.models.voice, state.registry.image, state.registry.voice]);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setApiKeys(Object.fromEntries(providers.map((provider) => [provider, window.localStorage.getItem(apiKeyStorageKey(provider)) ?? ''])));
+  }, [providers]);
   return (
     <div className="inspector-body">
-      <span className="kicker">PROJECT SETTINGS</span><h2>Generation models</h2>
+      <span className="kicker">MODEL SETTINGS</span><h2>Generation models</h2>
       <label>Image model<Selector className="model-selector" label="Image model" isLabelHidden options={state.registry.image.map((item) => ({value: item.id, label: item.label}))} value={image} onChange={setImage} /></label>
       <label>Voice model<Selector className="model-selector" label="Voice model" isLabelHidden options={state.registry.voice.map((item) => ({value: item.id, label: item.label}))} value={voice} onChange={setVoice} /></label>
+      <div className="settings-divider"><span className="kicker">PROVIDER KEYS</span></div>
+      {providers.map((provider) => <label key={provider}>{provider} API key<input type="password" autoComplete="off" value={apiKeys[provider] ?? ''} placeholder="Stored only in this browser" onChange={(event) => setApiKeys((value) => ({...value, [provider]: event.target.value}))} /></label>)}
       <Button label="Save settings" variant="primary" width="100%" onClick={async () => {
-        try { await transport.updateModels(state.videoId, {image, voice}); await refresh(); notice('Project settings saved'); }
+        try {
+          await transport.updateModels(state.videoId, {image, voice});
+          if (typeof window !== 'undefined') providers.forEach((provider) => {
+            const key = apiKeyStorageKey(provider);
+            if (apiKeys[provider]) window.localStorage.setItem(key, apiKeys[provider]);
+            else window.localStorage.removeItem(key);
+          });
+          await refresh(); notice('Model settings saved');
+        }
         catch (error) { notice(error instanceof Error ? error.message : String(error)); }
       }} />
-      <small>Saving configuration does not start generation.</small>
+      <small>API keys stay in this browser and are not sent through MCP. Saving model selection does not start generation.</small>
     </div>
   );
 };
+
+const apiKeyStorageKey = (provider: string) => `make-video.api-key.${provider.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 
 const effectKind = (type: string) => type.includes('video') || type.includes('montage') ? 'media' : type.includes('depth') || type.includes('zoom') || type.includes('burns') ? 'camera' : type.includes('draw') || type.includes('route') || type.includes('network') ? 'draw' : 'reveal';

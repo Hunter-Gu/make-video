@@ -104,7 +104,7 @@ export const App = ({transport}: {transport: ProjectTransport}) => {
         <div />
         <div className="topbar-actions">
           <Badge className="qa-badge" variant={state.qa?.passed ? 'success' : 'warning'} label={state.qa?.passed ? 'QA passed' : 'QA pending'} />
-          <Button label="Project settings" variant="secondary" size="sm" onClick={() => setInspectorMode('settings')} />
+          <Button label="Model settings" variant="secondary" size="sm" onClick={() => setInspectorMode('settings')} />
           <Button label="Preview" variant="primary" size="sm" onClick={() => setPreviewMode('player')} />
         </div>
       </header>
