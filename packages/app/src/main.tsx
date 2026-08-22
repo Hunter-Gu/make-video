@@ -5,8 +5,6 @@ import {neutralTheme} from '@astryxdesign/theme-neutral/built';
 import {App} from './App';
 import {httpTransport} from './http-transport';
 import './astryx.css';
-import './styles.css';
-import './editor-overrides.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

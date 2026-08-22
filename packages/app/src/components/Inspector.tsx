@@ -22,8 +22,8 @@ type InspectorProps = {
 };
 
 export const Inspector = ({state, mode, setMode, scene, caption, asset, effect, audioSelection, transport, refresh, notice}: InspectorProps) => (
-  <aside className="inspector panel">
-    <SegmentedControl className="inspector-tabs" label="Inspector view" value={mode} onChange={(value) => setMode(value as InspectorMode)} layout="fill" size="sm">
+  <aside className="min-h-0 overflow-auto border-l border-[#242830] bg-[#101318]">
+    <SegmentedControl className="m-2.5 flex-wrap" label="Inspector view" value={mode} onChange={(value) => setMode(value as InspectorMode)} layout="fill" size="sm">
       {(['scene', 'caption', 'voice', 'effect', 'audio', 'image'] as const).map((tab) => <SegmentedControlItem key={tab} value={tab} label={tab === 'image' ? 'Visual' : tab === 'audio' ? 'Music' : tab[0].toUpperCase() + tab.slice(1)} />)}
     </SegmentedControl>
     {mode === 'scene' && <SceneInspector scene={scene} asset={asset} fps={state.composition.fps} effects={state.effects.filter((item) => item.sceneId === scene?.id)} />}
@@ -36,8 +36,8 @@ export const Inspector = ({state, mode, setMode, scene, caption, asset, effect, 
           catch (error) { notice(error instanceof Error ? error.message : String(error)); }
         }}
       />
-    ) : <div className="empty-state">This scene has no caption.</div>)}
-    {mode === 'voice' && (caption ? <VoiceInspector caption={caption} fps={state.composition.fps} track={state.audio.voiceover} /> : <div className="empty-state">Select a voice block.</div>)}
+    ) : <div className="grid h-full place-items-center text-xs text-[#68717d]">This scene has no caption.</div>)}
+    {mode === 'voice' && (caption ? <VoiceInspector caption={caption} fps={state.composition.fps} track={state.audio.voiceover} /> : <div className="grid h-full place-items-center text-xs text-[#68717d]">Select a voice block.</div>)}
     {mode === 'effect' && <EffectInspector effect={effect} fps={state.composition.fps} />}
     {mode === 'audio' && <AudioInspector track={audioSelection ? state.audio.music : state.audio.music} />}
     {mode === 'image' && <ImageInspector state={state} asset={asset} transport={transport} refresh={refresh} notice={notice} />}
@@ -45,28 +45,28 @@ export const Inspector = ({state, mode, setMode, scene, caption, asset, effect, 
 );
 
 const SceneInspector = ({scene, asset, fps, effects}: {scene: ProjectState['scenes'][number] | null; asset: Asset | null; fps: number; effects: RemotionEffect[]}) => scene ? (
-  <div className="inspector-body">
-    <span className="kicker">CURRENT SCENE</span>
-    <h2>{scene.id}</h2>
-    {asset?.url && <div className="scene-asset-preview">{asset.kind === 'image' ? <img src={asset.url} alt={asset.id} /> : <video src={asset.url} controls />}</div>}
-    <dl>
-      <dt>Start</dt><dd>{formatTime(scene.startFrame, fps)}</dd>
-      <dt>End</dt><dd>{formatTime(scene.endFrame, fps)}</dd>
-      <dt>Duration</dt><dd>{(scene.durationInFrames / fps).toFixed(2)}s</dd>
-      <dt>Timing</dt><dd>{scene.timingSource}</dd>
-      <dt>Assets</dt><dd>{scene.assetIds?.join(', ') || 'None'}</dd>
+  <div className="px-4 pb-5 pt-2.5">
+    <span className="text-[9px] tracking-[.13em] text-[#6e7884]">CURRENT SCENE</span>
+    <h2 className="my-2 mb-5 font-serif text-[22px] font-medium">{scene.id}</h2>
+    {asset?.url && <div className="mb-4 overflow-hidden rounded-md bg-[#080a0d]">{asset.kind === 'image' ? <img className="block aspect-video w-full object-contain" src={asset.url} alt={asset.id} /> : <video className="block aspect-video w-full object-contain" src={asset.url} controls />}</div>}
+    <dl className="grid grid-cols-[1fr_1.2fr] gap-3 text-[11px]">
+      <dt className="text-[#737c87]">Start</dt><dd className="m-0 text-right [overflow-wrap:anywhere]">{formatTime(scene.startFrame, fps)}</dd>
+      <dt className="text-[#737c87]">End</dt><dd className="m-0 text-right [overflow-wrap:anywhere]">{formatTime(scene.endFrame, fps)}</dd>
+      <dt className="text-[#737c87]">Duration</dt><dd className="m-0 text-right [overflow-wrap:anywhere]">{(scene.durationInFrames / fps).toFixed(2)}s</dd>
+      <dt className="text-[#737c87]">Timing</dt><dd className="m-0 text-right [overflow-wrap:anywhere]">{scene.timingSource}</dd>
+      <dt className="text-[#737c87]">Assets</dt><dd className="m-0 text-right [overflow-wrap:anywhere]">{scene.assetIds?.join(', ') || 'None'}</dd>
     </dl>
-    <div className="effect-summary">
-      <span className="kicker">REMOTION EFFECTS</span>
+    <div className="mt-6 border-t border-[#252a31] pt-4">
+      <span className="text-[9px] tracking-[.13em] text-[#6e7884]">REMOTION EFFECTS</span>
       {effects.length ? effects.map((effect) => (
-        <div key={effect.id}>
-          <i className={`effect-dot effect-${effectKind(effect.type)}`} />
-          <span><strong>{effect.label}</strong><small>{effect.type} · {effect.endFrame - effect.startFrame}f</small></span>
+        <div className="mt-2.5 flex items-center gap-2 rounded-md bg-[#171b21] p-2" key={effect.id}>
+          <i className={`h-1.5 w-1.5 shrink-0 rounded-full ${effectDotColor(effect.type)}`} />
+          <span><strong className="block text-[10px]">{effect.label}</strong><small className="mt-[3px] block text-[8px] text-[#737c87]">{effect.type} · {effect.endFrame - effect.startFrame}f</small></span>
         </div>
-      )) : <small>No declared effects</small>}
+      )) : <small className="my-2.5 block text-[9px] leading-[1.45] text-[#737c87]">No declared effects</small>}
     </div>
   </div>
-) : <div className="empty-state">Select a scene.</div>;
+) : <div className="grid h-full place-items-center text-xs text-[#68717d]">Select a scene.</div>;
 
 const VoiceInspector = ({caption, fps, track}: {caption: Caption; fps: number; track: AudioTrack}) => {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -79,43 +79,43 @@ const VoiceInspector = ({caption, fps, track}: {caption: Caption; fps: number; t
     await audioRef.current.play();
   };
   return (
-    <div className="inspector-body">
-      <span className="kicker">VOICE</span><h2>{caption.id}</h2>
-      <p className="inspector-quote">{caption.text}</p>
-      {track.url ? <><audio ref={audioRef} src={track.url} controls preload="metadata" /><Button label="Play this caption" variant="primary" width="100%" onClick={playCaption} /></> : <div className="empty-state">Voiceover audio is not available.</div>}
-      <dl><dt>Start</dt><dd>{formatTime(caption.startFrame, fps)}</dd><dt>End</dt><dd>{formatTime(caption.endFrame, fps)}</dd></dl>
+    <div className="px-4 pb-5 pt-2.5">
+      <span className="text-[9px] tracking-[.13em] text-[#6e7884]">VOICE</span><h2 className="my-2 mb-5 font-serif text-[22px] font-medium">{caption.id}</h2>
+      <p className="rounded-md border-l-2 border-[#d68b46] bg-[#171b21] p-3 text-[11px] leading-[1.5] text-[#c7cdd4]">{caption.text}</p>
+      {track.url ? <><audio className="mb-3 block w-full" ref={audioRef} src={track.url} controls preload="metadata" /><Button label="Play this caption" variant="primary" width="100%" onClick={playCaption} /></> : <div className="grid h-full place-items-center text-xs text-[#68717d]">Voiceover audio is not available.</div>}
+      <dl className="mt-4 grid grid-cols-[1fr_1.2fr] gap-3 text-[11px]"><dt className="text-[#737c87]">Start</dt><dd className="m-0 text-right">{formatTime(caption.startFrame, fps)}</dd><dt className="text-[#737c87]">End</dt><dd className="m-0 text-right">{formatTime(caption.endFrame, fps)}</dd></dl>
     </div>
   );
 };
 
 const AudioInspector = ({track}: {track: AudioTrack}) => (
-  <div className="inspector-body">
-    <span className="kicker">AUDIO TRACK</span><h2>{track.label}</h2>
-    {track.url ? <audio src={track.url} controls preload="metadata" /> : <div className="empty-state">Music audio is not available.</div>}
-    <small>{track.path}</small>
+  <div className="px-4 pb-5 pt-2.5">
+    <span className="text-[9px] tracking-[.13em] text-[#6e7884]">AUDIO TRACK</span><h2 className="my-2 mb-5 font-serif text-[22px] font-medium">{track.label}</h2>
+    {track.url ? <audio className="mb-3 block w-full" src={track.url} controls preload="metadata" /> : <div className="grid h-full place-items-center text-xs text-[#68717d]">Music audio is not available.</div>}
+    <small className="my-2.5 block text-[9px] leading-[1.45] text-[#737c87]">{track.path}</small>
   </div>
 );
 
 const EffectInspector = ({effect, fps}: {effect: RemotionEffect | null; fps: number}) => effect ? (
-  <div className="inspector-body">
-    <span className="kicker">REMOTION EFFECT</span><h2>{effect.label}</h2>
-    <dl><dt>Type</dt><dd>{effect.type}</dd><dt>Start</dt><dd>{formatTime(effect.startFrame, fps)}</dd><dt>End</dt><dd>{formatTime(effect.endFrame, fps)}</dd><dt>Duration</dt><dd>{((effect.endFrame - effect.startFrame) / fps).toFixed(2)}s</dd></dl>
-    <pre className="effect-parameters">{JSON.stringify(effect.parameters ?? {}, null, 2)}</pre>
+  <div className="px-4 pb-5 pt-2.5">
+    <span className="text-[9px] tracking-[.13em] text-[#6e7884]">REMOTION EFFECT</span><h2 className="my-2 mb-5 font-serif text-[22px] font-medium">{effect.label}</h2>
+    <dl className="grid grid-cols-[1fr_1.2fr] gap-3 text-[11px]"><dt className="text-[#737c87]">Type</dt><dd className="m-0 text-right [overflow-wrap:anywhere]">{effect.type}</dd><dt className="text-[#737c87]">Start</dt><dd className="m-0 text-right">{formatTime(effect.startFrame, fps)}</dd><dt className="text-[#737c87]">End</dt><dd className="m-0 text-right">{formatTime(effect.endFrame, fps)}</dd><dt className="text-[#737c87]">Duration</dt><dd className="m-0 text-right">{((effect.endFrame - effect.startFrame) / fps).toFixed(2)}s</dd></dl>
+    <pre className="mt-5 max-h-48 overflow-auto rounded-md bg-[#0a0d11] p-3 text-[9px] leading-[1.45] text-[#aab6c2]">{JSON.stringify(effect.parameters ?? {}, null, 2)}</pre>
   </div>
-) : <div className="empty-state">Select a Remotion effect.</div>;
+) : <div className="grid h-full place-items-center text-xs text-[#68717d]">Select a Remotion effect.</div>;
 
 const CaptionEditor = ({caption, fps, save}: {caption: Caption; fps: number; save: (caption: Caption) => Promise<void>}) => {
   const [draft, setDraft] = useState(caption);
   useEffect(() => setDraft(caption), [caption]);
   return (
-    <div className="inspector-body">
-      <span className="kicker">CAPTION</span><h2>{caption.id}</h2>
+    <div className="px-4 pb-5 pt-2.5">
+      <span className="text-[9px] tracking-[.13em] text-[#6e7884]">CAPTION</span><h2 className="my-2 mb-5 font-serif text-[22px] font-medium">{caption.id}</h2>
       <TextArea label="Narration" value={draft.text} rows={4} onChange={(value) => setDraft({...draft, text: value})} />
-      <div className="two-fields">
+      <div className="grid grid-cols-2 gap-2">
         <NumberInput label="Start frame" value={draft.startFrame} onChange={(value) => setDraft({...draft, startFrame: value})} isIntegerOnly />
         <NumberInput label="End frame" value={draft.endFrame} onChange={(value) => setDraft({...draft, endFrame: value})} isIntegerOnly />
       </div>
-      <small>{(draft.startFrame / fps).toFixed(2)}s – {(draft.endFrame / fps).toFixed(2)}s</small>
+      <small className="my-2.5 block text-[9px] leading-[1.45] text-[#737c87]">{(draft.startFrame / fps).toFixed(2)}s – {(draft.endFrame / fps).toFixed(2)}s</small>
       <Button label="Save caption" variant="primary" width="100%" onClick={() => save(draft)} />
     </div>
   );
@@ -125,10 +125,10 @@ const ImageInspector = ({state, asset, transport, refresh, notice}: {state: Proj
   const [instruction, setInstruction] = useState('');
   const isCover = Boolean(asset && state.cover?.assetId === asset.id);
   return (
-    <div className="inspector-body">
-      <span className="kicker">VISUAL</span><h2>{asset?.id ?? 'No asset'}</h2>
-      {asset?.kind === 'image' && <div className="inspector-image-wrap"><img className="inspector-image" src={asset.url} />{isCover && <em>Current cover</em>}</div>}
-      <Button label={isCover ? '✓ Current cover' : 'Set as cover'} variant={isCover ? 'secondary' : 'ghost'} width="100%" className={`cover-button ${isCover ? 'selected' : ''}`} isDisabled={!asset || asset.kind !== 'image' || isCover} onClick={async () => {
+    <div className="px-4 pb-5 pt-2.5">
+      <span className="text-[9px] tracking-[.13em] text-[#6e7884]">VISUAL</span><h2 className="my-2 mb-5 font-serif text-[22px] font-medium">{asset?.id ?? 'No asset'}</h2>
+      {asset?.kind === 'image' && <div className="relative"><img className="aspect-[16/10] w-full rounded-md bg-[#080a0d] object-contain" src={asset.url} />{isCover && <em className="absolute right-2 top-2 rounded bg-[#d68b46] px-1.5 py-1 text-[8px] font-extrabold uppercase not-italic text-[#17100a]">Current cover</em>}</div>}
+      <Button label={isCover ? '✓ Current cover' : 'Set as cover'} variant={isCover ? 'secondary' : 'ghost'} width="100%" className="mt-2" isDisabled={!asset || asset.kind !== 'image' || isCover} onClick={async () => {
         if (!asset) return;
         try { await transport.setCover(state.videoId, asset.id); await refresh(); notice('Cover image selected'); }
         catch (error) { notice(error instanceof Error ? error.message : String(error)); }
@@ -141,9 +141,10 @@ const ImageInspector = ({state, asset, transport, refresh, notice}: {state: Proj
           setInstruction(''); await refresh(); notice('Revision request created');
         } catch (error) { notice(error instanceof Error ? error.message : String(error)); }
       }} />
-      <small>Cover selection is project state. It does not overwrite a rendered thumbnail.</small>
+      <small className="my-2.5 block text-[9px] leading-[1.45] text-[#737c87]">Cover selection is project state. It does not overwrite a rendered thumbnail.</small>
     </div>
   );
 };
 
 const effectKind = (type: string) => type.includes('video') || type.includes('montage') ? 'media' : type.includes('depth') || type.includes('zoom') || type.includes('burns') ? 'camera' : type.includes('draw') || type.includes('route') || type.includes('network') ? 'draw' : 'reveal';
+const effectDotColor = (type: string) => ({media: 'bg-[#cf8dcc]', camera: 'bg-[#73c7ce]', draw: 'bg-[#70cf99]', reveal: 'bg-[#91aee8]'}[effectKind(type)]);

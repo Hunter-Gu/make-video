@@ -59,7 +59,7 @@ export const App = ({transport}: {transport: ProjectTransport}) => {
     catch (error) { setNotice(error instanceof Error ? error.message : String(error)); void refreshCurrent(); }
   }, [refreshCurrent, transport, videoId]);
 
-  if (!state) return <main className="loading">{notice}</main>;
+  if (!state) return <main className="grid min-h-screen place-items-center bg-[#090b0e] text-[#858e99]">{notice}</main>;
   const scene = state.scenes.find((item) => item.id === sceneId) ?? null;
   const asset = state.assets.find((item) => item.id === assetId) ?? null;
   const stage = state.stages.find((item) => item.id === stageId) ?? null;
@@ -99,25 +99,25 @@ export const App = ({transport}: {transport: ProjectTransport}) => {
     setInspectorMode('audio');
   };
   return (
-    <main className="editor">
-      <header className="topbar">
-        <div className="brand"><span>MV</span><strong>Make Video</strong></div>
-        <Selector className="project-selector" label="Project" isLabelHidden options={projects} value={videoId} onChange={(id) => { setVideoId(id); void refresh(id); }} />
+    <main className="grid h-screen min-w-[1024px] grid-rows-[52px_minmax(330px,1fr)_282px] overflow-hidden bg-[#090b0e] text-[#e8eaed]">
+      <header className="grid grid-cols-[190px_220px_1fr_auto] items-center gap-3 border-b border-[#242830] bg-[#101318] px-3 max-[1120px]:grid-cols-[150px_190px_1fr_auto]">
+        <div className="flex items-center gap-2.5"><span className="grid h-7 w-7 place-items-center rounded-md bg-[#d68b46] text-[10px] font-black text-[#17100a]">MV</span><strong className="text-[13px]">Make Video</strong></div>
+        <Selector className="min-w-0" label="Project" isLabelHidden options={projects} value={videoId} onChange={(id) => { setVideoId(id); void refresh(id); }} />
         <div />
-        <div className="topbar-actions">
-          <Badge className="qa-badge" variant={state.qa?.passed ? 'success' : 'warning'} label={state.qa?.passed ? 'QA passed' : 'QA pending'} />
+        <div className="flex items-center gap-2">
+          <Badge className="max-[1120px]:hidden" variant={state.qa?.passed ? 'success' : 'warning'} label={state.qa?.passed ? 'QA passed' : 'QA pending'} />
           <Button label="Model settings" variant="secondary" size="sm" onClick={() => setModelSettingsOpen(true)} />
           <Button label="Preview" variant="primary" size="sm" onClick={() => setPreviewMode('player')} />
         </div>
       </header>
-      <section className="edit-area">
+      <section className="grid min-h-0 grid-cols-[220px_minmax(460px,1fr)_300px] max-[1120px]:grid-cols-[180px_minmax(430px,1fr)_260px]">
         <AssetBin state={state} selected={assetId} onSelect={selectAsset} />
         <Preview state={state} mode={previewMode} setMode={setPreviewMode} stage={stage} setStageId={setStageId} sceneId={sceneId} selectScene={selectScene} playheadFrame={playheadFrame} onPlayheadChange={setPlayheadFrame} />
         <Inspector state={state} mode={inspectorMode} setMode={setInspectorMode} scene={scene} caption={caption} asset={asset} effect={selection?.type === 'effect' ? state.effects.find((item) => item.id === selection.id) ?? null : null} audioSelection={selection?.type === 'music' ? selection : null} transport={transport} refresh={refreshCurrent} notice={setNotice} />
       </section>
       <Timeline state={state} selection={selection} playheadFrame={playheadFrame} onSelect={selectTimeline} onSeek={setPlayheadFrame} onRangeChange={handleRangeChange} />
       {modelSettingsOpen && <ModelSettingsDialog state={state} transport={transport} listModels={transport.listModels} refresh={refreshCurrent} notice={setNotice} onClose={() => setModelSettingsOpen(false)} />}
-      {notice && <div className="toast">{notice}</div>}
+      {notice && <div className="fixed bottom-[270px] right-[18px] rounded-md border border-[#4b535e] bg-[#20252d] px-3 py-2.5 text-[11px] text-[#e8eaed] shadow-[0_8px_24px_#0008]">{notice}</div>}
     </main>
   );
 };
