@@ -45,6 +45,18 @@ export const App = ({transport}: {transport: ProjectTransport}) => {
     }).catch((error) => setNotice(error instanceof Error ? error.message : String(error)));
   }, [refresh, transport]);
 
+  const handleRangeChange = useCallback(async (item: TimelineSelection, range: {startFrame: number; endFrame: number}) => {
+    setState((current) => {
+      if (!current) return current;
+      if (item.type === 'scene') return {...current, scenes: current.scenes.map((scene) => scene.id === item.id ? {...scene, ...range, durationInFrames: range.endFrame - range.startFrame} : scene)};
+      if (item.type === 'effect') return {...current, effects: current.effects.map((effect) => effect.id === item.id ? {...effect, ...range} : effect)};
+      if (item.type === 'caption' || item.type === 'voice') return {...current, captions: current.captions.map((caption) => caption.id === item.id ? {...caption, ...range} : caption)};
+      return current;
+    });
+    try { await transport.updateTimelineRange(videoId, {...item, ...range}); setNotice('Timeline range saved'); }
+    catch (error) { setNotice(error instanceof Error ? error.message : String(error)); void refreshCurrent(); }
+  }, [refreshCurrent, transport, videoId]);
+
   if (!state) return <main className="loading">{notice}</main>;
   const scene = state.scenes.find((item) => item.id === sceneId) ?? null;
   const asset = state.assets.find((item) => item.id === assetId) ?? null;
@@ -84,18 +96,6 @@ export const App = ({transport}: {transport: ProjectTransport}) => {
     }
     setInspectorMode('audio');
   };
-  const handleRangeChange = useCallback(async (item: TimelineSelection, range: {startFrame: number; endFrame: number}) => {
-    setState((current) => {
-      if (!current) return current;
-      if (item.type === 'scene') return {...current, scenes: current.scenes.map((scene) => scene.id === item.id ? {...scene, ...range, durationInFrames: range.endFrame - range.startFrame} : scene)};
-      if (item.type === 'effect') return {...current, effects: current.effects.map((effect) => effect.id === item.id ? {...effect, ...range} : effect)};
-      if (item.type === 'caption' || item.type === 'voice') return {...current, captions: current.captions.map((caption) => caption.id === item.id ? {...caption, ...range} : caption)};
-      return current;
-    });
-    try { await transport.updateTimelineRange(videoId, {...item, ...range}); setNotice('Timeline range saved'); }
-    catch (error) { setNotice(error instanceof Error ? error.message : String(error)); void refreshCurrent(); }
-  }, [refreshCurrent, transport, videoId]);
-
   return (
     <main className="editor">
       <header className="topbar">
