@@ -1,8 +1,9 @@
 import {useEffect, useMemo, useState} from 'react';
 import {Button} from '@astryxdesign/core/Button';
 import {Dialog, DialogHeader} from '@astryxdesign/core/Dialog';
+import {Item} from '@astryxdesign/core/Item';
 import {Layout, LayoutContent, LayoutFooter} from '@astryxdesign/core/Layout';
-import {SelectableCard} from '@astryxdesign/core/SelectableCard';
+import {RadioList, RadioListItem} from '@astryxdesign/core/RadioList';
 import {TextInput} from '@astryxdesign/core/TextInput';
 import type {Model, ModelCatalog, ProjectState, ProjectTransport} from '@make-video/contracts';
 
@@ -71,7 +72,7 @@ export const ModelSettingsDialog = ({state, transport, listModels, refresh, noti
           <section className="mt-6">
             <div className="mb-2 flex items-center justify-between"><h3 className="m-0 text-[12px] font-medium">Active Gemini models</h3><span className="text-[10px] text-[#737c87]">{allModels.length ? `${allModels.length.toLocaleString()} available` : 'Loading catalog…'}</span></div>
             <TextInput label="Search Gemini models" isLabelHidden placeholder="Search model or id" value={query} onChange={setQuery} />
-            {allModels.length > 0 && <div className="max-h-48 overflow-auto rounded-md border border-[#2d3540] bg-[#0e1217]">{filteredModels.map((model) => <div key={model.id} className="border-b border-[#202731] px-3 py-2 last:border-b-0"><strong className="block truncate text-[10px]">{model.label}</strong><small className="mt-0.5 block truncate text-[8px] text-[#737c87]">{model.provider} · {model.id}</small></div>)}</div>}
+            {allModels.length > 0 && <div className="max-h-48 overflow-auto rounded-md border border-[#2d3540] bg-[#0e1217]">{filteredModels.map((model) => <Item key={model.id} className="border-b border-[#202731] last:border-b-0" label={model.label} description={`${model.provider} · ${model.id}`} density="compact" />)}</div>}
             {allModels.length > filteredModels.length && <small className="my-3 block text-[10px] leading-[1.45] text-[#737c87]">Showing {filteredModels.length.toLocaleString()} matching models. Refine the search to browse the full catalog.</small>}
           </section>
           <div className="mt-5 border-t border-[#252a31] pt-4"><span className="text-[9px] tracking-[.13em] text-[#6e7884]">PROVIDER KEYS</span></div>
@@ -87,12 +88,9 @@ export const ModelSettingsDialog = ({state, transport, listModels, refresh, noti
 const ModelList = ({title, models, selected, onSelect}: {title: string; models: Model[]; selected: string; onSelect: (id: string) => void}) => (
   <section className="mb-6 last:mb-0">
     <div className="mb-2 flex items-center justify-between"><h3 className="m-0 text-[12px] font-medium">{title}</h3><span className="text-[10px] text-[#737c87]">{models.length} available</span></div>
-    <div className="grid gap-2">
-      {models.map((model) => <SelectableCard key={model.id} className="flex items-center justify-between text-left" label={`Select ${model.label}`} isSelected={selected === model.id} onChange={(isSelected) => { if (isSelected) onSelect(model.id); }} padding={3}>
-        <span><strong className="block text-[11px]">{model.label}</strong><small className="mt-1 block text-[9px] text-[#7d8793]">{model.provider} · {model.capabilities.join(' · ')}</small></span>
-        {selected === model.id && <em className="rounded bg-[#d68b46] px-2 py-1 text-[9px] font-bold not-italic text-[#17100a]">Selected</em>}
-      </SelectableCard>)}
-    </div>
+    <RadioList label={title} isLabelHidden value={selected} onChange={onSelect} size="sm">
+      {models.map((model) => <RadioListItem key={model.id} label={model.label} value={model.id} description={`${model.provider} · ${model.capabilities.join(' · ')}`} />)}
+    </RadioList>
   </section>
 );
 
