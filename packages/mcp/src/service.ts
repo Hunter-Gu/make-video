@@ -1,21 +1,22 @@
 import {randomUUID} from "node:crypto";
 import {existsSync, readFileSync, readdirSync, renameSync, writeFileSync} from "node:fs";
-import {spawnSync} from "node:child_process";
 import {dirname, extname, relative, resolve, sep} from "node:path";
 
-import {loadVideoContext, projectRoot, scriptsDir} from "./context";
+import {linkAssets} from "@make-video/assets";
+import {loadVideoContext, projectRoot} from "./context";
 
 const preparedAssetProjects = new Set<string>();
 
 /** Prepare ignored public/ links before reading project media. */
 export const prepareProjectAssets = (videoId: string) => {
   if (preparedAssetProjects.has(videoId)) return true;
-  const result = spawnSync(process.execPath, [resolve(scriptsDir, "link-assets.mjs"), videoId], {
-    cwd: projectRoot,
-    stdio: "ignore",
-  });
-  if (result.status === 0) preparedAssetProjects.add(videoId);
-  return result.status === 0;
+  try {
+    linkAssets(videoId);
+    preparedAssetProjects.add(videoId);
+    return true;
+  } catch {
+    return false;
+  }
 };
 
 const readJson = (file: string, fallback: any = null): any => existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : fallback;

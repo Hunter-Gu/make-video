@@ -25,7 +25,7 @@ const run = (command, args) => {
   if (result.status !== 0) process.exit(result.status ?? 1);
 };
 
-run(process.execPath, [resolve(scriptsDir, "link-assets.mjs"), videoId]);
+run(process.execPath, [resolve(scriptsDir, "assets.mjs"), "link", videoId]);
 const remotion = resolve(scriptsDir, "run-remotion.mjs");
 
 if (action === "studio") {

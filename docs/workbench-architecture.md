@@ -37,6 +37,7 @@ The pnpm workspace keeps runtime boundaries explicit:
 - `packages/contracts`: shared project and transport types.
 - `packages/ai`: AI SDK provider adapters and the unified media-generation
   command.
+- `packages/assets`: canonical project asset linking and preparation.
 - `packages/qa`: deterministic media and timeline QA; its build emits one
   `skills/make-video/scripts/qa.mjs` entrypoint with mode arguments.
 - `packages/mcp`: TypeScript MCP application service and adapters; its build

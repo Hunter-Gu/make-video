@@ -14,7 +14,7 @@
     "url": "https://github.com/Hunter-Gu/make-video/issues"
   },
   "scripts": {
-    "assets:link": "node skills/make-video/scripts/link-assets.mjs",
+    "assets:link": "node skills/make-video/scripts/assets.mjs link",
     "sources:ingest": "node skills/make-video/scripts/ingest-sources.mjs",
     "audio:prepare": "node skills/make-video/scripts/prepare-audio.mjs",
     "video:qa": "node skills/make-video/scripts/qa.mjs video",
