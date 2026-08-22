@@ -1,4 +1,4 @@
-import {useMemo, useRef, useState} from 'react';
+import {useEffect, useMemo, useRef, useState} from 'react';
 import {Selector} from '@astryxdesign/core/Selector';
 import type {ProjectState} from '@make-video/contracts';
 import type {PreviewMode} from '../types';
@@ -12,9 +12,11 @@ type PreviewProps = {
   setStageId: (id: string) => void;
   sceneId: string | null;
   selectScene: (id: string) => void;
+  playheadFrame: number;
+  onPlayheadChange: (frame: number) => void;
 };
 
-export const Preview = ({state, mode, setMode, stage, setStageId, sceneId, selectScene}: PreviewProps) => {
+export const Preview = ({state, mode, setMode, stage, setStageId, sceneId, selectScene, playheadFrame, onPlayheadChange}: PreviewProps) => {
   const sceneAssets = useMemo(
     () => new Map(state.assets.filter((item) => item.sceneId).map((item) => [item.sceneId, item])),
     [state.assets],
@@ -29,6 +31,11 @@ export const Preview = ({state, mode, setMode, stage, setStageId, sceneId, selec
     if (videoRef.current.paused) await videoRef.current.play();
     else videoRef.current.pause();
   };
+  useEffect(() => {
+    if (!videoRef.current) return;
+    const target = playheadFrame / state.composition.fps;
+    if (Math.abs(videoRef.current.currentTime - target) > 0.1) videoRef.current.currentTime = target;
+  }, [playheadFrame, state.composition.fps]);
 
   return (
     <section className="preview-zone">
@@ -53,7 +60,7 @@ export const Preview = ({state, mode, setMode, stage, setStageId, sceneId, selec
         <div className="player-canvas">
           {stage?.url ? (
             stage.kind === 'still' || stage.path.endsWith('.png') ? <img src={stage.url} /> : (
-              <video ref={videoRef} src={stage.url} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} />
+              <video ref={videoRef} src={stage.url} onTimeUpdate={(event) => onPlayheadChange(Math.round(event.currentTarget.currentTime * state.composition.fps))} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} />
             )
           ) : <div className="empty">No rendered preview</div>}
         </div>

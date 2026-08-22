@@ -58,6 +58,14 @@ export const getProjectState = (videoId: string) => {
     }
   }
   const outputLabels: Record<string, string> = {still: "Cover image", silent: "Preview video", unmastered: "Intermediate render", final: "Final video"};
+  const audioTrack = (id: string, label: string, file: string) => ({id, label, path: relative(projectRoot, file), exists: existsSync(file), url: existsSync(file) ? mediaUrl(file) : null});
+  const audioDir = resolve(context.publicDir, "audio");
+  const sfxDir = resolve(audioDir, "sfx");
+  const audio = {
+    voiceover: audioTrack("voiceover", "Voiceover", resolve(audioDir, "voiceover", "voiceover.wav")),
+    music: audioTrack("music", "Music", resolve(audioDir, "music", "underscore.mp3")),
+    sfx: existsSync(sfxDir) ? readdirSync(sfxDir).filter((file) => /\.(wav|mp3|m4a)$/i.test(file)).sort().map((file) => audioTrack(file, file.replace(/\.[^.]+$/, ""), resolve(sfxDir, file))) : [],
+  };
   const stages = [
     ...Object.entries(context.outputs).filter(([id]) => id !== "unmastered").map(([id, file]) => ({id, label: outputLabels[id] ?? id, path: relative(projectRoot, file), exists: existsSync(file), url: existsSync(file) ? mediaUrl(file) : null})),
   ].filter((stage, index, all) => all.findIndex((item) => item.path === stage.path) === index);
@@ -70,12 +78,52 @@ export const getProjectState = (videoId: string) => {
     scenes: sceneIndex.scenes,
     captions,
     effects: (remotionTimeline.effects ?? []).filter((effect: any) => Number.isInteger(effect.startFrame) && Number.isInteger(effect.endFrame) && effect.startFrame >= 0 && effect.endFrame > effect.startFrame && effect.endFrame <= context.composition.durationInFrames),
+    audio,
     cover,
     assets,
     stages,
     revisions: projectState.revisionRequests ?? [],
     qa: readJson(resolve(projectRoot, "output", videoId, "qa-report.json"), null),
   };
+};
+
+export const updateTimelineRange = (videoId: string, input: any) => {
+  const context = loadVideoContext(videoId);
+  const type = String(input.type ?? "");
+  const id = String(input.id ?? "");
+  const startFrame = Number(input.startFrame);
+  const endFrame = Number(input.endFrame);
+  if (!["scene", "caption", "voice", "effect"].includes(type) || !id) throw new Error("Timeline item type and id are required.");
+  if (!Number.isInteger(startFrame) || !Number.isInteger(endFrame) || startFrame < 0 || endFrame <= startFrame || endFrame > context.composition.durationInFrames) throw new Error("Timeline frame range is invalid.");
+
+  if (type === "caption" || type === "voice") {
+    const project = getProjectState(videoId);
+    const caption = project.captions.find((item: any) => item.id === id);
+    if (!caption) throw new Error(`Unknown caption: ${id}`);
+    updateCaption(videoId, id, {text: caption.text, startFrame, endFrame});
+    return {type, id, startFrame, endFrame};
+  }
+
+  if (type === "scene") {
+    const indexFile = resolve(context.sourceDir, "SCENE_INDEX.json");
+    const index = readJson(indexFile);
+    const scene = index.scenes.find((item: any) => item.id === id);
+    if (!scene) throw new Error(`Unknown scene: ${id}`);
+    scene.startFrame = startFrame;
+    scene.endFrame = endFrame;
+    scene.durationInFrames = endFrame - startFrame;
+    writeJson(indexFile, index);
+    return {type, id, startFrame, endFrame};
+  }
+
+  const timelineFile = resolve(context.sourceDir, "REMOTION_TIMELINE.json");
+  const timeline = readJson(timelineFile, {version: 1, effects: []});
+  const effect = timeline.effects.find((item: any) => item.id === id);
+  if (!effect) throw new Error(`Unknown effect: ${id}`);
+  effect.startFrame = startFrame;
+  effect.endFrame = endFrame;
+  writeJson(timelineFile, timeline);
+  return {type, id, startFrame, endFrame};
 };
 
 export const setCover = (videoId: string, input: any) => {

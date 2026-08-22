@@ -1,7 +1,7 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {Button} from '@astryxdesign/core/Button';
 import {Selector} from '@astryxdesign/core/Selector';
-import type {Asset, Caption, ProjectState, ProjectTransport, RemotionEffect} from '@make-video/contracts';
+import type {Asset, AudioTrack, Caption, ProjectState, ProjectTransport, RemotionEffect} from '@make-video/contracts';
 import type {InspectorMode} from '../types';
 import {formatTime} from '../lib/format-time';
 
@@ -12,21 +12,23 @@ type InspectorProps = {
   scene: ProjectState['scenes'][number] | null;
   caption: Caption | null;
   asset: Asset | null;
+  effect: RemotionEffect | null;
+  audioSelection: {type: 'music'; id: string} | null;
   transport: ProjectTransport;
   refresh: () => Promise<void>;
   notice: (value: string) => void;
 };
 
-export const Inspector = ({state, mode, setMode, scene, caption, asset, transport, refresh, notice}: InspectorProps) => (
+export const Inspector = ({state, mode, setMode, scene, caption, asset, effect, audioSelection, transport, refresh, notice}: InspectorProps) => (
   <aside className="inspector panel">
     <div className="inspector-tabs">
-      {(['scene', 'caption', 'image', 'settings'] as const).map((tab) => (
+      {(['scene', 'caption', 'voice', 'effect', 'audio', 'image', 'settings'] as const).map((tab) => (
         <button className={mode === tab ? 'active' : ''} onClick={() => setMode(tab)} key={tab}>
-          {tab === 'image' ? 'Visual' : tab[0].toUpperCase() + tab.slice(1)}
+          {tab === 'image' ? 'Visual' : tab === 'audio' ? 'Music' : tab[0].toUpperCase() + tab.slice(1)}
         </button>
       ))}
     </div>
-    {mode === 'scene' && <SceneInspector scene={scene} fps={state.composition.fps} effects={state.effects.filter((effect) => effect.sceneId === scene?.id)} />}
+    {mode === 'scene' && <SceneInspector scene={scene} asset={asset} fps={state.composition.fps} effects={state.effects.filter((item) => item.sceneId === scene?.id)} />}
     {mode === 'caption' && (caption ? (
       <CaptionEditor
         caption={caption}
@@ -37,15 +39,19 @@ export const Inspector = ({state, mode, setMode, scene, caption, asset, transpor
         }}
       />
     ) : <div className="empty-state">This scene has no caption.</div>)}
+    {mode === 'voice' && (caption ? <VoiceInspector caption={caption} fps={state.composition.fps} track={state.audio.voiceover} /> : <div className="empty-state">Select a voice block.</div>)}
+    {mode === 'effect' && <EffectInspector effect={effect} fps={state.composition.fps} />}
+    {mode === 'audio' && <AudioInspector track={audioSelection ? state.audio.music : state.audio.music} />}
     {mode === 'image' && <ImageInspector state={state} asset={asset} transport={transport} refresh={refresh} notice={notice} />}
     {mode === 'settings' && <ModelSettings state={state} transport={transport} refresh={refresh} notice={notice} />}
   </aside>
 );
 
-const SceneInspector = ({scene, fps, effects}: {scene: ProjectState['scenes'][number] | null; fps: number; effects: RemotionEffect[]}) => scene ? (
+const SceneInspector = ({scene, asset, fps, effects}: {scene: ProjectState['scenes'][number] | null; asset: Asset | null; fps: number; effects: RemotionEffect[]}) => scene ? (
   <div className="inspector-body">
     <span className="kicker">CURRENT SCENE</span>
     <h2>{scene.id}</h2>
+    {asset?.url && <div className="scene-asset-preview">{asset.kind === 'image' ? <img src={asset.url} alt={asset.id} /> : <video src={asset.url} controls />}</div>}
     <dl>
       <dt>Start</dt><dd>{formatTime(scene.startFrame, fps)}</dd>
       <dt>End</dt><dd>{formatTime(scene.endFrame, fps)}</dd>
@@ -64,6 +70,42 @@ const SceneInspector = ({scene, fps, effects}: {scene: ProjectState['scenes'][nu
     </div>
   </div>
 ) : <div className="empty-state">Select a scene.</div>;
+
+const VoiceInspector = ({caption, fps, track}: {caption: Caption; fps: number; track: AudioTrack}) => {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.currentTime = caption.startFrame / fps;
+  }, [caption.id, caption.startFrame, fps, track.url]);
+  const playCaption = async () => {
+    if (!audioRef.current || !track.url) return;
+    audioRef.current.currentTime = caption.startFrame / fps;
+    await audioRef.current.play();
+  };
+  return (
+    <div className="inspector-body">
+      <span className="kicker">VOICE</span><h2>{caption.id}</h2>
+      <p className="inspector-quote">{caption.text}</p>
+      {track.url ? <><audio ref={audioRef} src={track.url} controls preload="metadata" /><Button label="Play this caption" variant="primary" width="100%" onClick={playCaption} /></> : <div className="empty-state">Voiceover audio is not available.</div>}
+      <dl><dt>Start</dt><dd>{formatTime(caption.startFrame, fps)}</dd><dt>End</dt><dd>{formatTime(caption.endFrame, fps)}</dd></dl>
+    </div>
+  );
+};
+
+const AudioInspector = ({track}: {track: AudioTrack}) => (
+  <div className="inspector-body">
+    <span className="kicker">AUDIO TRACK</span><h2>{track.label}</h2>
+    {track.url ? <audio src={track.url} controls preload="metadata" /> : <div className="empty-state">Music audio is not available.</div>}
+    <small>{track.path}</small>
+  </div>
+);
+
+const EffectInspector = ({effect, fps}: {effect: RemotionEffect | null; fps: number}) => effect ? (
+  <div className="inspector-body">
+    <span className="kicker">REMOTION EFFECT</span><h2>{effect.label}</h2>
+    <dl><dt>Type</dt><dd>{effect.type}</dd><dt>Start</dt><dd>{formatTime(effect.startFrame, fps)}</dd><dt>End</dt><dd>{formatTime(effect.endFrame, fps)}</dd><dt>Duration</dt><dd>{((effect.endFrame - effect.startFrame) / fps).toFixed(2)}s</dd></dl>
+    <pre className="effect-parameters">{JSON.stringify(effect.parameters ?? {}, null, 2)}</pre>
+  </div>
+) : <div className="empty-state">Select a Remotion effect.</div>;
 
 const CaptionEditor = ({caption, fps, save}: {caption: Caption; fps: number; save: (caption: Caption) => Promise<void>}) => {
   const [draft, setDraft] = useState(caption);

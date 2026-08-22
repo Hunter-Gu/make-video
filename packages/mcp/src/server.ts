@@ -7,7 +7,7 @@ import {createMcpHandler, McpServer} from "@modelcontextprotocol/server";
 import {z} from "zod";
 
 import {projectRoot} from "./context";
-import {createAssetRevision, getProjectState, listProjects, resolveMediaPath, setCover, updateCaption, updateModels} from "./service";
+import {createAssetRevision, getProjectState, listProjects, resolveMediaPath, setCover, updateCaption, updateModels, updateTimelineRange} from "./service";
 
 type CallToolResult = {
   content: Array<{type: "text"; text: string}>;
@@ -130,6 +130,7 @@ export const startHttpServer = () => {
       if (url.pathname === "/api/projects" && request.method === "GET") return sendJson(response, 200, listProjects());
       if (url.pathname === "/api/project" && request.method === "GET") return sendJson(response, 200, getProjectState(requiredParam(url.searchParams.get("videoId"))));
       if (url.pathname.startsWith("/api/captions/") && request.method === "PATCH") { const input = await readBody(request); return sendJson(response, 200, updateCaption(input.videoId, decodeURIComponent(url.pathname.slice(14)), input)); }
+      if (url.pathname === "/api/timeline" && request.method === "PATCH") { const input = await readBody(request); return sendJson(response, 200, updateTimelineRange(input.videoId, input)); }
       if (url.pathname === "/api/models" && request.method === "PATCH") { const input = await readBody(request); return sendJson(response, 200, updateModels(input.videoId, input)); }
       if (url.pathname === "/api/assets/revisions" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 201, createAssetRevision(input.videoId, input)); }
       if (url.pathname === "/api/cover" && request.method === "PUT") { const input = await readBody(request); return sendJson(response, 200, setCover(input.videoId, input)); }
