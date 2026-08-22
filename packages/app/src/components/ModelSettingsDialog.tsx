@@ -1,9 +1,12 @@
 import {useEffect, useMemo, useState} from 'react';
 import {Button} from '@astryxdesign/core/Button';
 import {Dialog, DialogHeader} from '@astryxdesign/core/Dialog';
+import {Heading} from '@astryxdesign/core/Heading';
+import {HStack} from '@astryxdesign/core/HStack';
 import {Item} from '@astryxdesign/core/Item';
 import {Layout, LayoutContent, LayoutFooter} from '@astryxdesign/core/Layout';
 import {Selector} from '@astryxdesign/core/Selector';
+import {Text} from '@astryxdesign/core/Text';
 import {TextInput} from '@astryxdesign/core/TextInput';
 import type {Model, ModelCatalog, ProjectState, ProjectTransport} from '@make-video/contracts';
 
@@ -62,24 +65,26 @@ export const ModelSettingsDialog = ({state, transport, listModels, refresh, noti
   };
 
   return (
-    <Dialog isOpen onOpenChange={(open) => { if (!open) onClose(); }} purpose="form" width="min(560px, calc(100vw - 32px))" maxHeight="80vh" padding={0}>
+    <Dialog isOpen onOpenChange={(open) => { if (!open) onClose(); }} purpose="form" width="min(560px, calc(100vw - 32px))" maxHeight="80vh">
       <Layout
-        className="min-h-0"
-        header={<DialogHeader title="Generation models" subtitle="Active Gemini models and local provider keys" onOpenChange={(open) => { if (!open) onClose(); }} hasDivider />}
-        content={<LayoutContent className="min-h-0" padding={4}>
+        header={<DialogHeader title="Generation models" subtitle="Active Gemini models and local provider keys" onOpenChange={() => onClose()} hasDivider />}
+        content={<LayoutContent>
           <ModelList title="Image models" models={imageModels} selected={image} onSelect={setImage} />
           <ModelList title="Voice models" models={voiceModels} selected={voice} onSelect={setVoice} />
           <section className="mt-6">
-            <div className="mb-2 flex items-center justify-between"><h3 className="m-0 text-[12px] font-medium">Active Gemini models</h3><span className="text-[10px] text-[#737c87]">{allModels.length ? `${allModels.length.toLocaleString()} available` : 'Loading catalog…'}</span></div>
+            <HStack hAlign="between" vAlign="center" gap={2}>
+              <Heading level={3}>Active Gemini models</Heading>
+              <Text type="supporting" size="2xs">{allModels.length ? `${allModels.length.toLocaleString()} available` : 'Loading catalog…'}</Text>
+            </HStack>
             <TextInput label="Search Gemini models" isLabelHidden placeholder="Search model or id" value={query} onChange={setQuery} />
             {allModels.length > 0 && <div className="max-h-48 overflow-auto rounded-md border border-[#2d3540] bg-[#0e1217]">{filteredModels.map((model) => <Item key={model.id} className="border-b border-[#202731] last:border-b-0" label={model.label} description={`${model.provider} · ${model.id}`} density="compact" />)}</div>}
-            {allModels.length > filteredModels.length && <small className="my-3 block text-[10px] leading-[1.45] text-[#737c87]">Showing {filteredModels.length.toLocaleString()} matching models. Refine the search to browse the full catalog.</small>}
+            {allModels.length > filteredModels.length && <Text type="supporting" size="2xs" display="block">Showing {filteredModels.length.toLocaleString()} matching models. Refine the search to browse the full catalog.</Text>}
           </section>
-          <div className="mt-5 border-t border-[#252a31] pt-4"><span className="text-[9px] tracking-[.13em] text-[#6e7884]">PROVIDER KEYS</span></div>
+          <div className="mt-5 border-t border-[#252a31] pt-4"><Text type="supporting" size="3xs">PROVIDER KEYS</Text></div>
           {providers.map((provider) => <TextInput key={provider} label={`${provider} API key`} type="password" value={apiKeys[provider] ?? ''} placeholder="Stored only in this browser" onChange={(value) => setApiKeys((current) => ({...current, [provider]: value}))} />)}
-          <small className="my-3 block text-[10px] leading-[1.45] text-[#737c87]">API keys stay in this browser and are not sent through MCP. Saving model selection does not start generation.</small>
+          <Text type="supporting" size="2xs" display="block">API keys stay in this browser and are not sent through MCP. Saving model selection does not start generation.</Text>
         </LayoutContent>}
-        footer={<LayoutFooter hasDivider className="flex justify-end gap-2"><Button label="Cancel" variant="secondary" onClick={onClose} /><Button label="Save settings" variant="primary" onClick={save} /></LayoutFooter>}
+        footer={<LayoutFooter hasDivider><HStack hAlign="end" gap={2}><Button label="Cancel" variant="secondary" onClick={onClose} /><Button label="Save settings" variant="primary" onClick={save} /></HStack></LayoutFooter>}
       />
     </Dialog>
   );
@@ -87,7 +92,10 @@ export const ModelSettingsDialog = ({state, transport, listModels, refresh, noti
 
 const ModelList = ({title, models, selected, onSelect}: {title: string; models: Model[]; selected: string; onSelect: (id: string) => void}) => (
   <section className="mb-6 last:mb-0">
-    <div className="mb-2 flex items-center justify-between"><h3 className="m-0 text-[12px] font-medium">{title}</h3><span className="text-[10px] text-[#737c87]">{models.length} available</span></div>
+    <HStack hAlign="between" vAlign="center" gap={2}>
+      <Heading level={3}>{title}</Heading>
+      <Text type="supporting" size="2xs">{models.length} available</Text>
+    </HStack>
     <Selector label={title} isLabelHidden options={models.map((model) => ({value: model.id, label: `${model.label} · ${model.id}`}))} value={selected} onChange={onSelect} width="100%" hasSearch searchPlaceholder="Search models" />
   </section>
 );
