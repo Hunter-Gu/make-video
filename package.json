@@ -24,6 +24,7 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.packages.json"
   },
   "dependencies": {
+    "@make-video/contracts": "workspace:*",
     "@remotion/captions": "^4.0.499",
     "@remotion/cli": "^4.0.499",
     "@remotion/media": "^4.0.499",
