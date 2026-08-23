@@ -1,5 +1,5 @@
 import type {CSSProperties, ReactNode} from 'react';
-import {AbsoluteFill, Img, interpolate, useCurrentFrame} from 'remotion';
+import {AbsoluteFill, Audio, Img, interpolate, useCurrentFrame} from 'remotion';
 import type {ProjectState, SceneContent} from '@make-video/contracts';
 
 export type TimelineEffect = {
@@ -98,6 +98,7 @@ export const ProjectComposition = ({state}: {state: ProjectState}) => {
   const localFrame = scene ? frame - scene.startFrame : 0;
   const progress = scene ? interpolate(localFrame, [0, Math.max(scene.durationInFrames, 1)], [0, 1], {extrapolateRight: 'clamp'}) : 0;
   const sceneEffect = scene ? state.effects.find((item) => item.sceneId === scene.id) ?? null : null;
+  const audioTracks = [state.audio.voiceover, state.audio.music, ...state.audio.sfx].filter((track) => track.exists && track.url);
   return <TimelineEffectFrame effects={state.effects} sceneId={scene?.id ?? ''} globalStartFrame={0}>
     <AbsoluteFill style={{background: '#090d14', color: '#f4ead7', fontFamily: 'Georgia, serif'}}>
       {asset?.url ? <Img src={asset.url} style={{width: '100%', height: '100%', objectFit: 'cover', transform: timelineImageTransform(frame, sceneEffect, progress)}} /> : null}
@@ -105,6 +106,7 @@ export const ProjectComposition = ({state}: {state: ProjectState}) => {
       <SceneContentView content={scene?.content} progress={progress} assetUrl={asset?.url ?? null} />
       {effect ? <div style={{position: 'absolute', left: '8%', top: '8%', color: '#d7a84b', fontFamily: 'Arial, sans-serif', fontSize: 'clamp(10px, 1.2vw, 18px)', letterSpacing: 2}}>{effect.label}</div> : null}
       {caption ? <div style={{position: 'absolute', left: '9%', right: '9%', bottom: '5%', padding: '10px 18px', borderRadius: 8, background: '#05080db8', textAlign: 'center', fontFamily: 'Arial, sans-serif', fontSize: 'clamp(13px, 1.8vw, 30px)', lineHeight: 1.35}}>{caption.text}</div> : null}
+      {audioTracks.map((track) => <Audio key={track.id} src={track.url as string} />)}
     </AbsoluteFill>
   </TimelineEffectFrame>;
 };
