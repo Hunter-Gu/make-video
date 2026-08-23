@@ -1,3 +1,4 @@
 export {ingestSources} from "./ingest";
 export {buildCatalog} from "./catalog";
-export {runSourceCatalog, runSourceIngest} from "./run";
+export {buildSourceList} from "./list";
+export {runSourceCatalog, runSourceIngest, runSourceList} from "./run";

@@ -8,7 +8,7 @@ import {z} from "zod";
 
 import {projectRoot} from "./context";
 import {getModelCatalog} from "./models";
-import {buildSourceCatalog, createAssetRevision, getGenerationJob, getPlan, getProjectState, getQaJob, getRenderJob, getSourceCatalog, getSourceJob, getSources, listProjects, resolveMediaPath, runGeneration, savePlan, setCover, startGeneration, startQa, startRender, startSourceIngest, updateCaption, updateModels, updateTimelineRange, uploadSource} from "./service";
+import {buildSourceCatalog, buildSourceList, createAssetRevision, getGenerationJob, getPlan, getProjectState, getQaJob, getRenderJob, getSourceCatalog, getSourceJob, getSources, listProjects, resolveMediaPath, runGeneration, savePlan, setCover, startGeneration, startQa, startRender, startSourceIngest, updateCaption, updateModels, updateTimelineRange, uploadSource} from "./service";
 
 type CallToolResult = {
   content: Array<{type: "text"; text: string}>;
@@ -91,6 +91,12 @@ export const createMakeVideoMcpServer = () => {
     inputSchema: z.object({videoId: z.string().min(1), force: z.boolean().optional()}),
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: true},
   }, ({videoId, force}) => run(() => buildSourceCatalog(videoId, force ?? true)));
+
+  server.registerTool("make_video_build_source_list", {
+    description: "Build a human-readable SOURCES.md from the indexed source documents and validated source catalog.",
+    inputSchema: z.object({videoId: z.string().min(1), force: z.boolean().optional()}),
+    annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: true},
+  }, ({videoId, force}) => run(() => buildSourceList(videoId, force ?? true)));
 
   server.registerTool("make_video_get_plan", {
     description: "Read the current host-agent video plan for a project.",

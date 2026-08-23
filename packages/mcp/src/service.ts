@@ -6,7 +6,7 @@ import {linkAssets} from "@make-video/assets";
 import {runImages, runMusic, runVoiceover} from "@make-video/ai";
 import {runRender} from "@make-video/render";
 import {runQa} from "@make-video/qa";
-import {runSourceCatalog, runSourceIngest} from "@make-video/sources";
+import {runSourceCatalog, runSourceIngest, runSourceList} from "@make-video/sources";
 import type {GenerationJob} from "@make-video/contracts";
 import type {RenderJob} from "@make-video/contracts";
 import type {QaJob, SourceCatalog, SourceIndex, SourceJob, SourceUpload, VideoPlan} from "@make-video/contracts";
@@ -131,6 +131,13 @@ export const getSources = (videoId: string): SourceIndex => {
 export const getSourceCatalog = (videoId: string): SourceCatalog | null => {
   const context = loadVideoContext(videoId);
   return readJson(resolve(context.sourceDir, "sources", "catalog.json"), null);
+};
+
+export const buildSourceList = async (videoId: string, force = true) => {
+  const context = loadVideoContext(videoId);
+  await runSourceList(videoId, force);
+  const file = resolve(context.sourceDir, "SOURCES.md");
+  return {videoId, path: relative(projectRoot, file), content: readFileSync(file, "utf8")};
 };
 
 export const buildSourceCatalog = async (videoId: string, force = true): Promise<SourceCatalog> => {

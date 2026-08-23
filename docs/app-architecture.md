@@ -44,8 +44,9 @@ The pnpm workspace keeps runtime boundaries explicit:
   `skills/make-video/scripts/qa.mjs` entrypoint with mode arguments.
 - `packages/render`: Remotion and FFmpeg rendering; its build emits one
   `skills/make-video/scripts/render.mjs` entrypoint with mode arguments.
-- `packages/sources`: source ingestion and catalog generation; its build emits
-  one `skills/make-video/scripts/sources.mjs` entrypoint with mode arguments.
+- `packages/sources`: source ingestion, catalog validation, and human-readable
+  source-list generation; its build emits one `skills/make-video/scripts/sources.mjs`
+  entrypoint with mode arguments.
 - `packages/mcp`: TypeScript MCP application service and adapters; its build
   emits one `skills/make-video/scripts/mcp.mjs` entrypoint with `stdio` and
   `http` modes.
@@ -72,6 +73,7 @@ The stdio and `/mcp` Streamable HTTP entries expose the same tools:
 - `make_video_ingest_sources`
 - `make_video_get_sources`
 - `make_video_build_source_catalog`
+- `make_video_build_source_list`
 - `make_video_get_plan`
 - `make_video_save_plan`
 
