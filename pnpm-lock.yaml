@@ -170,6 +170,9 @@ importers:
 
   packages/mcp:
     dependencies:
+      '@make-video/ai':
+        specifier: workspace:*
+        version: link:../ai
       '@make-video/assets':
         specifier: workspace:*
         version: link:../assets

@@ -3,6 +3,7 @@ import {existsSync, readFileSync, readdirSync, renameSync, writeFileSync} from "
 import {dirname, extname, relative, resolve, sep} from "node:path";
 
 import {linkAssets} from "@make-video/assets";
+import {runImages, runMusic, runVoiceover} from "@make-video/ai";
 import {loadVideoContext, projectRoot} from "./context";
 
 const preparedAssetProjects = new Set<string>();
@@ -178,6 +179,15 @@ export const updateModels = (videoId: string, input: any) => {
   if (voice) config.voice = {...(config.voice ?? {}), model: voice, voiceName: config.voice?.voiceName ?? "Kore", direction: config.voice?.direction ?? "Clear documentary narration.", timingMode: config.voice?.timingMode ?? "narration"};
   writeJson(context.configPath, config);
   return {image: config.imageGeneration?.model ?? null, voice: config.voice?.model ?? null};
+};
+
+export const runGeneration = async (videoId: string, kind: "images" | "voiceover" | "music", force = false) => {
+  if (!["images", "voiceover", "music"].includes(kind)) throw new Error(`Unknown generation kind: ${kind}`);
+  const args = [videoId, ...(force ? ["--force"] : [])];
+  if (kind === "images") await runImages(args);
+  else if (kind === "voiceover") await runVoiceover(args);
+  else await runMusic(args);
+  return getProjectState(videoId);
 };
 
 const normalizeGoogleModel = (value: unknown) => typeof value === "string" && value.startsWith("google/") ? value.slice("google/".length) : value;

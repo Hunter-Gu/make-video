@@ -37,9 +37,9 @@ export const Inspector = ({state, mode, setMode, scene, caption, asset, effect, 
         }}
       />
     ) : <div className="grid h-full place-items-center text-xs text-[#68717d]">This scene has no caption.</div>)}
-    {mode === 'voice' && (caption ? <VoiceInspector caption={caption} fps={state.composition.fps} track={state.audio.voiceover} /> : <div className="grid h-full place-items-center text-xs text-[#68717d]">Select a voice block.</div>)}
+    {mode === 'voice' && (caption ? <VoiceInspector caption={caption} fps={state.composition.fps} track={state.audio.voiceover} generate={() => transport.generate(state.videoId, 'voiceover')} notice={notice} refresh={refresh} /> : <div className="grid h-full place-items-center text-xs text-[#68717d]">Select a voice block.</div>)}
     {mode === 'effect' && <EffectInspector effect={effect} fps={state.composition.fps} />}
-    {mode === 'audio' && <AudioInspector track={audioSelection ? state.audio.music : state.audio.music} />}
+    {mode === 'audio' && <AudioInspector track={audioSelection ? state.audio.music : state.audio.music} generate={() => transport.generate(state.videoId, 'music')} notice={notice} refresh={refresh} />}
     {mode === 'image' && <ImageInspector state={state} asset={asset} transport={transport} refresh={refresh} notice={notice} />}
   </aside>
 );
@@ -68,7 +68,7 @@ const SceneInspector = ({scene, asset, fps, effects}: {scene: ProjectState['scen
   </div>
 ) : <div className="grid h-full place-items-center text-xs text-[#68717d]">Select a scene.</div>;
 
-const VoiceInspector = ({caption, fps, track}: {caption: Caption; fps: number; track: AudioTrack}) => {
+const VoiceInspector = ({caption, fps, track, generate, notice, refresh}: {caption: Caption; fps: number; track: AudioTrack; generate: () => Promise<void>; notice: (value: string) => void; refresh: () => Promise<void>}) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   useEffect(() => {
     if (audioRef.current) audioRef.current.currentTime = caption.startFrame / fps;
@@ -83,15 +83,17 @@ const VoiceInspector = ({caption, fps, track}: {caption: Caption; fps: number; t
       <span className="text-[9px] tracking-[.13em] text-[#6e7884]">VOICE</span><h2 className="my-2 mb-5 font-serif text-[22px] font-medium">{caption.id}</h2>
       <p className="rounded-md border-l-2 border-[#d68b46] bg-[#171b21] p-3 text-[11px] leading-[1.5] text-[#c7cdd4]">{caption.text}</p>
       {track.url ? <><audio className="mb-3 block w-full" ref={audioRef} src={track.url} controls preload="metadata" /><Button label="Play this caption" variant="primary" width="100%" onClick={playCaption} /></> : <div className="grid h-full place-items-center text-xs text-[#68717d]">Voiceover audio is not available.</div>}
+      <GenerationButton label="Generate voiceover" generate={generate} notice={notice} refresh={refresh} />
       <dl className="mt-4 grid grid-cols-[1fr_1.2fr] gap-3 text-[11px]"><dt className="text-[#737c87]">Start</dt><dd className="m-0 text-right">{formatTime(caption.startFrame, fps)}</dd><dt className="text-[#737c87]">End</dt><dd className="m-0 text-right">{formatTime(caption.endFrame, fps)}</dd></dl>
     </div>
   );
 };
 
-const AudioInspector = ({track}: {track: AudioTrack}) => (
+const AudioInspector = ({track, generate, notice, refresh}: {track: AudioTrack; generate: () => Promise<void>; notice: (value: string) => void; refresh: () => Promise<void>}) => (
   <div className="px-4 pb-5 pt-2.5">
     <span className="text-[9px] tracking-[.13em] text-[#6e7884]">AUDIO TRACK</span><h2 className="my-2 mb-5 font-serif text-[22px] font-medium">{track.label}</h2>
     {track.url ? <audio className="mb-3 block w-full" src={track.url} controls preload="metadata" /> : <div className="grid h-full place-items-center text-xs text-[#68717d]">Music audio is not available.</div>}
+    <GenerationButton label="Generate music" generate={generate} notice={notice} refresh={refresh} />
     <small className="my-2.5 block text-[9px] leading-[1.45] text-[#737c87]">{track.path}</small>
   </div>
 );
@@ -141,9 +143,21 @@ const ImageInspector = ({state, asset, transport, refresh, notice}: {state: Proj
           setInstruction(''); await refresh(); notice('Revision request created');
         } catch (error) { notice(error instanceof Error ? error.message : String(error)); }
       }} />
+      <GenerationButton label="Generate configured images" generate={() => transport.generate(state.videoId, 'images')} notice={notice} refresh={refresh} />
       <small className="my-2.5 block text-[9px] leading-[1.45] text-[#737c87]">Cover selection is project state. It does not overwrite a rendered thumbnail.</small>
     </div>
   );
+};
+
+const GenerationButton = ({label, generate, notice, refresh}: {label: string; generate: () => Promise<void>; notice: (value: string) => void; refresh: () => Promise<void>}) => {
+  const [running, setRunning] = useState(false);
+  const run = async () => {
+    setRunning(true);
+    try { await generate(); await refresh(); notice(`${label} complete`); }
+    catch (error) { notice(error instanceof Error ? error.message : String(error)); }
+    finally { setRunning(false); }
+  };
+  return <Button className="mt-2" label={running ? `${label}…` : label} variant="secondary" width="100%" isDisabled={running} onClick={run} />;
 };
 
 const effectKind = (type: string) => type.includes('video') || type.includes('montage') ? 'media' : type.includes('depth') || type.includes('zoom') || type.includes('burns') ? 'camera' : type.includes('draw') || type.includes('route') || type.includes('network') ? 'draw' : 'reveal';
