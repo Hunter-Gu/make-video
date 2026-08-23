@@ -49,6 +49,7 @@ export type QaSummary = {passed: boolean; reports?: Array<{kind: QaKind; passed:
 export type SourceBlock = {id: string; locator: string; text: string};
 export type ProjectSource = {id: string; title: string; type: string; origin: string; rights: string; sha256: string; blocks: SourceBlock[]};
 export type SourceIndex = {videoId: string; sources: ProjectSource[]};
+export type SourceCatalog = {videoId: string; entities: Array<Record<string, unknown>>; quotations: Array<Record<string, unknown>>; claims: Array<Record<string, unknown>>; illustrations: Array<Record<string, unknown>>};
 export type SourceJob = {id: string; videoId: string; status: "queued" | "running" | "succeeded" | "failed"; createdAt: string; startedAt?: string; completedAt?: string; error?: string};
 export type SourceUpload = {videoId: string; source: {id: string; title: string; type: string; input: string; rights: string}};
 export type ProjectState = {videoId: string; composition: {fps: number; durationInFrames: number; width: number; height: number}; models: {image: string | null; voice: string | null}; registry: {image: Model[]; voice: Model[]}; scenes: Scene[]; captions: Caption[]; effects: RemotionEffect[]; audio: ProjectAudio; cover: Cover | null; assets: Asset[]; stages: Stage[]; revisions: Array<{id: string; assetId: string; instruction: string; status: string}>; sources: ProjectSource[]; qa: QaSummary | null};
@@ -70,6 +71,7 @@ export interface ProjectTransport {
   ingestSources(videoId: string, force?: boolean): Promise<SourceJob>;
   getSourceJob(jobId: string): Promise<SourceJob>;
   getSources(videoId: string): Promise<SourceIndex>;
+  buildSourceCatalog(videoId: string, force?: boolean): Promise<SourceCatalog>;
   createAssetRevision(videoId: string, input: {assetId: string; sceneId: string | null; modelId: string | null; instruction: string}): Promise<void>;
   setCover(videoId: string, assetId: string): Promise<void>;
 }

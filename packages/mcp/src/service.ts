@@ -6,10 +6,10 @@ import {linkAssets} from "@make-video/assets";
 import {runImages, runMusic, runVoiceover} from "@make-video/ai";
 import {runRender} from "@make-video/render";
 import {runQa} from "@make-video/qa";
-import {runSourceIngest} from "@make-video/sources";
+import {runSourceCatalog, runSourceIngest} from "@make-video/sources";
 import type {GenerationJob} from "@make-video/contracts";
 import type {RenderJob} from "@make-video/contracts";
-import type {QaJob, SourceIndex, SourceJob, SourceUpload} from "@make-video/contracts";
+import type {QaJob, SourceCatalog, SourceIndex, SourceJob, SourceUpload} from "@make-video/contracts";
 import {loadVideoContext, projectRoot} from "./context";
 
 const preparedAssetProjects = new Set<string>();
@@ -125,6 +125,18 @@ export const getProjectState = (videoId: string) => {
 export const getSources = (videoId: string): SourceIndex => {
   const context = loadVideoContext(videoId);
   return readJson(resolve(context.sourceDir, "sources", "index.json"), {videoId, sources: []});
+};
+
+export const getSourceCatalog = (videoId: string): SourceCatalog | null => {
+  const context = loadVideoContext(videoId);
+  return readJson(resolve(context.sourceDir, "sources", "catalog.json"), null);
+};
+
+export const buildSourceCatalog = async (videoId: string, force = true): Promise<SourceCatalog> => {
+  await runSourceCatalog(videoId, force);
+  const catalog = getSourceCatalog(videoId);
+  if (!catalog) throw new Error(`Source catalog was not created for ${videoId}.`);
+  return catalog;
 };
 
 export const uploadSource = (videoId: string, filename: string, data: Buffer): SourceUpload => {

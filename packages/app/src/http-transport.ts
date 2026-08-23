@@ -1,4 +1,4 @@
-import type {Caption, GenerationJob, GenerationKind, ProjectTransport, QaJob, QaKind, RenderJob, RenderKind, SourceIndex, SourceJob, SourceUpload} from "@make-video/contracts";
+import type {Caption, GenerationJob, GenerationKind, ProjectTransport, QaJob, QaKind, RenderJob, RenderKind, SourceCatalog, SourceIndex, SourceJob, SourceUpload} from "@make-video/contracts";
 
 const request = async <T,>(path: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(path, {...init, headers: {"content-type": "application/json", ...init?.headers}});
@@ -31,6 +31,7 @@ export const httpTransport: ProjectTransport = {
   ingestSources: (videoId: string, force = true) => request<SourceJob>("/api/sources/ingest", {method: "POST", body: JSON.stringify({videoId, force})}),
   getSourceJob: (jobId: string) => request<SourceJob>(`/api/sources/ingest/${encodeURIComponent(jobId)}`),
   getSources: (videoId: string) => request<SourceIndex>(`/api/sources?videoId=${encodeURIComponent(videoId)}`),
+  buildSourceCatalog: (videoId: string, force = true) => request<SourceCatalog>("/api/sources/catalog", {method: "POST", body: JSON.stringify({videoId, force})}),
   createAssetRevision: async (videoId, input) => { await request("/api/assets/revisions", {method: "POST", body: JSON.stringify({videoId, ...input})}); },
   setCover: async (videoId, assetId) => { await request("/api/cover", {method: "PUT", body: JSON.stringify({videoId, assetId})}); },
 };

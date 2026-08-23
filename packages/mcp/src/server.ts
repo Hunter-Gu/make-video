@@ -8,7 +8,7 @@ import {z} from "zod";
 
 import {projectRoot} from "./context";
 import {getModelCatalog} from "./models";
-import {createAssetRevision, getGenerationJob, getProjectState, getQaJob, getRenderJob, getSourceJob, getSources, listProjects, resolveMediaPath, runGeneration, setCover, startGeneration, startQa, startRender, startSourceIngest, updateCaption, updateModels, updateTimelineRange, uploadSource} from "./service";
+import {buildSourceCatalog, createAssetRevision, getGenerationJob, getProjectState, getQaJob, getRenderJob, getSourceCatalog, getSourceJob, getSources, listProjects, resolveMediaPath, runGeneration, setCover, startGeneration, startQa, startRender, startSourceIngest, updateCaption, updateModels, updateTimelineRange, uploadSource} from "./service";
 
 type CallToolResult = {
   content: Array<{type: "text"; text: string}>;
@@ -85,6 +85,12 @@ export const createMakeVideoMcpServer = () => {
     inputSchema: z.object({videoId: z.string().min(1)}),
     annotations: {readOnlyHint: true},
   }, ({videoId}) => run(() => getSources(videoId)));
+
+  server.registerTool("make_video_build_source_catalog", {
+    description: "Validate source annotations and build the deterministic catalog of entities, quotations, claims, and illustrations.",
+    inputSchema: z.object({videoId: z.string().min(1), force: z.boolean().optional()}),
+    annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: true},
+  }, ({videoId, force}) => run(() => buildSourceCatalog(videoId, force ?? true)));
 
   server.registerTool("make_video_request_image_revision", {
     description: "Create a non-destructive, versioned image revision request for an existing image asset.",
@@ -199,6 +205,8 @@ export const startHttpServer = () => {
       if (url.pathname === "/api/qa" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 202, startQa(input.videoId, input.kind)); }
       if (url.pathname.startsWith("/api/qa/") && request.method === "GET") return sendJson(response, 200, getQaJob(decodeURIComponent(url.pathname.slice(9))));
       if (url.pathname === "/api/sources" && request.method === "GET") return sendJson(response, 200, getSources(requiredParam(url.searchParams.get("videoId"))));
+      if (url.pathname === "/api/sources/catalog" && request.method === "GET") return sendJson(response, 200, getSourceCatalog(requiredParam(url.searchParams.get("videoId"))));
+      if (url.pathname === "/api/sources/catalog" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 200, await buildSourceCatalog(input.videoId, input.force ?? true)); }
       if (url.pathname === "/api/sources/upload" && request.method === "POST") { const input = parseUpload(request, await readRawBody(request)); return sendJson(response, 201, uploadSource(requiredParam(url.searchParams.get("videoId")), input.filename, input.data)); }
       if (url.pathname === "/api/sources/ingest" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 202, startSourceIngest(input.videoId, input.force ?? true)); }
       if (url.pathname.startsWith("/api/sources/ingest/") && request.method === "GET") return sendJson(response, 200, getSourceJob(decodeURIComponent(url.pathname.slice("/api/sources/ingest/".length))));
