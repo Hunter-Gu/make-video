@@ -69,6 +69,11 @@ The stdio and `/mcp` Streamable HTTP entries expose the same tools:
 - `make_video_update_models`
 - `make_video_request_image_revision`
 - `make_video_set_cover`
+- `make_video_ingest_sources`
+- `make_video_get_sources`
+- `make_video_build_source_catalog`
+- `make_video_get_plan`
+- `make_video_save_plan`
 
 They also expose `make-video://projects` and one read-only project resource per
 video. Tool handlers contain no filesystem rules; they delegate to
@@ -86,6 +91,8 @@ Inspectable project files remain authoritative:
 - `PROJECT_STATE.json` stores revision requests and UI-relevant production state.
 - `COVER.json` stores the selected cover source without overwriting a rendered
   thumbnail.
+- `VIDEO_PLAN.json` stores the host-agent-authored, source-referenced plan;
+  MCP validates its source block references before writing it.
 - Rendered media and QA reports remain under `output/<video-id>/`.
 
 Browser state is limited to presentation preferences. It must not become a

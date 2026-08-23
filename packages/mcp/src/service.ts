@@ -9,7 +9,7 @@ import {runQa} from "@make-video/qa";
 import {runSourceCatalog, runSourceIngest} from "@make-video/sources";
 import type {GenerationJob} from "@make-video/contracts";
 import type {RenderJob} from "@make-video/contracts";
-import type {QaJob, SourceCatalog, SourceIndex, SourceJob, SourceUpload} from "@make-video/contracts";
+import type {QaJob, SourceCatalog, SourceIndex, SourceJob, SourceUpload, VideoPlan} from "@make-video/contracts";
 import {loadVideoContext, projectRoot} from "./context";
 
 const preparedAssetProjects = new Set<string>();
@@ -118,6 +118,7 @@ export const getProjectState = (videoId: string) => {
     stages,
     revisions: projectState.revisionRequests ?? [],
     sources: sourceIndex.sources,
+    plan: getPlan(videoId),
     qa: qaReports.length > 0 ? {passed: qaReports.every((item) => item.report.passed === true), reports: qaReports.map((item) => ({kind: item.kind, passed: item.report.passed === true, checkedAt: item.report.checkedAt}))} : null,
   };
 };
@@ -137,6 +138,45 @@ export const buildSourceCatalog = async (videoId: string, force = true): Promise
   const catalog = getSourceCatalog(videoId);
   if (!catalog) throw new Error(`Source catalog was not created for ${videoId}.`);
   return catalog;
+};
+
+const planSceneTypes = new Set(["chapter", "image", "portrait", "depth", "video", "quote", "timeline", "comparison", "statistic", "chart", "map", "document", "relationship", "montage"]);
+const planModes = new Set(["overview", "chapter-explanation", "documentary", "series-episode"]);
+const validatePlan = (videoId: string, value: unknown): VideoPlan => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Video plan must be an object.");
+  const plan = value as Record<string, any>;
+  if (plan.version !== 1 || typeof plan.title !== "string" || !plan.title.trim()) throw new Error("Video plan needs version 1 and a title.");
+  if (!planModes.has(plan.adaptationMode) || typeof plan.audience !== "string" || typeof plan.language !== "string" || !Number.isFinite(plan.durationSeconds) || plan.durationSeconds <= 0) throw new Error("Video plan metadata is invalid.");
+  if (!Array.isArray(plan.sourceBlockIds) || !Array.isArray(plan.chapters) || !Array.isArray(plan.scenes)) throw new Error("Video plan needs sourceBlockIds, chapters, and scenes arrays.");
+  const sourceBlockIds = new Set(getSources(videoId).sources.flatMap((source) => source.blocks.map((block) => block.id)));
+  const checkRefs = (refs: unknown, label: string) => {
+    if (!Array.isArray(refs) || refs.some((id) => typeof id !== "string" || !sourceBlockIds.has(id))) throw new Error(`${label} contains an unknown source block.`);
+  };
+  checkRefs(plan.sourceBlockIds, "Video plan sourceBlockIds");
+  const chapterIds = new Set<string>();
+  for (const chapter of plan.chapters) {
+    if (!chapter || typeof chapter.id !== "string" || !chapter.id || chapterIds.has(chapter.id) || typeof chapter.title !== "string" || typeof chapter.objective !== "string" || !Array.isArray(chapter.sceneIds)) throw new Error("Video plan contains an invalid chapter.");
+    chapterIds.add(chapter.id); checkRefs(chapter.sourceBlockIds, `Chapter ${chapter.id} sourceBlockIds`);
+  }
+  const sceneIds = new Set<string>();
+  for (const scene of plan.scenes) {
+    if (!scene || typeof scene.id !== "string" || !scene.id || sceneIds.has(scene.id) || !chapterIds.has(scene.chapterId) || typeof scene.title !== "string" || !planSceneTypes.has(scene.type) || typeof scene.objective !== "string") throw new Error("Video plan contains an invalid scene.");
+    sceneIds.add(scene.id); checkRefs(scene.sourceBlockIds, `Scene ${scene.id} sourceBlockIds`);
+  }
+  for (const chapter of plan.chapters) if (chapter.sceneIds.some((id: unknown) => typeof id !== "string" || !sceneIds.has(id) || plan.scenes.find((scene: any) => scene.id === id)?.chapterId !== chapter.id)) throw new Error(`Chapter ${chapter.id} has an invalid scene reference.`);
+  return plan as VideoPlan;
+};
+
+export const getPlan = (videoId: string): VideoPlan | null => {
+  const context = loadVideoContext(videoId);
+  return readJson(resolve(context.sourceDir, "VIDEO_PLAN.json"), null);
+};
+
+export const savePlan = (videoId: string, value: unknown): VideoPlan => {
+  const context = loadVideoContext(videoId);
+  const plan = validatePlan(videoId, value);
+  writeJson(resolve(context.sourceDir, "VIDEO_PLAN.json"), plan);
+  return plan;
 };
 
 export const uploadSource = (videoId: string, filename: string, data: Buffer): SourceUpload => {

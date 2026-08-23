@@ -52,7 +52,10 @@ export type SourceIndex = {videoId: string; sources: ProjectSource[]};
 export type SourceCatalog = {videoId: string; entities: Array<Record<string, unknown>>; quotations: Array<Record<string, unknown>>; claims: Array<Record<string, unknown>>; illustrations: Array<Record<string, unknown>>};
 export type SourceJob = {id: string; videoId: string; status: "queued" | "running" | "succeeded" | "failed"; createdAt: string; startedAt?: string; completedAt?: string; error?: string};
 export type SourceUpload = {videoId: string; source: {id: string; title: string; type: string; input: string; rights: string}};
-export type ProjectState = {videoId: string; composition: {fps: number; durationInFrames: number; width: number; height: number}; models: {image: string | null; voice: string | null}; registry: {image: Model[]; voice: Model[]}; scenes: Scene[]; captions: Caption[]; effects: RemotionEffect[]; audio: ProjectAudio; cover: Cover | null; assets: Asset[]; stages: Stage[]; revisions: Array<{id: string; assetId: string; instruction: string; status: string}>; sources: ProjectSource[]; qa: QaSummary | null};
+export type VideoPlanScene = {id: string; chapterId: string; title: string; type: SceneType; objective: string; sourceBlockIds: string[]; visualDirection?: string};
+export type VideoPlanChapter = {id: string; title: string; objective: string; sourceBlockIds: string[]; sceneIds: string[]};
+export type VideoPlan = {version: 1; title: string; adaptationMode: "overview" | "chapter-explanation" | "documentary" | "series-episode"; audience: string; language: string; durationSeconds: number; sourceBlockIds: string[]; chapters: VideoPlanChapter[]; scenes: VideoPlanScene[]};
+export type ProjectState = {videoId: string; composition: {fps: number; durationInFrames: number; width: number; height: number}; models: {image: string | null; voice: string | null}; registry: {image: Model[]; voice: Model[]}; scenes: Scene[]; captions: Caption[]; effects: RemotionEffect[]; audio: ProjectAudio; cover: Cover | null; assets: Asset[]; stages: Stage[]; revisions: Array<{id: string; assetId: string; instruction: string; status: string}>; sources: ProjectSource[]; plan: VideoPlan | null; qa: QaSummary | null};
 
 export interface ProjectTransport {
   listProjects(): Promise<string[]>;
@@ -72,6 +75,8 @@ export interface ProjectTransport {
   getSourceJob(jobId: string): Promise<SourceJob>;
   getSources(videoId: string): Promise<SourceIndex>;
   buildSourceCatalog(videoId: string, force?: boolean): Promise<SourceCatalog>;
+  getPlan(videoId: string): Promise<VideoPlan | null>;
+  savePlan(videoId: string, plan: VideoPlan): Promise<VideoPlan>;
   createAssetRevision(videoId: string, input: {assetId: string; sceneId: string | null; modelId: string | null; instruction: string}): Promise<void>;
   setCover(videoId: string, assetId: string): Promise<void>;
 }

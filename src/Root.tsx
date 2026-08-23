@@ -32,6 +32,7 @@ const projectState: ProjectState = {
   stages: [],
   revisions: [],
   sources: [],
+  plan: null,
   qa: null,
 };
 
