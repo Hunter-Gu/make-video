@@ -111,7 +111,7 @@ export const App = ({transport}: {transport: ProjectTransport}) => {
         </div>
       </header>
       <section className="grid min-h-0 grid-cols-[220px_minmax(460px,1fr)_300px] max-[1120px]:grid-cols-[180px_minmax(430px,1fr)_260px]">
-        <AssetBin state={state} selected={assetId} onSelect={selectAsset} />
+        <AssetBin state={state} selected={assetId} onSelect={selectAsset} transport={transport} refresh={refreshCurrent} notice={setNotice} />
         <Preview state={state} mode={previewMode} setMode={setPreviewMode} stage={stage} setStageId={setStageId} sceneId={sceneId} selectScene={selectScene} playheadFrame={playheadFrame} onPlayheadChange={setPlayheadFrame} />
         <Inspector state={state} mode={inspectorMode} setMode={setInspectorMode} scene={scene} caption={caption} asset={asset} effect={selection?.type === 'effect' ? state.effects.find((item) => item.id === selection.id) ?? null : null} audioSelection={selection?.type === 'music' ? selection : null} transport={transport} refresh={refreshCurrent} notice={setNotice} />
       </section>

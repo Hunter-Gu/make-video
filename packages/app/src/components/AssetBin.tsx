@@ -1,15 +1,18 @@
 import {useState} from 'react';
 import {Button} from '@astryxdesign/core/Button';
 import {SegmentedControl, SegmentedControlItem} from '@astryxdesign/core/SegmentedControl';
-import type {Asset, ProjectState} from '@make-video/contracts';
+import type {Asset, ProjectState, ProjectTransport, RenderJob, RenderKind} from '@make-video/contracts';
 
 type AssetBinProps = {
   state: ProjectState;
   selected: string | null;
   onSelect: (asset: Asset) => void;
+  transport: ProjectTransport;
+  refresh: () => Promise<void>;
+  notice: (value: string) => void;
 };
 
-export const AssetBin = ({state, selected, onSelect}: AssetBinProps) => {
+export const AssetBin = ({state, selected, onSelect, transport, refresh, notice}: AssetBinProps) => {
   const [tab, setTab] = useState<'media' | 'renders'>('media');
 
   return (
@@ -35,6 +38,10 @@ export const AssetBin = ({state, selected, onSelect}: AssetBinProps) => {
         </div>
       ) : (
         <div className="grid gap-1">
+          <div className="mb-2 grid grid-cols-2 gap-1.5">
+            <RenderButton label="Render preview" kind="preview" videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} />
+            <RenderButton label="Render final" kind="final" videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} />
+          </div>
           {state.stages.map((stage) => (
             <div className={`grid grid-cols-[10px_1fr_auto] items-center gap-2 rounded-md bg-[#171b21] p-2 text-[10px] ${stage.exists ? '' : ''}`} key={stage.id}>
               <i className={`h-1.5 w-1.5 rounded-full ${stage.exists ? 'bg-[#61b88f]' : 'bg-[#4a5059]'}`} />
@@ -46,4 +53,22 @@ export const AssetBin = ({state, selected, onSelect}: AssetBinProps) => {
       )}
     </aside>
   );
+};
+
+const RenderButton = ({label, kind, videoId, transport, refresh, notice}: {label: string; kind: RenderKind; videoId: string; transport: ProjectTransport; refresh: () => Promise<void>; notice: (value: string) => void}) => {
+  const [running, setRunning] = useState(false);
+  const run = async () => {
+    setRunning(true);
+    try {
+      let job: RenderJob = await transport.render(videoId, kind);
+      while (job.status === 'queued' || job.status === 'running') {
+        await new Promise((resolve) => window.setTimeout(resolve, 500));
+        job = await transport.getRenderJob(job.id);
+      }
+      if (job.status === 'failed') throw new Error(job.error ?? `${label} failed`);
+      await refresh(); notice(`${label} complete`);
+    } catch (error) { notice(error instanceof Error ? error.message : String(error)); }
+    finally { setRunning(false); }
+  };
+  return <button className="rounded-md border border-[#343c47] bg-[#20252d] px-2 py-2 text-[9px] text-[#d7dde5] hover:bg-[#2b323d] disabled:cursor-wait disabled:opacity-60" disabled={running} onClick={run}>{running ? `${label}…` : label}</button>;
 };

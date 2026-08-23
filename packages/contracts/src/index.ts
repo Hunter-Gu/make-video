@@ -41,6 +41,8 @@ export type AudioTrack = {id: string; label: string; path: string; exists: boole
 export type ProjectAudio = {voiceover: AudioTrack; music: AudioTrack; sfx: AudioTrack[]};
 export type GenerationKind = "images" | "voiceover" | "music";
 export type GenerationJob = {id: string; videoId: string; kind: GenerationKind; status: "queued" | "running" | "succeeded" | "failed"; createdAt: string; startedAt?: string; completedAt?: string; error?: string};
+export type RenderKind = "still" | "preview" | "final";
+export type RenderJob = {id: string; videoId: string; kind: RenderKind; status: "queued" | "running" | "succeeded" | "failed"; createdAt: string; startedAt?: string; completedAt?: string; error?: string};
 export type ProjectState = {videoId: string; composition: {fps: number; durationInFrames: number; width: number; height: number}; models: {image: string | null; voice: string | null}; registry: {image: Model[]; voice: Model[]}; scenes: Scene[]; captions: Caption[]; effects: RemotionEffect[]; audio: ProjectAudio; cover: Cover | null; assets: Asset[]; stages: Stage[]; revisions: Array<{id: string; assetId: string; instruction: string; status: string}>; qa: {passed: boolean} | null};
 
 export interface ProjectTransport {
@@ -52,6 +54,8 @@ export interface ProjectTransport {
   updateModels(videoId: string, models: {image?: string; voice?: string}): Promise<void>;
   generate(videoId: string, kind: GenerationKind, force?: boolean): Promise<GenerationJob>;
   getGenerationJob(jobId: string): Promise<GenerationJob>;
+  render(videoId: string, kind: RenderKind, force?: boolean): Promise<RenderJob>;
+  getRenderJob(jobId: string): Promise<RenderJob>;
   createAssetRevision(videoId: string, input: {assetId: string; sceneId: string | null; modelId: string | null; instruction: string}): Promise<void>;
   setCover(videoId: string, assetId: string): Promise<void>;
 }

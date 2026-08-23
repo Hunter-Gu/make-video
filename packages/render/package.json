@@ -13,5 +13,11 @@
     "@types/node": "^26.1.1",
     "esbuild": "^0.28.1",
     "typescript": "^5.9.3"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/run.ts",
+      "import": "./src/run.ts"
+    }
   }
 }

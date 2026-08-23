@@ -4,11 +4,14 @@ import {dirname, extname, relative, resolve, sep} from "node:path";
 
 import {linkAssets} from "@make-video/assets";
 import {runImages, runMusic, runVoiceover} from "@make-video/ai";
+import {runRender} from "@make-video/render";
 import type {GenerationJob} from "@make-video/contracts";
+import type {RenderJob} from "@make-video/contracts";
 import {loadVideoContext, projectRoot} from "./context";
 
 const preparedAssetProjects = new Set<string>();
 const generationJobs = new Map<string, GenerationJob>();
+const renderJobs = new Map<string, RenderJob>();
 
 /** Prepare ignored public/ links before reading project media. */
 export const prepareProjectAssets = (videoId: string) => {
@@ -215,6 +218,32 @@ export const startGeneration = (videoId: string, kind: "images" | "voiceover" | 
 export const getGenerationJob = (jobId: string) => {
   const job = generationJobs.get(jobId);
   if (!job) throw new Error(`Generation job not found: ${jobId}`);
+  return job;
+};
+
+export const startRender = (videoId: string, kind: "still" | "preview" | "final", force = false): RenderJob => {
+  if (!["still", "preview", "final"].includes(kind)) throw new Error(`Unknown render kind: ${kind}`);
+  const job: RenderJob = {id: randomUUID(), videoId, kind, status: "queued", createdAt: new Date().toISOString()};
+  renderJobs.set(job.id, job);
+  void (async () => {
+    job.status = "running";
+    job.startedAt = new Date().toISOString();
+    try {
+      await runRender(kind, videoId, force);
+      job.status = "succeeded";
+    } catch (error) {
+      job.status = "failed";
+      job.error = error instanceof Error ? error.message : String(error);
+    } finally {
+      job.completedAt = new Date().toISOString();
+    }
+  })();
+  return job;
+};
+
+export const getRenderJob = (jobId: string) => {
+  const job = renderJobs.get(jobId);
+  if (!job) throw new Error(`Render job not found: ${jobId}`);
   return job;
 };
 
