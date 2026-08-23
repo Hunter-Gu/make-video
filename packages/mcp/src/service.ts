@@ -75,7 +75,7 @@ export const getProjectState = (videoId: string) => {
     composition: context.composition,
     models: {image: context.config.imageGeneration?.model ?? null, voice: context.config.voice?.model ?? null},
     registry: {image: [], voice: []},
-    scenes: sceneIndex.scenes,
+    scenes: sceneIndex.scenes.map((scene: any) => ({...scene, ...(scene.content ? {content: scene.content} : {})})),
     captions,
     effects: (remotionTimeline.effects ?? []).filter((effect: any) => Number.isInteger(effect.startFrame) && Number.isInteger(effect.endFrame) && effect.startFrame >= 0 && effect.endFrame > effect.startFrame && effect.endFrame <= context.composition.durationInFrames),
     audio,

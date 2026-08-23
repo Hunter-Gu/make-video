@@ -14,6 +14,9 @@ export const buildTiming = (videoId: string, force: boolean) => {
   const scriptFile = resolve(context.sourceDir, "SCRIPT.md");
   const script = existsSync(scriptFile) ? new Map([...readFileSync(scriptFile, "utf8").matchAll(/^- `([^`]+)`: (.+)$/gm)].map((match) => [match[1], match[2]])) : new Map();
   const fps = context.composition.fps;
+  const indexFile = resolve(context.sourceDir, "SCENE_INDEX.json");
+  const previousIndex = existsSync(indexFile) ? JSON.parse(readFileSync(indexFile, "utf8")) : null;
+  const previousScenes = new Map((previousIndex?.scenes ?? []).map((scene: any) => [scene.id, scene]));
   const scenes: any[] = []; const captions: any[] = []; let frame = 0;
   for (const scene of plan.scenes ?? []) {
     const narrationIds = scene.narrationIds ?? [];
@@ -22,11 +25,11 @@ export const buildTiming = (videoId: string, force: boolean) => {
     if (!Number.isInteger(durationInFrames) || durationInFrames <= 0) throw new Error(`Scene ${scene.id} has no valid duration.`);
     let narrationFrame = frame + (scene.leadFrames ?? 0);
     for (const id of narrationIds) { const segmentFrames = Math.ceil(voice.segments[id].durationSeconds * fps); captions.push({id, sceneId: scene.id, text: script.get(id) ?? "", startFrame: narrationFrame, endFrame: narrationFrame + segmentFrames}); narrationFrame += segmentFrames; }
-    scenes.push({...scene, startFrame: frame, endFrame: frame + durationInFrames, durationInFrames, timingSource: narrationIds.length > 0 ? "voice-manifest" : "fixed"});
+    const previousScene = previousScenes.get(scene.id) as any;
+    scenes.push({...previousScene, ...scene, startFrame: frame, endFrame: frame + durationInFrames, durationInFrames, timingSource: narrationIds.length > 0 ? "voice-manifest" : "fixed"});
     frame += durationInFrames;
   }
   const sceneIndex = {version: 1, fps, voiceManifest: plan.voiceManifest, assets: plan.assets ?? {}, captions, scenes};
-  const indexFile = resolve(context.sourceDir, "SCENE_INDEX.json");
   assertOutputAvailable([indexFile], force, `Narration timing for ${videoId}`);
   const segmentFiles = captions.map((caption) => resolve(dirname(manifestFile), `${caption.id}.wav`));
   const canAssembleVoiceover = segmentFiles.length > 0 && segmentFiles.every(existsSync);

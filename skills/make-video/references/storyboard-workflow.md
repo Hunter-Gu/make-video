@@ -69,6 +69,10 @@ Save the storyboard as `src/<video-id>/STORYBOARD.md`. Include an asset summary
 with approximate supplied, sourced, generated, and programmatic counts so the
 user can understand cost and workload.
 
+Persist the renderable scene content alongside timing in `SCENE_INDEX.json`.
+Use the optional `content` object for the scene type and its visual data so the
+GUI Player and the Remotion renderer can consume the same scene description.
+
 ## Before generation
 
 Before generating media, make sure that:

@@ -79,7 +79,8 @@ the shared MCP application service, just like the REST compatibility routes.
 Inspectable project files remain authoritative:
 
 - `video.config.json` stores selected image and voice models.
-- `SCENE_INDEX.json` stores scene and caption timing.
+- `SCENE_INDEX.json` stores scene and caption timing plus optional scene content
+  (`type`, titles, quotes, charts, maps, documents, and relationship data).
 - `REMOTION_TIMELINE.json` stores absolute-frame Remotion effects for the FX
   track, including effect type, label, parameters, and scene association.
 - `PROJECT_STATE.json` stores revision requests and UI-relevant production state.
