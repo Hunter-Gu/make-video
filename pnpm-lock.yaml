@@ -182,6 +182,9 @@ importers:
       '@make-video/render':
         specifier: workspace:*
         version: link:../render
+      '@make-video/qa':
+        specifier: workspace:*
+        version: link:../qa
       '@modelcontextprotocol/client':
         specifier: ^2.0.0
         version: 2.0.0

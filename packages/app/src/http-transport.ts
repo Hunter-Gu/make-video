@@ -1,4 +1,4 @@
-import type {Caption, GenerationJob, GenerationKind, ProjectTransport, RenderJob, RenderKind} from "@make-video/contracts";
+import type {Caption, GenerationJob, GenerationKind, ProjectTransport, QaJob, QaKind, RenderJob, RenderKind} from "@make-video/contracts";
 
 const request = async <T,>(path: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(path, {...init, headers: {"content-type": "application/json", ...init?.headers}});
@@ -18,6 +18,8 @@ export const httpTransport: ProjectTransport = {
   getGenerationJob: (jobId: string) => request<GenerationJob>(`/api/generate/${encodeURIComponent(jobId)}`),
   render: (videoId: string, kind: RenderKind, force = false) => request<RenderJob>("/api/render", {method: "POST", body: JSON.stringify({videoId, kind, force})}),
   getRenderJob: (jobId: string) => request<RenderJob>(`/api/render/${encodeURIComponent(jobId)}`),
+  runQa: (videoId: string, kind: QaKind) => request<QaJob>("/api/qa", {method: "POST", body: JSON.stringify({videoId, kind})}),
+  getQaJob: (jobId: string) => request<QaJob>(`/api/qa/${encodeURIComponent(jobId)}`),
   createAssetRevision: async (videoId, input) => { await request("/api/assets/revisions", {method: "POST", body: JSON.stringify({videoId, ...input})}); },
   setCover: async (videoId, assetId) => { await request("/api/cover", {method: "PUT", body: JSON.stringify({videoId, assetId})}); },
 };

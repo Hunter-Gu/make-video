@@ -8,7 +8,7 @@ import {z} from "zod";
 
 import {projectRoot} from "./context";
 import {getModelCatalog} from "./models";
-import {createAssetRevision, getGenerationJob, getProjectState, getRenderJob, listProjects, resolveMediaPath, runGeneration, setCover, startGeneration, startRender, updateCaption, updateModels, updateTimelineRange} from "./service";
+import {createAssetRevision, getGenerationJob, getProjectState, getQaJob, getRenderJob, listProjects, resolveMediaPath, runGeneration, setCover, startGeneration, startQa, startRender, updateCaption, updateModels, updateTimelineRange} from "./service";
 
 type CallToolResult = {
   content: Array<{type: "text"; text: string}>;
@@ -67,6 +67,12 @@ export const createMakeVideoMcpServer = () => {
     inputSchema: z.object({videoId: z.string().min(1), kind: z.enum(["still", "preview", "final"]), force: z.boolean().optional()}),
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: false},
   }, ({videoId, kind, force}) => result(startRender(videoId, kind, force ?? false)));
+
+  server.registerTool("make_video_qa", {
+    description: "Run deterministic video, image, or generated-clip QA and return a task id.",
+    inputSchema: z.object({videoId: z.string().min(1), kind: z.enum(["video", "images", "generated-videos"])}),
+    annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: false},
+  }, ({videoId, kind}) => result(startQa(videoId, kind)));
 
   server.registerTool("make_video_request_image_revision", {
     description: "Create a non-destructive, versioned image revision request for an existing image asset.",
@@ -150,6 +156,8 @@ export const startHttpServer = () => {
       if (url.pathname.startsWith("/api/generate/") && request.method === "GET") return sendJson(response, 200, getGenerationJob(decodeURIComponent(url.pathname.slice(14))));
       if (url.pathname === "/api/render" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 202, startRender(input.videoId, input.kind, Boolean(input.force))); }
       if (url.pathname.startsWith("/api/render/") && request.method === "GET") return sendJson(response, 200, getRenderJob(decodeURIComponent(url.pathname.slice(12))));
+      if (url.pathname === "/api/qa" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 202, startQa(input.videoId, input.kind)); }
+      if (url.pathname.startsWith("/api/qa/") && request.method === "GET") return sendJson(response, 200, getQaJob(decodeURIComponent(url.pathname.slice(9))));
       if (url.pathname === "/api/assets/revisions" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 201, createAssetRevision(input.videoId, input)); }
       if (url.pathname === "/api/cover" && request.method === "PUT") { const input = await readBody(request); return sendJson(response, 200, setCover(input.videoId, input)); }
       if (url.pathname === "/media" && request.method === "GET") {

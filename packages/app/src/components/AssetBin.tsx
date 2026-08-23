@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import {Button} from '@astryxdesign/core/Button';
 import {SegmentedControl, SegmentedControlItem} from '@astryxdesign/core/SegmentedControl';
-import type {Asset, ProjectState, ProjectTransport, RenderJob, RenderKind} from '@make-video/contracts';
+import type {Asset, ProjectState, ProjectTransport, QaJob, QaKind, RenderJob, RenderKind} from '@make-video/contracts';
 
 type AssetBinProps = {
   state: ProjectState;
@@ -42,6 +42,14 @@ export const AssetBin = ({state, selected, onSelect, transport, refresh, notice}
             <RenderButton label="Render preview" kind="preview" videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} />
             <RenderButton label="Render final" kind="final" videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} />
           </div>
+          <div className="mb-2 rounded-md border border-[#252c35] bg-[#14181e] p-2">
+            <div className="mb-1.5 flex items-center justify-between text-[9px]"><strong>QA</strong><span className={state.qa?.passed ? 'text-[#61b88f]' : 'text-[#737c87]'}>{state.qa ? (state.qa.passed ? 'Passed' : 'Issues') : 'Not run'}</span></div>
+            <div className="grid grid-cols-3 gap-1">
+              <QaButton label="Video" kind="video" videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} />
+              <QaButton label="Images" kind="images" videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} />
+              <QaButton label="Clips" kind="generated-videos" videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} />
+            </div>
+          </div>
           {state.stages.map((stage) => (
             <div className={`grid grid-cols-[10px_1fr_auto] items-center gap-2 rounded-md bg-[#171b21] p-2 text-[10px] ${stage.exists ? '' : ''}`} key={stage.id}>
               <i className={`h-1.5 w-1.5 rounded-full ${stage.exists ? 'bg-[#61b88f]' : 'bg-[#4a5059]'}`} />
@@ -53,6 +61,24 @@ export const AssetBin = ({state, selected, onSelect, transport, refresh, notice}
       )}
     </aside>
   );
+};
+
+const QaButton = ({label, kind, videoId, transport, refresh, notice}: {label: string; kind: QaKind; videoId: string; transport: ProjectTransport; refresh: () => Promise<void>; notice: (value: string) => void}) => {
+  const [running, setRunning] = useState(false);
+  const run = async () => {
+    setRunning(true);
+    try {
+      let job: QaJob = await transport.runQa(videoId, kind);
+      while (job.status === 'queued' || job.status === 'running') {
+        await new Promise((resolve) => window.setTimeout(resolve, 500));
+        job = await transport.getQaJob(job.id);
+      }
+      if (job.status === 'failed') throw new Error(job.error ?? `${label} QA failed`);
+      await refresh(); notice(`${label} QA complete`);
+    } catch (error) { notice(error instanceof Error ? error.message : String(error)); }
+    finally { setRunning(false); }
+  };
+  return <button className="rounded border border-[#343c47] bg-[#20252d] px-1 py-1.5 text-[8px] text-[#c7cdd4] hover:bg-[#2b323d] disabled:cursor-wait disabled:opacity-60" disabled={running} onClick={run}>{running ? `${label}…` : label}</button>;
 };
 
 const RenderButton = ({label, kind, videoId, transport, refresh, notice}: {label: string; kind: RenderKind; videoId: string; transport: ProjectTransport; refresh: () => Promise<void>; notice: (value: string) => void}) => {

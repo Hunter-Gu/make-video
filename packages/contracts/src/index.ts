@@ -43,7 +43,10 @@ export type GenerationKind = "images" | "voiceover" | "music";
 export type GenerationJob = {id: string; videoId: string; kind: GenerationKind; status: "queued" | "running" | "succeeded" | "failed"; createdAt: string; startedAt?: string; completedAt?: string; error?: string};
 export type RenderKind = "still" | "preview" | "final";
 export type RenderJob = {id: string; videoId: string; kind: RenderKind; status: "queued" | "running" | "succeeded" | "failed"; createdAt: string; startedAt?: string; completedAt?: string; error?: string};
-export type ProjectState = {videoId: string; composition: {fps: number; durationInFrames: number; width: number; height: number}; models: {image: string | null; voice: string | null}; registry: {image: Model[]; voice: Model[]}; scenes: Scene[]; captions: Caption[]; effects: RemotionEffect[]; audio: ProjectAudio; cover: Cover | null; assets: Asset[]; stages: Stage[]; revisions: Array<{id: string; assetId: string; instruction: string; status: string}>; qa: {passed: boolean} | null};
+export type QaKind = "video" | "images" | "generated-videos";
+export type QaJob = {id: string; videoId: string; kind: QaKind; status: "queued" | "running" | "succeeded" | "failed"; createdAt: string; startedAt?: string; completedAt?: string; error?: string};
+export type QaSummary = {passed: boolean; reports?: Array<{kind: QaKind; passed: boolean; checkedAt?: string}>};
+export type ProjectState = {videoId: string; composition: {fps: number; durationInFrames: number; width: number; height: number}; models: {image: string | null; voice: string | null}; registry: {image: Model[]; voice: Model[]}; scenes: Scene[]; captions: Caption[]; effects: RemotionEffect[]; audio: ProjectAudio; cover: Cover | null; assets: Asset[]; stages: Stage[]; revisions: Array<{id: string; assetId: string; instruction: string; status: string}>; qa: QaSummary | null};
 
 export interface ProjectTransport {
   listProjects(): Promise<string[]>;
@@ -56,6 +59,8 @@ export interface ProjectTransport {
   getGenerationJob(jobId: string): Promise<GenerationJob>;
   render(videoId: string, kind: RenderKind, force?: boolean): Promise<RenderJob>;
   getRenderJob(jobId: string): Promise<RenderJob>;
+  runQa(videoId: string, kind: QaKind): Promise<QaJob>;
+  getQaJob(jobId: string): Promise<QaJob>;
   createAssetRevision(videoId: string, input: {assetId: string; sceneId: string | null; modelId: string | null; instruction: string}): Promise<void>;
   setCover(videoId: string, assetId: string): Promise<void>;
 }

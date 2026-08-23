@@ -5,13 +5,16 @@ import {dirname, extname, relative, resolve, sep} from "node:path";
 import {linkAssets} from "@make-video/assets";
 import {runImages, runMusic, runVoiceover} from "@make-video/ai";
 import {runRender} from "@make-video/render";
+import {runQa} from "@make-video/qa";
 import type {GenerationJob} from "@make-video/contracts";
 import type {RenderJob} from "@make-video/contracts";
+import type {QaJob} from "@make-video/contracts";
 import {loadVideoContext, projectRoot} from "./context";
 
 const preparedAssetProjects = new Set<string>();
 const generationJobs = new Map<string, GenerationJob>();
 const renderJobs = new Map<string, RenderJob>();
+const qaJobs = new Map<string, QaJob>();
 
 /** Prepare ignored public/ links before reading project media. */
 export const prepareProjectAssets = (videoId: string) => {
@@ -85,6 +88,11 @@ export const getProjectState = (videoId: string) => {
   const stages = [
     ...Object.entries(context.outputs).filter(([id]) => id !== "unmastered").map(([id, file]) => ({id, label: outputLabels[id] ?? id, path: relative(projectRoot, file), exists: existsSync(file), url: existsSync(file) ? mediaUrl(file) : null})),
   ].filter((stage, index, all) => all.findIndex((item) => item.path === stage.path) === index);
+  const qaReports = ([
+    ["video", "qa-report.json"],
+    ["images", "image-qa-report.json"],
+    ["generated-videos", "clip-qa-report.json"],
+  ] as const).map(([kind, file]) => ({kind, report: readJson(resolve(projectRoot, "output", videoId, file), null)})).filter((item) => item.report);
 
   return {
     videoId,
@@ -99,7 +107,7 @@ export const getProjectState = (videoId: string) => {
     assets,
     stages,
     revisions: projectState.revisionRequests ?? [],
-    qa: readJson(resolve(projectRoot, "output", videoId, "qa-report.json"), null),
+    qa: qaReports.length > 0 ? {passed: qaReports.every((item) => item.report.passed === true), reports: qaReports.map((item) => ({kind: item.kind, passed: item.report.passed === true, checkedAt: item.report.checkedAt}))} : null,
   };
 };
 
@@ -244,6 +252,32 @@ export const startRender = (videoId: string, kind: "still" | "preview" | "final"
 export const getRenderJob = (jobId: string) => {
   const job = renderJobs.get(jobId);
   if (!job) throw new Error(`Render job not found: ${jobId}`);
+  return job;
+};
+
+export const startQa = (videoId: string, kind: "video" | "images" | "generated-videos"): QaJob => {
+  if (!["video", "images", "generated-videos"].includes(kind)) throw new Error(`Unknown QA kind: ${kind}`);
+  const job: QaJob = {id: randomUUID(), videoId, kind, status: "queued", createdAt: new Date().toISOString()};
+  qaJobs.set(job.id, job);
+  void (async () => {
+    job.status = "running";
+    job.startedAt = new Date().toISOString();
+    try {
+      await runQa(kind, videoId);
+      job.status = "succeeded";
+    } catch (error) {
+      job.status = "failed";
+      job.error = error instanceof Error ? error.message : String(error);
+    } finally {
+      job.completedAt = new Date().toISOString();
+    }
+  })();
+  return job;
+};
+
+export const getQaJob = (jobId: string) => {
+  const job = qaJobs.get(jobId);
+  if (!job) throw new Error(`QA job not found: ${jobId}`);
   return job;
 };
 
