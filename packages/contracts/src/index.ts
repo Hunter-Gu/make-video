@@ -21,6 +21,13 @@ export type SceneContent = {
   documentText?: string;
   relations?: Array<{from: string; to: string; label?: string}>;
   images?: string[];
+  video?: string;
+  videoFit?: "cover" | "contain";
+  videoStartInFrames?: number;
+  videoPlaybackRate?: number;
+  videoMuted?: boolean;
+  videoVolume?: number;
+  layers?: Array<{assetId?: string; image?: string; video?: string; depth?: number; x?: number; y?: number; scale?: number; opacity?: number; mask?: string}>;
 };
 export type Scene = {id: string; startFrame: number; endFrame: number; durationInFrames: number; timingSource: string; assetIds?: string[]; content?: SceneContent};
 export type Caption = {id: string; sceneId: string; startFrame: number; endFrame: number; text: string};

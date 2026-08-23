@@ -30,6 +30,18 @@ const writeJson = (file: string, value: any) => {
   renameSync(temporary, file);
 };
 const mediaUrl = (file: string) => `/media?path=${encodeURIComponent(relative(projectRoot, file))}`;
+const mediaKind = (file: string): "image" | "video" => /\.(mp4|mov|webm|m4v)$/i.test(file) ? "video" : "image";
+
+const resolveAssetFile = (context: ReturnType<typeof loadVideoContext>, id: string, configuredPath: string) => {
+  const configuredFile = context.resolveConfiguredPath(configuredPath, `scene asset ${id}`);
+  if (existsSync(configuredFile) && extname(configuredFile).toLowerCase() !== ".json") return configuredFile;
+  if (extname(configuredFile).toLowerCase() !== ".json") return null;
+  const metadata = readJson(configuredFile, null);
+  const candidate = metadata?.output ?? metadata?.groups?.find((group: any) => group?.id === id)?.output;
+  if (typeof candidate !== "string" || candidate.length === 0) return null;
+  const output = resolve(context.publicDir, candidate);
+  return insideRoot(output) && existsSync(output) ? output : null;
+};
 
 export const listProjects = () => readdirSync(resolve(projectRoot, "src"), {withFileTypes: true})
   .filter((entry) => entry.isDirectory() && existsSync(resolve(projectRoot, "src", entry.name, "video.config.json")))
@@ -52,10 +64,8 @@ export const getProjectState = (videoId: string) => {
   const assets: any[] = [];
 
   for (const [id, configuredPath] of Object.entries(sceneIndex.assets ?? {})) {
-    const file = context.resolveConfiguredPath(configuredPath, `scene asset ${id}`);
-    if (existsSync(file) && extname(file).toLowerCase() !== ".json") {
-      assets.push({id, sceneId: sceneIndex.scenes.find((scene: any) => scene.assetIds?.includes(id))?.id ?? null, kind: "image", selected: true, path: relative(projectRoot, file), url: mediaUrl(file)});
-    }
+    const file = resolveAssetFile(context, id, String(configuredPath));
+    if (file) assets.push({id, sceneId: sceneIndex.scenes.find((scene: any) => scene.assetIds?.includes(id))?.id ?? null, kind: mediaKind(file), selected: true, path: relative(projectRoot, file), url: mediaUrl(file)});
   }
   const outputLabels: Record<string, string> = {still: "Cover image", silent: "Preview video", unmastered: "Intermediate render", final: "Final video"};
   const audioTrack = (id: string, label: string, file: string) => ({id, label, path: relative(projectRoot, file), exists: existsSync(file), url: existsSync(file) ? mediaUrl(file) : null});

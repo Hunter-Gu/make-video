@@ -4,15 +4,19 @@ import {ProjectComposition} from "@make-video/remotion";
 import config from "./library-of-alexandria/video.config.json";
 import sceneIndex from "./library-of-alexandria/SCENE_INDEX.json";
 import timeline from "./library-of-alexandria/REMOTION_TIMELINE.json";
+import candidates from "./library-of-alexandria/CANDIDATES.json";
 
 const assetLinks = config.production.assetLinks ?? [];
 const sourceScenes = sceneIndex.scenes as ProjectState["scenes"];
-const projectAssets = Object.entries(sceneIndex.assets ?? {}).flatMap(([id, configuredPath]) => {
+const projectAssets: ProjectState["assets"] = Object.entries(sceneIndex.assets ?? {}).flatMap(([id, configuredPath]) => {
   const link = assetLinks.find((item) => item.source === configuredPath);
-  if (!link || !/\.(svg|png|jpe?g|webp)$/i.test(link.output)) return [];
+  if (!link || !/\.(svg|png|jpe?g|webp|mp4|mov|webm|m4v)$/i.test(link.output)) return [];
   const scene = sourceScenes.find((item) => item.assetIds?.includes(id));
-  return [{id, sceneId: scene?.id ?? null, kind: "image" as const, selected: true, provider: "project", path: link.output, url: staticFile(`${config.production.publicPath}/${link.output}`)}];
+  const kind = /\.(mp4|mov|webm|m4v)$/i.test(link.output) ? "video" as const : "image" as const;
+  return [{id, sceneId: scene?.id ?? null, kind, selected: true, provider: "project", path: link.output, url: staticFile(`${config.production.publicPath}/${link.output}`)}];
 });
+const hybridCandidate = candidates.groups?.find((group) => group.id === "hybrid-motion");
+if (hybridCandidate?.output) projectAssets.push({id: "hybrid-motion", sceneId: "hybrid-clip", kind: "video", selected: true, provider: "project", path: hybridCandidate.output, url: staticFile(`${config.production.publicPath}/${hybridCandidate.output}`)});
 
 const projectState: ProjectState = {
   videoId: config.videoId,
