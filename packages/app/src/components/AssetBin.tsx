@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useRef, useState} from 'react';
 import {Button} from '@astryxdesign/core/Button';
 import {SegmentedControl, SegmentedControlItem} from '@astryxdesign/core/SegmentedControl';
 import type {Asset, ProjectState, ProjectTransport, QaJob, QaKind, RenderJob, RenderKind} from '@make-video/contracts';
@@ -14,19 +14,41 @@ type AssetBinProps = {
 
 export const AssetBin = ({state, selected, onSelect, transport, refresh, notice}: AssetBinProps) => {
   const [tab, setTab] = useState<'media' | 'renders'>('media');
+  const [uploading, setUploading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const upload = async (file: File) => {
+    setUploading(true);
+    try {
+      await transport.uploadSource(state.videoId, file);
+      let job = await transport.ingestSources(state.videoId, true);
+      while (job.status === 'queued' || job.status === 'running') {
+        await new Promise((resolve) => window.setTimeout(resolve, 500));
+        job = await transport.getSourceJob(job.id);
+      }
+      if (job.status === 'failed') throw new Error(job.error ?? 'Source ingestion failed');
+      await refresh();
+      notice(`Imported ${file.name}`);
+    } catch (error) { notice(error instanceof Error ? error.message : String(error)); }
+    finally { setUploading(false); }
+  };
 
   return (
     <aside className="min-h-0 overflow-auto border-r border-[#242830] bg-[#101318] p-3">
       <div className="flex h-8 items-center justify-between text-xs">
         <strong>Project media</strong>
-        <Button label="Add media" variant="ghost" size="sm" isIconOnly icon={<span>＋</span>} />
+        <>
+          <input ref={inputRef} className="hidden" type="file" accept=".pdf,.docx,.epub,.md,.txt" onChange={(event) => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; if (file) void upload(file); }} />
+          <Button label={uploading ? 'Importing…' : 'Add source'} variant="ghost" size="sm" isIconOnly icon={<span>＋</span>} isDisabled={uploading} onClick={() => inputRef.current?.click()} />
+        </>
       </div>
       <SegmentedControl className="my-2 mb-3" label="Project media view" value={tab} onChange={(value) => setTab(value as 'media' | 'renders')} layout="fill" size="sm">
         <SegmentedControlItem value="media" label="Assets" />
         <SegmentedControlItem value="renders" label="Outputs" />
       </SegmentedControl>
       {tab === 'media' ? (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid gap-2">
+          <div className="rounded-md border border-[#252c35] bg-[#14181e] px-2 py-1.5 text-[9px] text-[#87909d]">Sources: <strong className="text-[#d7dde5]">{state.sources.length}</strong> structured documents</div>
+          <div className="grid grid-cols-2 gap-2">
           {state.assets.map((asset) => (
             <button className={`relative min-w-0 cursor-pointer rounded-md border p-1.5 text-left ${selected === asset.id ? 'border-[#d68b46]' : 'border-transparent bg-[#171b21]'}`} onClick={() => onSelect(asset)} key={asset.id}>
               {asset.kind === 'image' ? <img className="block aspect-[16/10] w-full rounded bg-[#080a0d] object-cover" src={asset.url} alt={asset.id} loading="lazy" /> : <video className="block aspect-[16/10] w-full rounded bg-[#080a0d] object-cover" src={asset.url} muted autoPlay loop playsInline preload="metadata" />}
@@ -35,6 +57,7 @@ export const AssetBin = ({state, selected, onSelect, transport, refresh, notice}
               <small className="text-[8px] uppercase text-[#68717d]">{asset.kind}</small>
             </button>
           ))}
+          </div>
         </div>
       ) : (
         <div className="grid gap-1">

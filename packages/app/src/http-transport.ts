@@ -1,4 +1,4 @@
-import type {Caption, GenerationJob, GenerationKind, ProjectTransport, QaJob, QaKind, RenderJob, RenderKind} from "@make-video/contracts";
+import type {Caption, GenerationJob, GenerationKind, ProjectTransport, QaJob, QaKind, RenderJob, RenderKind, SourceIndex, SourceJob, SourceUpload} from "@make-video/contracts";
 
 const request = async <T,>(path: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(path, {...init, headers: {"content-type": "application/json", ...init?.headers}});
@@ -20,6 +20,17 @@ export const httpTransport: ProjectTransport = {
   getRenderJob: (jobId: string) => request<RenderJob>(`/api/render/${encodeURIComponent(jobId)}`),
   runQa: (videoId: string, kind: QaKind) => request<QaJob>("/api/qa", {method: "POST", body: JSON.stringify({videoId, kind})}),
   getQaJob: (jobId: string) => request<QaJob>(`/api/qa/${encodeURIComponent(jobId)}`),
+  uploadSource: async (videoId, file) => {
+    const form = new FormData();
+    form.append("file", file, file.name);
+    const response = await fetch(`/api/sources/upload?videoId=${encodeURIComponent(videoId)}`, {method: "POST", body: form});
+    const value = await response.json();
+    if (!response.ok) throw new Error(value.error ?? "Source upload failed.");
+    return value as SourceUpload;
+  },
+  ingestSources: (videoId: string, force = true) => request<SourceJob>("/api/sources/ingest", {method: "POST", body: JSON.stringify({videoId, force})}),
+  getSourceJob: (jobId: string) => request<SourceJob>(`/api/sources/ingest/${encodeURIComponent(jobId)}`),
+  getSources: (videoId: string) => request<SourceIndex>(`/api/sources?videoId=${encodeURIComponent(videoId)}`),
   createAssetRevision: async (videoId, input) => { await request("/api/assets/revisions", {method: "POST", body: JSON.stringify({videoId, ...input})}); },
   setCover: async (videoId, assetId) => { await request("/api/cover", {method: "PUT", body: JSON.stringify({videoId, assetId})}); },
 };

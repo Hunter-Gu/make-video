@@ -13,6 +13,7 @@
     "@make-video/contracts": "workspace:*",
     "@make-video/render": "workspace:*",
     "@make-video/qa": "workspace:*",
+    "@make-video/sources": "workspace:*",
     "@modelcontextprotocol/client": "^2.0.0",
     "@modelcontextprotocol/node": "^2.0.0",
     "@modelcontextprotocol/server": "^2.0.0",

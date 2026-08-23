@@ -31,6 +31,7 @@ const projectState: ProjectState = {
   assets: projectAssets,
   stages: [],
   revisions: [],
+  sources: [],
   qa: null,
 };
 

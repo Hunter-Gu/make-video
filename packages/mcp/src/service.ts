@@ -1,20 +1,22 @@
 import {randomUUID} from "node:crypto";
-import {existsSync, readFileSync, readdirSync, renameSync, writeFileSync} from "node:fs";
-import {dirname, extname, relative, resolve, sep} from "node:path";
+import {existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync} from "node:fs";
+import {basename, dirname, extname, relative, resolve, sep} from "node:path";
 
 import {linkAssets} from "@make-video/assets";
 import {runImages, runMusic, runVoiceover} from "@make-video/ai";
 import {runRender} from "@make-video/render";
 import {runQa} from "@make-video/qa";
+import {runSourceIngest} from "@make-video/sources";
 import type {GenerationJob} from "@make-video/contracts";
 import type {RenderJob} from "@make-video/contracts";
-import type {QaJob} from "@make-video/contracts";
+import type {QaJob, SourceIndex, SourceJob, SourceUpload} from "@make-video/contracts";
 import {loadVideoContext, projectRoot} from "./context";
 
 const preparedAssetProjects = new Set<string>();
 const generationJobs = new Map<string, GenerationJob>();
 const renderJobs = new Map<string, RenderJob>();
 const qaJobs = new Map<string, QaJob>();
+const sourceJobs = new Map<string, SourceJob>();
 
 /** Prepare ignored public/ links before reading project media. */
 export const prepareProjectAssets = (videoId: string) => {
@@ -40,6 +42,13 @@ const writeJson = (file: string, value: any) => {
 };
 const mediaUrl = (file: string) => `/media?path=${encodeURIComponent(relative(projectRoot, file))}`;
 const mediaKind = (file: string): "image" | "video" => /\.(mp4|mov|webm|m4v)$/i.test(file) ? "video" : "image";
+const sourceType = (file: string) => ({".md": "markdown", ".txt": "text", ".pdf": "pdf", ".docx": "docx", ".epub": "epub"} as Record<string, string>)[extname(file).toLowerCase()];
+const sourceId = (name: string, used: Set<string>) => {
+  const base = basename(name, extname(name)).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "source";
+  let id = base; let index = 2;
+  while (used.has(id)) id = `${base}-${index++}`;
+  return id;
+};
 
 const resolveAssetFile = (context: ReturnType<typeof loadVideoContext>, id: string, configuredPath: string) => {
   const configuredFile = context.resolveConfiguredPath(configuredPath, `scene asset ${id}`);
@@ -93,6 +102,7 @@ export const getProjectState = (videoId: string) => {
     ["images", "image-qa-report.json"],
     ["generated-videos", "clip-qa-report.json"],
   ] as const).map(([kind, file]) => ({kind, report: readJson(resolve(projectRoot, "output", videoId, file), null)})).filter((item) => item.report);
+  const sourceIndex = getSources(videoId);
 
   return {
     videoId,
@@ -107,8 +117,55 @@ export const getProjectState = (videoId: string) => {
     assets,
     stages,
     revisions: projectState.revisionRequests ?? [],
+    sources: sourceIndex.sources,
     qa: qaReports.length > 0 ? {passed: qaReports.every((item) => item.report.passed === true), reports: qaReports.map((item) => ({kind: item.kind, passed: item.report.passed === true, checkedAt: item.report.checkedAt}))} : null,
   };
+};
+
+export const getSources = (videoId: string): SourceIndex => {
+  const context = loadVideoContext(videoId);
+  return readJson(resolve(context.sourceDir, "sources", "index.json"), {videoId, sources: []});
+};
+
+export const uploadSource = (videoId: string, filename: string, data: Buffer): SourceUpload => {
+  const context = loadVideoContext(videoId);
+  const safeName = basename(filename).replace(/[^a-zA-Z0-9._-]+/g, "-");
+  const type = sourceType(safeName);
+  if (!type) throw new Error("Supported source files are PDF, DOCX, EPUB, Markdown, and text.");
+  if (data.byteLength === 0) throw new Error("The uploaded source file is empty.");
+  if (data.byteLength > 100 * 1024 * 1024) throw new Error("Source files must be smaller than 100 MB.");
+  const configuredSources = Array.isArray(context.config.sources) ? context.config.sources : [];
+  const used = new Set(configuredSources.map((source: any) => String(source?.id ?? "")));
+  const id = sourceId(safeName, used);
+  const uploadDir = resolve(context.sourceDir, "sources", "uploads");
+  mkdirSync(uploadDir, {recursive: true});
+  const file = resolve(uploadDir, safeName);
+  if (!insideRoot(file)) throw new Error("Source filename is invalid.");
+  writeFileSync(file, data, {flag: "wx"});
+  const input = relative(projectRoot, file);
+  const source = {id, title: basename(safeName, extname(safeName)), type, input, rights: "user-provided"};
+  const config = {...context.config, sources: [...configuredSources, source]};
+  writeJson(context.configPath, config);
+  return {videoId, source};
+};
+
+export const startSourceIngest = (videoId: string, force = true): SourceJob => {
+  const job: SourceJob = {id: randomUUID(), videoId, status: "queued", createdAt: new Date().toISOString()};
+  sourceJobs.set(job.id, job);
+  void (async () => {
+    job.status = "running";
+    job.startedAt = new Date().toISOString();
+    try { await runSourceIngest(videoId, force); job.status = "succeeded"; }
+    catch (error) { job.status = "failed"; job.error = error instanceof Error ? error.message : String(error); }
+    finally { job.completedAt = new Date().toISOString(); }
+  })();
+  return job;
+};
+
+export const getSourceJob = (jobId: string) => {
+  const job = sourceJobs.get(jobId);
+  if (!job) throw new Error(`Source job not found: ${jobId}`);
+  return job;
 };
 
 export const updateTimelineRange = (videoId: string, input: any) => {

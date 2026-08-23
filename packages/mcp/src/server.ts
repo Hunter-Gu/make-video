@@ -8,7 +8,7 @@ import {z} from "zod";
 
 import {projectRoot} from "./context";
 import {getModelCatalog} from "./models";
-import {createAssetRevision, getGenerationJob, getProjectState, getQaJob, getRenderJob, listProjects, resolveMediaPath, runGeneration, setCover, startGeneration, startQa, startRender, updateCaption, updateModels, updateTimelineRange} from "./service";
+import {createAssetRevision, getGenerationJob, getProjectState, getQaJob, getRenderJob, getSourceJob, getSources, listProjects, resolveMediaPath, runGeneration, setCover, startGeneration, startQa, startRender, startSourceIngest, updateCaption, updateModels, updateTimelineRange, uploadSource} from "./service";
 
 type CallToolResult = {
   content: Array<{type: "text"; text: string}>;
@@ -74,6 +74,18 @@ export const createMakeVideoMcpServer = () => {
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: false},
   }, ({videoId, kind}) => result(startQa(videoId, kind)));
 
+  server.registerTool("make_video_ingest_sources", {
+    description: "Parse the files registered in a video project into structured source blocks for the host agent to use when making a plan.",
+    inputSchema: z.object({videoId: z.string().min(1), force: z.boolean().optional()}),
+    annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: true},
+  }, ({videoId, force}) => result(startSourceIngest(videoId, force ?? true)));
+
+  server.registerTool("make_video_get_sources", {
+    description: "Read the structured source blocks available to the host agent for one video project.",
+    inputSchema: z.object({videoId: z.string().min(1)}),
+    annotations: {readOnlyHint: true},
+  }, ({videoId}) => run(() => getSources(videoId)));
+
   server.registerTool("make_video_request_image_revision", {
     description: "Create a non-destructive, versioned image revision request for an existing image asset.",
     inputSchema: z.object({videoId: z.string().min(1), assetId: z.string().min(1), modelId: z.string().min(1).nullable().optional(), instruction: z.string().min(1)}),
@@ -123,6 +135,34 @@ const readBody = async (request: IncomingMessage): Promise<any> => {
   return chunks.length ? JSON.parse(Buffer.concat(chunks).toString("utf8")) : {};
 };
 
+const readRawBody = async (request: IncomingMessage) => {
+  const chunks: Buffer[] = [];
+  for await (const chunk of request) chunks.push(Buffer.from(chunk));
+  return Buffer.concat(chunks);
+};
+
+const parseUpload = (request: IncomingMessage, body: Buffer) => {
+  const contentType = request.headers["content-type"] ?? "";
+  const boundaryMatch = contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/i);
+  if (!boundaryMatch) throw new Error("Source upload must use multipart/form-data.");
+  const boundary = boundaryMatch[1] ?? boundaryMatch[2];
+  const marker = Buffer.from(`--${boundary}`);
+  const headerSeparator = Buffer.from("\r\n\r\n");
+  let cursor = body.indexOf(marker);
+  while (cursor >= 0) {
+    const headerStart = cursor + marker.length + 2;
+    const headerEnd = body.indexOf(headerSeparator, headerStart);
+    if (headerEnd < 0) break;
+    const headers = body.subarray(headerStart, headerEnd).toString("utf8");
+    const next = body.indexOf(Buffer.from(`\r\n--${boundary}`), headerEnd + headerSeparator.length);
+    if (next < 0) break;
+    const disposition = headers.match(/content-disposition:[^\r\n]*name="([^"]+)"[^\r\n]*filename="([^"]*)"/i);
+    if (disposition) return {filename: disposition[2], data: body.subarray(headerEnd + headerSeparator.length, next)};
+    cursor = body.indexOf(marker, next + 2);
+  }
+  throw new Error("No source file was found in the upload.");
+};
+
 const sendJson = (response: ServerResponse, status: number, value: unknown) => {
   response.writeHead(status, {"content-type": "application/json; charset=utf-8"});
   response.end(JSON.stringify(value));
@@ -158,6 +198,10 @@ export const startHttpServer = () => {
       if (url.pathname.startsWith("/api/render/") && request.method === "GET") return sendJson(response, 200, getRenderJob(decodeURIComponent(url.pathname.slice(12))));
       if (url.pathname === "/api/qa" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 202, startQa(input.videoId, input.kind)); }
       if (url.pathname.startsWith("/api/qa/") && request.method === "GET") return sendJson(response, 200, getQaJob(decodeURIComponent(url.pathname.slice(9))));
+      if (url.pathname === "/api/sources" && request.method === "GET") return sendJson(response, 200, getSources(requiredParam(url.searchParams.get("videoId"))));
+      if (url.pathname === "/api/sources/upload" && request.method === "POST") { const input = parseUpload(request, await readRawBody(request)); return sendJson(response, 201, uploadSource(requiredParam(url.searchParams.get("videoId")), input.filename, input.data)); }
+      if (url.pathname === "/api/sources/ingest" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 202, startSourceIngest(input.videoId, input.force ?? true)); }
+      if (url.pathname.startsWith("/api/sources/ingest/") && request.method === "GET") return sendJson(response, 200, getSourceJob(decodeURIComponent(url.pathname.slice("/api/sources/ingest/".length))));
       if (url.pathname === "/api/assets/revisions" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 201, createAssetRevision(input.videoId, input)); }
       if (url.pathname === "/api/cover" && request.method === "PUT") { const input = await readBody(request); return sendJson(response, 200, setCover(input.videoId, input)); }
       if (url.pathname === "/media" && request.method === "GET") {
