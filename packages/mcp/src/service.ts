@@ -4,9 +4,11 @@ import {dirname, extname, relative, resolve, sep} from "node:path";
 
 import {linkAssets} from "@make-video/assets";
 import {runImages, runMusic, runVoiceover} from "@make-video/ai";
+import type {GenerationJob} from "@make-video/contracts";
 import {loadVideoContext, projectRoot} from "./context";
 
 const preparedAssetProjects = new Set<string>();
+const generationJobs = new Map<string, GenerationJob>();
 
 /** Prepare ignored public/ links before reading project media. */
 export const prepareProjectAssets = (videoId: string) => {
@@ -188,6 +190,32 @@ export const runGeneration = async (videoId: string, kind: "images" | "voiceover
   else if (kind === "voiceover") await runVoiceover(args);
   else await runMusic(args);
   return getProjectState(videoId);
+};
+
+export const startGeneration = (videoId: string, kind: "images" | "voiceover" | "music", force = false): GenerationJob => {
+  if (!["images", "voiceover", "music"].includes(kind)) throw new Error(`Unknown generation kind: ${kind}`);
+  const job: GenerationJob = {id: randomUUID(), videoId, kind, status: "queued", createdAt: new Date().toISOString()};
+  generationJobs.set(job.id, job);
+  void (async () => {
+    job.status = "running";
+    job.startedAt = new Date().toISOString();
+    try {
+      await runGeneration(videoId, kind, force);
+      job.status = "succeeded";
+    } catch (error) {
+      job.status = "failed";
+      job.error = error instanceof Error ? error.message : String(error);
+    } finally {
+      job.completedAt = new Date().toISOString();
+    }
+  })();
+  return job;
+};
+
+export const getGenerationJob = (jobId: string) => {
+  const job = generationJobs.get(jobId);
+  if (!job) throw new Error(`Generation job not found: ${jobId}`);
+  return job;
 };
 
 const normalizeGoogleModel = (value: unknown) => typeof value === "string" && value.startsWith("google/") ? value.slice("google/".length) : value;
