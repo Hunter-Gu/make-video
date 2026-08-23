@@ -92,7 +92,7 @@ const SceneContentView = ({content, progress, assetUrl}: {content: SceneContent 
 export const ProjectComposition = ({state}: {state: ProjectState}) => {
   const frame = useCurrentFrame();
   const scene = state.scenes.find((item) => frame >= item.startFrame && frame < item.endFrame) ?? state.scenes.at(-1);
-  const asset = scene ? state.assets.find((item) => item.sceneId === scene.id && item.kind === 'image') ?? state.assets.find((item) => item.kind === 'image') : null;
+  const asset = scene ? state.assets.find((item) => item.sceneId === scene.id && item.kind === 'image') : null;
   const caption = state.captions.find((item) => frame >= item.startFrame && frame < item.endFrame);
   const effect = scene ? timelineEffectForScene(state.effects, scene.id, frame) : null;
   const localFrame = scene ? frame - scene.startFrame : 0;
