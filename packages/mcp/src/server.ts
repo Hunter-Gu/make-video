@@ -8,7 +8,7 @@ import {z} from "zod";
 
 import {projectRoot} from "./context";
 import {getModelCatalog} from "./models";
-import {buildSourceCatalog, buildSourceList, buildStoryboard, createAssetRevision, getGenerationJob, getPlan, getProjectState, getQaJob, getRenderJob, getSourceCatalog, getSourceJob, getSources, listProjects, resolveMediaPath, runGeneration, savePlan, setCover, startGeneration, startQa, startRender, startSourceIngest, updateCaption, updateModels, updateTimelineRange, uploadSource} from "./service";
+import {buildSourceCatalog, buildSourceList, buildStoryboard, createAssetRevision, getGenerationJob, getPlan, getProjectState, getQaJob, getRenderJob, getSourceCatalog, getSourceJob, getSources, listProjects, resolveMediaPath, runGeneration, savePlan, setCover, startGeneration, startQa, startRender, startSourceIngest, updateCaption, updateModels, updateTimelineRange, uploadSource, validateScript} from "./service";
 
 type CallToolResult = {
   content: Array<{type: "text"; text: string}>;
@@ -115,6 +115,12 @@ export const createMakeVideoMcpServer = () => {
     inputSchema: z.object({videoId: z.string().min(1), force: z.boolean().optional()}),
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: true},
   }, ({videoId, force}) => run(() => buildStoryboard(videoId, force ?? false)));
+
+  server.registerTool("make_video_validate_script", {
+    description: "Validate host-agent-authored narration segments and their claim/source references before timing or voice generation.",
+    inputSchema: z.object({videoId: z.string().min(1)}),
+    annotations: {readOnlyHint: true},
+  }, ({videoId}) => run(() => validateScript(videoId)));
 
   server.registerTool("make_video_request_image_revision", {
     description: "Create a non-destructive, versioned image revision request for an existing image asset.",
@@ -233,6 +239,7 @@ export const startHttpServer = () => {
       if (url.pathname === "/api/sources/catalog" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 200, await buildSourceCatalog(input.videoId, input.force ?? true)); }
       if (url.pathname === "/api/plan" && request.method === "GET") return sendJson(response, 200, {videoId: requiredParam(url.searchParams.get("videoId")), plan: getPlan(requiredParam(url.searchParams.get("videoId")))});
       if (url.pathname === "/api/plan" && request.method === "PUT") { const input = await readBody(request); return sendJson(response, 200, savePlan(input.videoId, input.plan)); }
+      if (url.pathname === "/api/script/validation" && request.method === "GET") return sendJson(response, 200, validateScript(requiredParam(url.searchParams.get("videoId"))));
       if (url.pathname === "/api/sources/upload" && request.method === "POST") { const input = parseUpload(request, await readRawBody(request)); return sendJson(response, 201, uploadSource(requiredParam(url.searchParams.get("videoId")), input.filename, input.data)); }
       if (url.pathname === "/api/sources/ingest" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 202, startSourceIngest(input.videoId, input.force ?? true)); }
       if (url.pathname.startsWith("/api/sources/ingest/") && request.method === "GET") return sendJson(response, 200, getSourceJob(decodeURIComponent(url.pathname.slice("/api/sources/ingest/".length))));

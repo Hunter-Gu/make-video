@@ -77,6 +77,7 @@ The stdio and `/mcp` Streamable HTTP entries expose the same tools:
 - `make_video_get_plan`
 - `make_video_save_plan`
 - `make_video_build_storyboard`
+- `make_video_validate_script`
 
 They also expose `make-video://projects` and one read-only project resource per
 video. Tool handlers contain no filesystem rules; they delegate to

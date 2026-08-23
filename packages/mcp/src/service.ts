@@ -207,6 +207,36 @@ export const buildStoryboard = (videoId: string, force = false) => {
   return {videoId, path: relative(projectRoot, file), content};
 };
 
+export const validateScript = (videoId: string) => {
+  const context = loadVideoContext(videoId);
+  const file = resolve(context.sourceDir, "SCRIPT.md");
+  if (!existsSync(file)) return {videoId, path: relative(projectRoot, file), passed: false, segments: [], errors: ["SCRIPT.md is missing."]};
+  const lines = readFileSync(file, "utf8").split("\n");
+  const segments: Array<{id: string; text: string}> = [];
+  const errors: string[] = [];
+  const seen = new Set<string>();
+  for (const [index, line] of lines.entries()) {
+    const match = line.match(/^- `([^`]+)`: (.+)$/);
+    if (!match) continue;
+    const [, id, value] = match;
+    if (seen.has(id)) errors.push(`Duplicate narration id: ${id} (line ${index + 1}).`);
+    if (!value.trim()) errors.push(`Narration ${id} is empty (line ${index + 1}).`);
+    seen.add(id); segments.push({id, text: value.trim()});
+  }
+  if (segments.length === 0) errors.push("SCRIPT.md has no narration segments.");
+  const sourceBlockIds = new Set(getSources(videoId).sources.flatMap((source) => source.blocks.map((block) => block.id)));
+  const claimsFile = resolve(context.sourceDir, "CLAIMS.json");
+  if (existsSync(claimsFile)) {
+    const claims = readJson(claimsFile, {claims: []}).claims ?? [];
+    for (const claim of claims) {
+      for (const narrationId of claim.narrationIds ?? []) if (!seen.has(narrationId)) errors.push(`Claim ${claim.id} references missing narration: ${narrationId}.`);
+      for (const sourceBlockId of claim.sourceBlockIds ?? []) if (!sourceBlockIds.has(sourceBlockId)) errors.push(`Claim ${claim.id} references missing source block: ${sourceBlockId}.`);
+      if (claim.type === "inference" && (typeof claim.disclosure !== "string" || !claim.disclosure.trim())) errors.push(`Inference claim ${claim.id} needs a disclosure.`);
+    }
+  }
+  return {videoId, path: relative(projectRoot, file), passed: errors.length === 0, segments, errors};
+};
+
 export const uploadSource = (videoId: string, filename: string, data: Buffer): SourceUpload => {
   const context = loadVideoContext(videoId);
   const safeName = basename(filename).replace(/[^a-zA-Z0-9._-]+/g, "-");
