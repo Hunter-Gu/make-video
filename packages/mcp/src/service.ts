@@ -186,6 +186,27 @@ export const savePlan = (videoId: string, value: unknown): VideoPlan => {
   return plan;
 };
 
+export const buildStoryboard = (videoId: string, force = false) => {
+  const context = loadVideoContext(videoId);
+  const saved = getPlan(videoId);
+  if (!saved) throw new Error(`Video plan not found for ${videoId}.`);
+  const plan = validatePlan(videoId, saved);
+  const lines = [`# Storyboard`, "", `Plan: ${plan.title}`, `Mode: ${plan.adaptationMode}`, `Audience: ${plan.audience}`, `Language: ${plan.language}`, `Target duration: ${plan.durationSeconds}s`, ""];
+  for (const chapter of plan.chapters) {
+    lines.push(`## ${chapter.title}`, "", `- ID: \`${chapter.id}\``, `- Objective: ${chapter.objective}`, `- Source blocks: ${chapter.sourceBlockIds.length ? chapter.sourceBlockIds.map((id) => `\`${id}\``).join(", ") : "none"}`, "");
+    for (const sceneId of chapter.sceneIds) {
+      const scene = plan.scenes.find((item) => item.id === sceneId);
+      if (!scene) continue;
+      lines.push(`### ${scene.title}`, "", `- ID: \`${scene.id}\``, `- Type: ${scene.type}`, `- Objective: ${scene.objective}`, `- Visual direction: ${scene.visualDirection || "To be specified by the host agent."}`, `- Source blocks: ${scene.sourceBlockIds.length ? scene.sourceBlockIds.map((id) => `\`${id}\``).join(", ") : "none"}`, "");
+    }
+  }
+  const file = resolve(context.sourceDir, "STORYBOARD.md");
+  if (!force && existsSync(file)) throw new Error(`Storyboard for ${videoId} already exists. Pass force to regenerate.`);
+  const content = `${lines.join("\n").trim()}\n`;
+  writeFileSync(file, content);
+  return {videoId, path: relative(projectRoot, file), content};
+};
+
 export const uploadSource = (videoId: string, filename: string, data: Buffer): SourceUpload => {
   const context = loadVideoContext(videoId);
   const safeName = basename(filename).replace(/[^a-zA-Z0-9._-]+/g, "-");

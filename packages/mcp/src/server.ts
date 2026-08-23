@@ -8,7 +8,7 @@ import {z} from "zod";
 
 import {projectRoot} from "./context";
 import {getModelCatalog} from "./models";
-import {buildSourceCatalog, buildSourceList, createAssetRevision, getGenerationJob, getPlan, getProjectState, getQaJob, getRenderJob, getSourceCatalog, getSourceJob, getSources, listProjects, resolveMediaPath, runGeneration, savePlan, setCover, startGeneration, startQa, startRender, startSourceIngest, updateCaption, updateModels, updateTimelineRange, uploadSource} from "./service";
+import {buildSourceCatalog, buildSourceList, buildStoryboard, createAssetRevision, getGenerationJob, getPlan, getProjectState, getQaJob, getRenderJob, getSourceCatalog, getSourceJob, getSources, listProjects, resolveMediaPath, runGeneration, savePlan, setCover, startGeneration, startQa, startRender, startSourceIngest, updateCaption, updateModels, updateTimelineRange, uploadSource} from "./service";
 
 type CallToolResult = {
   content: Array<{type: "text"; text: string}>;
@@ -109,6 +109,12 @@ export const createMakeVideoMcpServer = () => {
     inputSchema: z.object({videoId: z.string().min(1), plan: z.any()}),
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: true},
   }, ({videoId, plan}) => run(() => savePlan(videoId, plan)));
+
+  server.registerTool("make_video_build_storyboard", {
+    description: "Materialize a storyboard outline from the saved host-agent video plan. It does not generate narration or media.",
+    inputSchema: z.object({videoId: z.string().min(1), force: z.boolean().optional()}),
+    annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: true},
+  }, ({videoId, force}) => run(() => buildStoryboard(videoId, force ?? false)));
 
   server.registerTool("make_video_request_image_revision", {
     description: "Create a non-destructive, versioned image revision request for an existing image asset.",
