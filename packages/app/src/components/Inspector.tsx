@@ -3,7 +3,7 @@ import {Button} from '@astryxdesign/core/Button';
 import {NumberInput} from '@astryxdesign/core/NumberInput';
 import {SegmentedControl, SegmentedControlItem} from '@astryxdesign/core/SegmentedControl';
 import {TextArea} from '@astryxdesign/core/TextArea';
-import type {Asset, AudioTrack, Caption, GenerationJob, ProjectState, ProjectTransport, RemotionEffect, TimingJob} from '@make-video/contracts';
+import type {Asset, AudioTrack, Caption, GenerationJob, GenerationReadiness, ProjectState, ProjectTransport, RemotionEffect, TimingJob} from '@make-video/contracts';
 import type {InspectorMode} from '../types';
 import {formatTime} from '../lib/format-time';
 
@@ -16,12 +16,13 @@ type InspectorProps = {
   asset: Asset | null;
   effect: RemotionEffect | null;
   audioSelection: {type: 'music'; id: string} | null;
+  readiness: GenerationReadiness | null;
   transport: ProjectTransport;
   refresh: () => Promise<void>;
   notice: (value: string) => void;
 };
 
-export const Inspector = ({state, mode, setMode, scene, caption, asset, effect, audioSelection, transport, refresh, notice}: InspectorProps) => (
+export const Inspector = ({state, mode, setMode, scene, caption, asset, effect, audioSelection, readiness, transport, refresh, notice}: InspectorProps) => (
   <aside className="min-h-0 overflow-auto border-l border-[#242830] bg-[#101318]">
     <SegmentedControl className="m-2.5 flex-wrap" label="Inspector view" value={mode} onChange={(value) => setMode(value as InspectorMode)} layout="fill" size="sm">
       {(['scene', 'caption', 'voice', 'effect', 'audio', 'image'] as const).map((tab) => <SegmentedControlItem key={tab} value={tab} label={tab === 'image' ? 'Visual' : tab === 'audio' ? 'Music' : tab[0].toUpperCase() + tab.slice(1)} />)}
@@ -37,10 +38,10 @@ export const Inspector = ({state, mode, setMode, scene, caption, asset, effect, 
         }}
       />
     ) : <div className="grid h-full place-items-center text-xs text-[#68717d]">This scene has no caption.</div>)}
-    {mode === 'voice' && (caption ? <VoiceInspector caption={caption} fps={state.composition.fps} track={state.audio.voiceover} generate={() => transport.generate(state.videoId, 'voiceover')} getJob={transport.getGenerationJob} buildTiming={() => transport.buildTiming(state.videoId, true)} getTimingJob={transport.getTimingJob} notice={notice} refresh={refresh} /> : <div className="grid h-full place-items-center text-xs text-[#68717d]">Select a voice block.</div>)}
+    {mode === 'voice' && (caption ? <VoiceInspector caption={caption} fps={state.composition.fps} track={state.audio.voiceover} readiness={readiness} generate={() => transport.generate(state.videoId, 'voiceover')} getJob={transport.getGenerationJob} buildTiming={() => transport.buildTiming(state.videoId, true)} getTimingJob={transport.getTimingJob} notice={notice} refresh={refresh} /> : <div className="grid h-full place-items-center text-xs text-[#68717d]">Select a voice block.</div>)}
     {mode === 'effect' && <EffectInspector effect={effect} fps={state.composition.fps} />}
     {mode === 'audio' && <AudioInspector track={audioSelection ? state.audio.music : state.audio.music} generate={() => transport.generate(state.videoId, 'music')} getJob={transport.getGenerationJob} notice={notice} refresh={refresh} />}
-    {mode === 'image' && <ImageInspector state={state} asset={asset} transport={transport} refresh={refresh} notice={notice} />}
+    {mode === 'image' && <ImageInspector state={state} asset={asset} readiness={readiness} transport={transport} refresh={refresh} notice={notice} />}
   </aside>
 );
 
@@ -68,7 +69,7 @@ const SceneInspector = ({scene, asset, fps, effects}: {scene: ProjectState['scen
   </div>
 ) : <div className="grid h-full place-items-center text-xs text-[#68717d]">Select a scene.</div>;
 
-const VoiceInspector = ({caption, fps, track, generate, getJob, buildTiming, getTimingJob, notice, refresh}: {caption: Caption; fps: number; track: AudioTrack; generate: () => Promise<GenerationJob>; getJob: (jobId: string) => Promise<GenerationJob>; buildTiming: () => Promise<TimingJob>; getTimingJob: (jobId: string) => Promise<TimingJob>; notice: (value: string) => void; refresh: () => Promise<void>}) => {
+const VoiceInspector = ({caption, fps, track, readiness, generate, getJob, buildTiming, getTimingJob, notice, refresh}: {caption: Caption; fps: number; track: AudioTrack; readiness: GenerationReadiness | null; generate: () => Promise<GenerationJob>; getJob: (jobId: string) => Promise<GenerationJob>; buildTiming: () => Promise<TimingJob>; getTimingJob: (jobId: string) => Promise<TimingJob>; notice: (value: string) => void; refresh: () => Promise<void>}) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   useEffect(() => {
     if (audioRef.current) audioRef.current.currentTime = caption.startFrame / fps;
@@ -83,7 +84,7 @@ const VoiceInspector = ({caption, fps, track, generate, getJob, buildTiming, get
       <span className="text-[9px] tracking-[.13em] text-[#6e7884]">VOICE</span><h2 className="my-2 mb-5 font-serif text-[22px] font-medium">{caption.id}</h2>
       <p className="rounded-md border-l-2 border-[#d68b46] bg-[#171b21] p-3 text-[11px] leading-[1.5] text-[#c7cdd4]">{caption.text}</p>
       {track.url ? <><audio className="mb-3 block w-full" ref={audioRef} src={track.url} controls preload="metadata" /><Button label="Play this caption" variant="primary" width="100%" onClick={playCaption} /></> : <div className="grid h-full place-items-center text-xs text-[#68717d]">Voiceover audio is not available.</div>}
-      <GenerationButton label="Generate voiceover" generate={generate} getJob={getJob} notice={notice} refresh={refresh} />
+      <GenerationButton label="Generate voiceover" kind="voiceover" readiness={readiness} generate={generate} getJob={getJob} notice={notice} refresh={refresh} />
       <TimingButton build={buildTiming} getJob={getTimingJob} notice={notice} refresh={refresh} />
       <dl className="mt-4 grid grid-cols-[1fr_1.2fr] gap-3 text-[11px]"><dt className="text-[#737c87]">Start</dt><dd className="m-0 text-right">{formatTime(caption.startFrame, fps)}</dd><dt className="text-[#737c87]">End</dt><dd className="m-0 text-right">{formatTime(caption.endFrame, fps)}</dd></dl>
     </div>
@@ -142,7 +143,7 @@ const CaptionEditor = ({caption, fps, save}: {caption: Caption; fps: number; sav
   );
 };
 
-const ImageInspector = ({state, asset, transport, refresh, notice}: {state: ProjectState; asset: Asset | null; transport: ProjectTransport; refresh: () => Promise<void>; notice: (value: string) => void}) => {
+const ImageInspector = ({state, asset, readiness, transport, refresh, notice}: {state: ProjectState; asset: Asset | null; readiness: GenerationReadiness | null; transport: ProjectTransport; refresh: () => Promise<void>; notice: (value: string) => void}) => {
   const [instruction, setInstruction] = useState('');
   const isCover = Boolean(asset && state.cover?.assetId === asset.id);
   return (
@@ -162,14 +163,15 @@ const ImageInspector = ({state, asset, transport, refresh, notice}: {state: Proj
           setInstruction(''); await refresh(); notice('Revision request created');
         } catch (error) { notice(error instanceof Error ? error.message : String(error)); }
       }} />
-      <GenerationButton label="Generate configured images" generate={() => transport.generate(state.videoId, 'images')} getJob={transport.getGenerationJob} notice={notice} refresh={refresh} />
+      <GenerationButton label="Generate configured images" kind="images" readiness={readiness} generate={() => transport.generate(state.videoId, 'images')} getJob={transport.getGenerationJob} notice={notice} refresh={refresh} />
       <small className="my-2.5 block text-[9px] leading-[1.45] text-[#737c87]">Cover selection is project state. It does not overwrite a rendered thumbnail.</small>
     </div>
   );
 };
 
-const GenerationButton = ({label, generate, getJob, notice, refresh}: {label: string; generate: () => Promise<GenerationJob>; getJob: (jobId: string) => Promise<GenerationJob>; notice: (value: string) => void; refresh: () => Promise<void>}) => {
+const GenerationButton = ({label, kind, readiness, generate, getJob, notice, refresh}: {label: string; kind?: 'images' | 'voiceover' | 'music'; readiness?: GenerationReadiness | null; generate: () => Promise<GenerationJob>; getJob: (jobId: string) => Promise<GenerationJob>; notice: (value: string) => void; refresh: () => Promise<void>}) => {
   const [running, setRunning] = useState(false);
+  const blocked = Boolean(kind !== 'music' && readiness && !readiness.passed);
   const run = async () => {
     setRunning(true);
     try {
@@ -184,7 +186,7 @@ const GenerationButton = ({label, generate, getJob, notice, refresh}: {label: st
     catch (error) { notice(error instanceof Error ? error.message : String(error)); }
     finally { setRunning(false); }
   };
-  return <Button className="mt-2" label={running ? `${label}…` : label} variant="secondary" width="100%" isDisabled={running} onClick={run} />;
+  return <Button className="mt-2" label={blocked ? 'Resolve readiness issues' : running ? `${label}…` : label} variant="secondary" width="100%" isDisabled={running || blocked} onClick={run} />;
 };
 
 const effectKind = (type: string) => type.includes('video') || type.includes('montage') ? 'media' : type.includes('depth') || type.includes('zoom') || type.includes('burns') ? 'camera' : type.includes('draw') || type.includes('route') || type.includes('network') ? 'draw' : 'reveal';
