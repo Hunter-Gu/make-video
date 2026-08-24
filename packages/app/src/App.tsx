@@ -26,21 +26,32 @@ export const App = ({transport}: {transport: ProjectTransport}) => {
   const [readinessOpen, setReadinessOpen] = useState(false);
   const [notice, setNotice] = useState('Loading project…');
 
+  const refreshReadiness = useCallback(async (id: string) => {
+    if (!id) return;
+    try { setReadiness(await transport.checkGenerationReadiness(id)); }
+    catch { setReadiness(null); }
+  }, [transport]);
+
   const refresh = useCallback(async (id: string) => {
     if (!id) return;
     const next = await transport.getProject(id);
     setState(next);
-    try { setReadiness(await transport.checkGenerationReadiness(id)); }
-    catch { setReadiness(null); }
+    await refreshReadiness(id);
     setSceneId((value) => next.scenes.some((item) => item.id === value) ? value : (next.scenes[0]?.id ?? null));
     setAssetId((value) => next.assets.some((item) => item.id === value) ? value : (next.assets[0]?.id ?? null));
     setStageId((value) => next.stages.some((item) => item.id === value && item.exists) ? value : (next.stages.find((item) => item.exists && item.kind !== 'still' && !item.path.endsWith('.png'))?.id ?? next.stages.find((item) => item.exists)?.id ?? null));
     setSelection((value) => value && selectionExists(next, value) ? value : (next.scenes[0] ? {type: 'scene', id: next.scenes[0].id} : null));
     setPlayheadFrame((value) => Math.min(value, next.composition.durationInFrames));
     setNotice('');
-  }, [transport]);
+  }, [refreshReadiness, transport]);
 
   const refreshCurrent = useCallback(() => refresh(videoId), [refresh, videoId]);
+
+  useEffect(() => {
+    if (!videoId) return undefined;
+    const interval = window.setInterval(() => { void refreshReadiness(videoId); }, 3000);
+    return () => window.clearInterval(interval);
+  }, [refreshReadiness, videoId]);
 
   useEffect(() => {
     transport.listProjects().then((items) => {
@@ -113,7 +124,7 @@ export const App = ({transport}: {transport: ProjectTransport}) => {
           <Button label={readiness ? (readiness.passed ? (readiness.warnings.length ? 'Generation warnings' : 'Generation ready') : 'Generation blocked') : 'Readiness unavailable'} variant="secondary" size="sm" onClick={() => setReadinessOpen((value) => !value)} />
           <Button label="Model settings" variant="secondary" size="sm" className="!bg-[#20252d] !text-[#e8eaed] hover:!bg-[#2b323d]" onClick={() => setModelSettingsOpen(true)} />
           <Button label="Preview" variant="primary" size="sm" onClick={() => setPreviewMode('player')} />
-          {readinessOpen && readiness && <ReadinessPanel readiness={readiness} onClose={() => setReadinessOpen(false)} />}
+          {readinessOpen && readiness && <ReadinessPanel readiness={readiness} refresh={() => refreshReadiness(videoId)} openModelSettings={() => { setReadinessOpen(false); setModelSettingsOpen(true); }} onClose={() => setReadinessOpen(false)} />}
         </div>
       </header>
       <section className="grid min-h-0 grid-cols-[220px_minmax(460px,1fr)_300px] max-[1120px]:grid-cols-[180px_minmax(430px,1fr)_260px]">
@@ -128,13 +139,17 @@ export const App = ({transport}: {transport: ProjectTransport}) => {
   );
 };
 
-const ReadinessPanel = ({readiness, onClose}: {readiness: GenerationReadiness; onClose: () => void}) => (
+const ReadinessPanel = ({readiness, refresh, openModelSettings, onClose}: {readiness: GenerationReadiness; refresh: () => Promise<void>; openModelSettings: () => void; onClose: () => void}) => {
+  const hasMissingModel = !readiness.generation.imageModel || !readiness.generation.voiceModel;
+  return (
   <div className="absolute right-0 top-11 z-30 w-[360px] rounded-md border border-[#3a424d] bg-[#171b21] p-3 shadow-[0_12px_32px_#0009]">
-    <div className="flex items-center justify-between gap-3"><strong className="text-[12px]">Generation readiness</strong><Button label="Close" variant="ghost" size="sm" onClick={onClose} /></div>
+    <div className="flex items-center justify-between gap-3"><strong className="text-[12px]">Generation readiness</strong><div className="flex items-center gap-1"><Button label="Refresh" variant="ghost" size="sm" onClick={() => void refresh()} /><Button label="Close" variant="ghost" size="sm" onClick={onClose} /></div></div>
     <div className="mt-2 grid grid-cols-2 gap-2 text-[10px] text-[#9aa4af]"><span>Plan: {readiness.plan.valid ? 'valid' : readiness.plan.present ? 'invalid' : 'missing'}</span><span>Script: {readiness.script.valid ? `${readiness.script.segments} segments` : 'invalid'}</span><span>Image model: {readiness.generation.imageModel ? 'configured' : 'missing'}</span><span>Voice model: {readiness.generation.voiceModel ? 'configured' : 'missing'}</span></div>
     {(readiness.errors.length > 0 || readiness.warnings.length > 0) ? <div className="mt-3 space-y-1.5 text-[10px] leading-[1.4]">{readiness.errors.map((error) => <div className="rounded bg-[#3b2426] px-2 py-1.5 text-[#f1b2b2]" key={`error-${error}`}>{error}</div>)}{readiness.warnings.map((warning) => <div className="rounded bg-[#3c3222] px-2 py-1.5 text-[#e8c78f]" key={`warning-${warning}`}>{warning}</div>)}</div> : <div className="mt-3 rounded bg-[#20372c] px-2 py-1.5 text-[10px] text-[#9bd4ae]">Plan and generation inputs are ready.</div>}
+    {hasMissingModel && <Button className="mt-3" label="Open model settings" variant="secondary" size="sm" onClick={openModelSettings} />}
   </div>
-);
+  );
+};
 
 const selectionExists = (state: ProjectState, selection: TimelineSelection) => {
   if (selection.type === 'scene') return state.scenes.some((item) => item.id === selection.id);
