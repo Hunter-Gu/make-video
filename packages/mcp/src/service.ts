@@ -4,12 +4,13 @@ import {basename, dirname, extname, relative, resolve, sep} from "node:path";
 
 import {linkAssets} from "@make-video/assets";
 import {runImages, runMusic, runVoiceover} from "@make-video/ai";
+import {runTiming as runTimingPackage} from "@make-video/audio";
 import {runRender} from "@make-video/render";
 import {runQa} from "@make-video/qa";
 import {runSourceCatalog, runSourceIngest, runSourceList} from "@make-video/sources";
 import type {GenerationJob} from "@make-video/contracts";
 import type {RenderJob} from "@make-video/contracts";
-import type {QaJob, SourceCatalog, SourceIndex, SourceJob, SourceUpload, VideoPlan} from "@make-video/contracts";
+import type {QaJob, SourceCatalog, SourceIndex, SourceJob, SourceUpload, TimingJob, VideoPlan} from "@make-video/contracts";
 import {loadVideoContext, projectRoot} from "./context";
 
 const preparedAssetProjects = new Set<string>();
@@ -17,6 +18,7 @@ const generationJobs = new Map<string, GenerationJob>();
 const renderJobs = new Map<string, RenderJob>();
 const qaJobs = new Map<string, QaJob>();
 const sourceJobs = new Map<string, SourceJob>();
+const timingJobs = new Map<string, TimingJob>();
 
 /** Prepare ignored public/ links before reading project media. */
 export const prepareProjectAssets = (videoId: string) => {
@@ -235,6 +237,31 @@ export const validateScript = (videoId: string) => {
     }
   }
   return {videoId, path: relative(projectRoot, file), passed: errors.length === 0, segments, errors};
+};
+
+export const startTiming = (videoId: string, force = false): TimingJob => {
+  const job: TimingJob = {id: randomUUID(), videoId, status: "queued", createdAt: new Date().toISOString()};
+  timingJobs.set(job.id, job);
+  void (async () => {
+    job.status = "running";
+    job.startedAt = new Date().toISOString();
+    try {
+      const validation = validateScript(videoId);
+      if (!validation.passed) throw new Error(`Script validation failed: ${validation.errors.join(" ")}`);
+      await runTimingPackage(videoId, force);
+      job.status = "succeeded";
+    } catch (error) {
+      job.status = "failed";
+      job.error = error instanceof Error ? error.message : String(error);
+    } finally { job.completedAt = new Date().toISOString(); }
+  })();
+  return job;
+};
+
+export const getTimingJob = (jobId: string) => {
+  const job = timingJobs.get(jobId);
+  if (!job) throw new Error(`Timing job not found: ${jobId}`);
+  return job;
 };
 
 export const uploadSource = (videoId: string, filename: string, data: Buffer): SourceUpload => {

@@ -173,6 +173,9 @@ importers:
       '@make-video/ai':
         specifier: workspace:*
         version: link:../ai
+      '@make-video/audio':
+        specifier: workspace:*
+        version: link:../audio
       '@make-video/assets':
         specifier: workspace:*
         version: link:../assets

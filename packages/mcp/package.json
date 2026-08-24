@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@make-video/ai": "workspace:*",
+    "@make-video/audio": "workspace:*",
     "@make-video/assets": "workspace:*",
     "@make-video/contracts": "workspace:*",
     "@make-video/render": "workspace:*",

@@ -1,4 +1,4 @@
-import type {Caption, GenerationJob, GenerationKind, ProjectTransport, QaJob, QaKind, RenderJob, RenderKind, SourceCatalog, SourceIndex, SourceJob, SourceUpload, VideoPlan} from "@make-video/contracts";
+import type {Caption, GenerationJob, GenerationKind, ProjectTransport, QaJob, QaKind, RenderJob, RenderKind, SourceCatalog, SourceIndex, SourceJob, SourceUpload, TimingJob, VideoPlan} from "@make-video/contracts";
 
 const request = async <T,>(path: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(path, {...init, headers: {"content-type": "application/json", ...init?.headers}});
@@ -30,6 +30,8 @@ export const httpTransport: ProjectTransport = {
   },
   ingestSources: (videoId: string, force = true) => request<SourceJob>("/api/sources/ingest", {method: "POST", body: JSON.stringify({videoId, force})}),
   getSourceJob: (jobId: string) => request<SourceJob>(`/api/sources/ingest/${encodeURIComponent(jobId)}`),
+  buildTiming: (videoId: string, force = false) => request<TimingJob>("/api/timing", {method: "POST", body: JSON.stringify({videoId, force})}),
+  getTimingJob: (jobId: string) => request<TimingJob>(`/api/timing/${encodeURIComponent(jobId)}`),
   getSources: (videoId: string) => request<SourceIndex>(`/api/sources?videoId=${encodeURIComponent(videoId)}`),
   buildSourceCatalog: (videoId: string, force = true) => request<SourceCatalog>("/api/sources/catalog", {method: "POST", body: JSON.stringify({videoId, force})}),
   getPlan: async (videoId: string) => (await request<{plan: VideoPlan | null}>(`/api/plan?videoId=${encodeURIComponent(videoId)}`)).plan,
