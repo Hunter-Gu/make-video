@@ -257,6 +257,7 @@ export const startHttpServer = () => {
       if (url.pathname === "/api/sources/catalog" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 200, await buildSourceCatalog(input.videoId, input.force ?? true)); }
       if (url.pathname === "/api/plan" && request.method === "GET") return sendJson(response, 200, {videoId: requiredParam(url.searchParams.get("videoId")), plan: getPlan(requiredParam(url.searchParams.get("videoId")))});
       if (url.pathname === "/api/plan" && request.method === "PUT") { const input = await readBody(request); return sendJson(response, 200, savePlan(input.videoId, input.plan)); }
+      if (url.pathname === "/api/storyboard" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 200, buildStoryboard(input.videoId, input.force ?? true)); }
       if (url.pathname === "/api/script/validation" && request.method === "GET") return sendJson(response, 200, validateScript(requiredParam(url.searchParams.get("videoId"))));
       if (url.pathname === "/api/timing" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 202, startTiming(input.videoId, Boolean(input.force))); }
       if (url.pathname.startsWith("/api/timing/") && request.method === "GET") return sendJson(response, 200, getTimingJob(decodeURIComponent(url.pathname.slice("/api/timing/".length))));

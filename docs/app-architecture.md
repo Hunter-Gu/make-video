@@ -112,6 +112,7 @@ second production state.
 3. Video player for the cover image, preview video, and final video.
 4. Caption editor with explicit save and narration-mismatch warnings.
 5. Image and voice model selectors backed by a capability registry.
+6. Outputs action to materialize the saved plan as `STORYBOARD.md`.
 
 Long-running generation and rendering operations use jobs. Starting an action
 returns a job id; progress and completion are read separately so HTTP or MCP

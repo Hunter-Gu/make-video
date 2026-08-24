@@ -1,4 +1,4 @@
-import type {Caption, GenerationJob, GenerationKind, GenerationReadiness, ProjectTransport, QaJob, QaKind, RenderJob, RenderKind, SourceCatalog, SourceIndex, SourceJob, SourceUpload, TimingJob, VideoPlan} from "@make-video/contracts";
+import type {Caption, GenerationJob, GenerationKind, GenerationReadiness, ProjectTransport, QaJob, QaKind, RenderJob, RenderKind, SourceCatalog, SourceIndex, SourceJob, SourceUpload, StoryboardArtifact, TimingJob, VideoPlan} from "@make-video/contracts";
 
 const request = async <T,>(path: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(path, {...init, headers: {"content-type": "application/json", ...init?.headers}});
@@ -33,6 +33,7 @@ export const httpTransport: ProjectTransport = {
   buildTiming: (videoId: string, force = false) => request<TimingJob>("/api/timing", {method: "POST", body: JSON.stringify({videoId, force})}),
   getTimingJob: (jobId: string) => request<TimingJob>(`/api/timing/${encodeURIComponent(jobId)}`),
   checkGenerationReadiness: (videoId: string) => request<GenerationReadiness>(`/api/generation/readiness?videoId=${encodeURIComponent(videoId)}`),
+  buildStoryboard: (videoId: string, force = true) => request<StoryboardArtifact>("/api/storyboard", {method: "POST", body: JSON.stringify({videoId, force})}),
   getSources: (videoId: string) => request<SourceIndex>(`/api/sources?videoId=${encodeURIComponent(videoId)}`),
   buildSourceCatalog: (videoId: string, force = true) => request<SourceCatalog>("/api/sources/catalog", {method: "POST", body: JSON.stringify({videoId, force})}),
   getPlan: async (videoId: string) => (await request<{plan: VideoPlan | null}>(`/api/plan?videoId=${encodeURIComponent(videoId)}`)).plan,

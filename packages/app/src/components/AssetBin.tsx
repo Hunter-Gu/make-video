@@ -64,6 +64,7 @@ export const AssetBin = ({state, selected, onSelect, transport, refresh, notice}
           <div className="mb-2 grid grid-cols-2 gap-1.5">
             <RenderButton label="Render preview" kind="preview" videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} />
             <RenderButton label="Render final" kind="final" videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} />
+            <StoryboardButton videoId={state.videoId} transport={transport} notice={notice} />
           </div>
           <div className="mb-2 rounded-md border border-[#252c35] bg-[#14181e] p-2">
             <div className="mb-1.5 flex items-center justify-between text-[9px]"><strong>QA</strong><span className={state.qa?.passed ? 'text-[#61b88f]' : 'text-[#737c87]'}>{state.qa ? (state.qa.passed ? 'Passed' : 'Issues') : 'Not run'}</span></div>
@@ -120,4 +121,15 @@ const RenderButton = ({label, kind, videoId, transport, refresh, notice}: {label
     finally { setRunning(false); }
   };
   return <button className="rounded-md border border-[#343c47] bg-[#20252d] px-2 py-2 text-[9px] text-[#d7dde5] hover:bg-[#2b323d] disabled:cursor-wait disabled:opacity-60" disabled={running} onClick={run}>{running ? `${label}…` : label}</button>;
+};
+
+const StoryboardButton = ({videoId, transport, notice}: {videoId: string; transport: ProjectTransport; notice: (value: string) => void}) => {
+  const [running, setRunning] = useState(false);
+  const run = async () => {
+    setRunning(true);
+    try { const artifact = await transport.buildStoryboard(videoId, true); notice(`Storyboard written to ${artifact.path}`); }
+    catch (error) { notice(error instanceof Error ? error.message : String(error)); }
+    finally { setRunning(false); }
+  };
+  return <Button className="col-span-2" label={running ? 'Building storyboard…' : 'Build storyboard'} variant="secondary" size="sm" width="100%" isDisabled={running} onClick={run} />;
 };
