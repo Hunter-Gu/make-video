@@ -80,6 +80,7 @@ The stdio and `/mcp` Streamable HTTP entries expose the same tools:
 - `make_video_validate_script`
 - `make_video_build_timing`
 - `make_video_get_generation_job`
+- `make_video_check_generation_readiness`
 
 They also expose `make-video://projects` and one read-only project resource per
 video. Tool handlers contain no filesystem rules; they delegate to

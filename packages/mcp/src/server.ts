@@ -8,7 +8,7 @@ import {z} from "zod";
 
 import {projectRoot} from "./context";
 import {getModelCatalog} from "./models";
-import {buildSourceCatalog, buildSourceList, buildStoryboard, createAssetRevision, getGenerationJob, getPlan, getProjectState, getQaJob, getRenderJob, getSourceCatalog, getSourceJob, getSources, getTimingJob, listProjects, resolveMediaPath, savePlan, setCover, startGeneration, startQa, startRender, startSourceIngest, startTiming, updateCaption, updateModels, updateTimelineRange, uploadSource, validateScript} from "./service";
+import {buildSourceCatalog, buildSourceList, buildStoryboard, checkGenerationReadiness, createAssetRevision, getGenerationJob, getPlan, getProjectState, getQaJob, getRenderJob, getSourceCatalog, getSourceJob, getSources, getTimingJob, listProjects, resolveMediaPath, savePlan, setCover, startGeneration, startQa, startRender, startSourceIngest, startTiming, updateCaption, updateModels, updateTimelineRange, uploadSource, validateScript} from "./service";
 
 type CallToolResult = {
   content: Array<{type: "text"; text: string}>;
@@ -134,6 +134,12 @@ export const createMakeVideoMcpServer = () => {
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: false},
   }, ({videoId, force}) => result(startTiming(videoId, force ?? false)));
 
+  server.registerTool("make_video_check_generation_readiness", {
+    description: "Check whether a source-referenced plan, narration script, media configuration, and timing inputs are ready for generation.",
+    inputSchema: z.object({videoId: z.string().min(1)}),
+    annotations: {readOnlyHint: true},
+  }, ({videoId}) => run(() => checkGenerationReadiness(videoId)));
+
   server.registerTool("make_video_request_image_revision", {
     description: "Create a non-destructive, versioned image revision request for an existing image asset.",
     inputSchema: z.object({videoId: z.string().min(1), assetId: z.string().min(1), modelId: z.string().min(1).nullable().optional(), instruction: z.string().min(1)}),
@@ -254,6 +260,7 @@ export const startHttpServer = () => {
       if (url.pathname === "/api/script/validation" && request.method === "GET") return sendJson(response, 200, validateScript(requiredParam(url.searchParams.get("videoId"))));
       if (url.pathname === "/api/timing" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 202, startTiming(input.videoId, Boolean(input.force))); }
       if (url.pathname.startsWith("/api/timing/") && request.method === "GET") return sendJson(response, 200, getTimingJob(decodeURIComponent(url.pathname.slice("/api/timing/".length))));
+      if (url.pathname === "/api/generation/readiness" && request.method === "GET") return sendJson(response, 200, checkGenerationReadiness(requiredParam(url.searchParams.get("videoId"))));
       if (url.pathname === "/api/sources/upload" && request.method === "POST") { const input = parseUpload(request, await readRawBody(request)); return sendJson(response, 201, uploadSource(requiredParam(url.searchParams.get("videoId")), input.filename, input.data)); }
       if (url.pathname === "/api/sources/ingest" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 202, startSourceIngest(input.videoId, input.force ?? true)); }
       if (url.pathname.startsWith("/api/sources/ingest/") && request.method === "GET") return sendJson(response, 200, getSourceJob(decodeURIComponent(url.pathname.slice("/api/sources/ingest/".length))));

@@ -10,7 +10,7 @@ import {runQa} from "@make-video/qa";
 import {runSourceCatalog, runSourceIngest, runSourceList} from "@make-video/sources";
 import type {GenerationJob} from "@make-video/contracts";
 import type {RenderJob} from "@make-video/contracts";
-import type {QaJob, SourceCatalog, SourceIndex, SourceJob, SourceUpload, TimingJob, VideoPlan} from "@make-video/contracts";
+import type {GenerationReadiness, QaJob, SourceCatalog, SourceIndex, SourceJob, SourceUpload, TimingJob, VideoPlan} from "@make-video/contracts";
 import {loadVideoContext, projectRoot} from "./context";
 
 const preparedAssetProjects = new Set<string>();
@@ -237,6 +237,51 @@ export const validateScript = (videoId: string) => {
     }
   }
   return {videoId, path: relative(projectRoot, file), passed: errors.length === 0, segments, errors};
+};
+
+export const checkGenerationReadiness = (videoId: string): GenerationReadiness => {
+  const context = loadVideoContext(videoId);
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const savedPlan = getPlan(videoId);
+  let planValid = false;
+  if (!savedPlan) errors.push("VIDEO_PLAN.json is missing.");
+  else { try { validatePlan(videoId, savedPlan); planValid = true; } catch (error) { errors.push(error instanceof Error ? error.message : String(error)); } }
+  const scriptFile = resolve(context.sourceDir, "SCRIPT.md");
+  const script = validateScript(videoId);
+  if (!script.passed) errors.push(...script.errors);
+  const config = context.config as Record<string, any>;
+  const imageGeneration = config.imageGeneration as Record<string, any> | undefined;
+  const imageAssets = Array.isArray(imageGeneration?.assets) ? imageGeneration.assets : [];
+  const assignedScenes = new Set<string>();
+  const imageIds = new Set<string>();
+  for (const asset of imageAssets) {
+    if (!asset || typeof asset.id !== "string" || imageIds.has(asset.id)) errors.push("imageGeneration.assets contains a missing or duplicate id.");
+    else imageIds.add(asset.id);
+    if (typeof asset?.prompt !== "string" || !asset.prompt.trim()) errors.push(`Generated image ${asset?.id ?? "unknown"} needs a prompt.`);
+    if (typeof asset?.output !== "string" || !asset.output.trim()) errors.push(`Generated image ${asset?.id ?? "unknown"} needs an output path.`);
+    for (const sceneId of Array.isArray(asset?.sceneIds) ? asset.sceneIds : []) if (typeof sceneId === "string") assignedScenes.add(sceneId);
+  }
+  if (imageAssets.length > 0 && typeof imageGeneration?.model !== "string") errors.push("imageGeneration.model is missing.");
+  const voiceModel = typeof config.voice?.model === "string" && config.voice.model.length > 0 ? config.voice.model : null;
+  if (!voiceModel) errors.push("voice.model is missing.");
+  const planScenes = Array.isArray(savedPlan?.scenes) ? savedPlan.scenes : [];
+  for (const scene of planScenes) if (["image", "portrait", "depth", "video", "montage"].includes(scene.type) && !assignedScenes.has(scene.id)) warnings.push(`Scene ${scene.id} has no configured generated media assignment; it must use supplied or Remotion visuals.`);
+  const timingFile = resolve(context.sourceDir, "TIMING_PLAN.json");
+  const timingPlanPresent = existsSync(timingFile);
+  let voiceManifestPresent = false;
+  if (timingPlanPresent) {
+    const timing = readJson(timingFile, {});
+    if (typeof timing.voiceManifest === "string") {
+      try {
+        voiceManifestPresent = existsSync(context.resolveConfiguredPath(timing.voiceManifest, "TIMING_PLAN.voiceManifest"));
+      } catch (error) {
+        warnings.push(error instanceof Error ? error.message : String(error));
+      }
+    }
+    if (!voiceManifestPresent) warnings.push("TIMING_PLAN.json exists but its voice manifest is missing.");
+  } else warnings.push("TIMING_PLAN.json is missing; build timing after voiceover generation.");
+  return {videoId, passed: errors.length === 0, errors: [...new Set(errors)], warnings: [...new Set(warnings)], plan: {present: Boolean(savedPlan), valid: planValid}, script: {present: existsSync(scriptFile), valid: script.passed, segments: script.segments.length}, generation: {imageModel: typeof imageGeneration?.model === "string" ? imageGeneration.model : null, voiceModel, imageAssets: imageAssets.length, assignedScenes: [...assignedScenes]}, timing: {planPresent: timingPlanPresent, voiceManifestPresent}};
 };
 
 export const startTiming = (videoId: string, force = false): TimingJob => {

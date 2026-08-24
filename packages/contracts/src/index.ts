@@ -52,6 +52,7 @@ export type SourceIndex = {videoId: string; sources: ProjectSource[]};
 export type SourceCatalog = {videoId: string; entities: Array<Record<string, unknown>>; quotations: Array<Record<string, unknown>>; claims: Array<Record<string, unknown>>; illustrations: Array<Record<string, unknown>>};
 export type SourceJob = {id: string; videoId: string; status: "queued" | "running" | "succeeded" | "failed"; createdAt: string; startedAt?: string; completedAt?: string; error?: string};
 export type TimingJob = {id: string; videoId: string; status: "queued" | "running" | "succeeded" | "failed"; createdAt: string; startedAt?: string; completedAt?: string; error?: string};
+export type GenerationReadiness = {videoId: string; passed: boolean; errors: string[]; warnings: string[]; plan: {present: boolean; valid: boolean}; script: {present: boolean; valid: boolean; segments: number}; generation: {imageModel: string | null; voiceModel: string | null; imageAssets: number; assignedScenes: string[]}; timing: {planPresent: boolean; voiceManifestPresent: boolean}};
 export type SourceUpload = {videoId: string; source: {id: string; title: string; type: string; input: string; rights: string}};
 export type VideoPlanScene = {id: string; chapterId: string; title: string; type: SceneType; objective: string; sourceBlockIds: string[]; visualDirection?: string};
 export type VideoPlanChapter = {id: string; title: string; objective: string; sourceBlockIds: string[]; sceneIds: string[]};
@@ -76,6 +77,7 @@ export interface ProjectTransport {
   getSourceJob(jobId: string): Promise<SourceJob>;
   buildTiming(videoId: string, force?: boolean): Promise<TimingJob>;
   getTimingJob(jobId: string): Promise<TimingJob>;
+  checkGenerationReadiness(videoId: string): Promise<GenerationReadiness>;
   getSources(videoId: string): Promise<SourceIndex>;
   buildSourceCatalog(videoId: string, force?: boolean): Promise<SourceCatalog>;
   getPlan(videoId: string): Promise<VideoPlan | null>;
