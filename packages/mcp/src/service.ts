@@ -390,6 +390,10 @@ export const updateModels = (videoId: string, input: any) => {
 
 export const runGeneration = async (videoId: string, kind: "images" | "voiceover" | "music", force = false) => {
   if (!["images", "voiceover", "music"].includes(kind)) throw new Error(`Unknown generation kind: ${kind}`);
+  if (kind === "voiceover") {
+    const validation = validateScript(videoId);
+    if (!validation.passed) throw new Error(`Script validation failed: ${validation.errors.join(" ")}`);
+  }
   const args = [videoId, ...(force ? ["--force"] : [])];
   if (kind === "images") await runImages(args);
   else if (kind === "voiceover") await runVoiceover(args);
