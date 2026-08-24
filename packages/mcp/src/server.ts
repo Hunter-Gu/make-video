@@ -8,7 +8,7 @@ import {z} from "zod";
 
 import {projectRoot} from "./context";
 import {getModelCatalog} from "./models";
-import {buildSourceCatalog, buildSourceList, buildStoryboard, createAssetRevision, getGenerationJob, getPlan, getProjectState, getQaJob, getRenderJob, getSourceCatalog, getSourceJob, getSources, getTimingJob, listProjects, resolveMediaPath, runGeneration, savePlan, setCover, startGeneration, startQa, startRender, startSourceIngest, startTiming, updateCaption, updateModels, updateTimelineRange, uploadSource, validateScript} from "./service";
+import {buildSourceCatalog, buildSourceList, buildStoryboard, createAssetRevision, getGenerationJob, getPlan, getProjectState, getQaJob, getRenderJob, getSourceCatalog, getSourceJob, getSources, getTimingJob, listProjects, resolveMediaPath, savePlan, setCover, startGeneration, startQa, startRender, startSourceIngest, startTiming, updateCaption, updateModels, updateTimelineRange, uploadSource, validateScript} from "./service";
 
 type CallToolResult = {
   content: Array<{type: "text"; text: string}>;
@@ -57,10 +57,16 @@ export const createMakeVideoMcpServer = () => {
   }, ({videoId, image, voice}) => run(() => updateModels(videoId, {image, voice})));
 
   server.registerTool("make_video_generate", {
-    description: "Run one configured generation action for a project. API keys stay on the server environment and are never passed as tool input.",
+    description: "Start one configured image, voiceover, or music generation job. Poll make_video_get_generation_job for completion. API keys stay on the server environment and are never passed as tool input.",
     inputSchema: z.object({videoId: z.string().min(1), kind: z.enum(["images", "voiceover", "music"]), force: z.boolean().optional()}),
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: false},
-  }, ({videoId, kind, force}) => run(() => runGeneration(videoId, kind, force ?? false)));
+  }, ({videoId, kind, force}) => result(startGeneration(videoId, kind, force ?? false)));
+
+  server.registerTool("make_video_get_generation_job", {
+    description: "Read the status of a Make Video image, voiceover, or music generation job.",
+    inputSchema: z.object({jobId: z.string().min(1)}),
+    annotations: {readOnlyHint: true},
+  }, ({jobId}) => run(() => getGenerationJob(jobId)));
 
   server.registerTool("make_video_render", {
     description: "Start a still, preview, or final Remotion render and return a task id.",
