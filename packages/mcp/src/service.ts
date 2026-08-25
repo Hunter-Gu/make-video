@@ -509,7 +509,10 @@ export const runGeneration = async (videoId: string, kind: "images" | "voiceover
   }
   const args = [videoId, ...(force ? ["--force"] : [])];
   if (kind === "images") { await runImages(args); syncGeneratedImages(videoId); }
-  else if (kind === "voiceover") await runVoiceover(args);
+  else if (kind === "voiceover") {
+    await runVoiceover(args);
+    if (existsSync(resolve(loadVideoContext(videoId).sourceDir, "TIMING_PLAN.json"))) await runTimingPackage(videoId, true);
+  }
   else await runMusic(args);
   return getProjectState(videoId);
 };
