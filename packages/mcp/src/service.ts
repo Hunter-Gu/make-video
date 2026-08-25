@@ -10,7 +10,7 @@ import {runQa} from "@make-video/qa";
 import {runSourceCatalog, runSourceIngest, runSourceList} from "@make-video/sources";
 import type {GenerationJob} from "@make-video/contracts";
 import type {RenderJob} from "@make-video/contracts";
-import type {GenerationReadiness, QaJob, SourceCatalog, SourceIndex, SourceJob, SourceUpload, TimingJob, VideoPlan} from "@make-video/contracts";
+import type {GenerationPreparation, GenerationReadiness, QaJob, SourceCatalog, SourceIndex, SourceJob, SourceUpload, TimingJob, VideoPlan} from "@make-video/contracts";
 import {loadVideoContext, projectRoot} from "./context";
 
 const preparedAssetProjects = new Set<string>();
@@ -186,6 +186,41 @@ export const savePlan = (videoId: string, value: unknown): VideoPlan => {
   const plan = validatePlan(videoId, value);
   writeJson(resolve(context.sourceDir, "VIDEO_PLAN.json"), plan);
   return plan;
+};
+
+const generatedImageSceneTypes = new Set(["image", "portrait", "depth"]);
+const kebabId = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "scene";
+
+export const prepareGeneration = (videoId: string): GenerationPreparation => {
+  const context = loadVideoContext(videoId);
+  const saved = getPlan(videoId);
+  if (!saved) throw new Error(`Video plan not found for ${videoId}.`);
+  const plan = validatePlan(videoId, saved);
+  const configuredImageGeneration = context.config.imageGeneration as Record<string, any> | undefined;
+  const current: Record<string, any> = configuredImageGeneration && !Array.isArray(configuredImageGeneration)
+    ? configuredImageGeneration
+    : {};
+  const assets = Array.isArray(current.assets) ? current.assets.map((asset: any) => ({...asset})) : [];
+  const usedIds = new Set(assets.map((asset: any) => typeof asset?.id === "string" ? asset.id : ""));
+  const preparedSceneIds: string[] = [];
+  for (const scene of plan.scenes) {
+    if (!generatedImageSceneTypes.has(scene.type)) continue;
+    const existing = assets.find((asset: any) => asset?.id === scene.id || (Array.isArray(asset?.sceneIds) && asset.sceneIds.includes(scene.id)));
+    if (existing) {
+      existing.sceneIds = [...new Set([...(Array.isArray(existing.sceneIds) ? existing.sceneIds : []), scene.id])];
+      preparedSceneIds.push(scene.id);
+      continue;
+    }
+    let id = kebabId(scene.id);
+    let suffix = 2;
+    while (usedIds.has(id)) id = `${kebabId(scene.id)}-${suffix++}`;
+    usedIds.add(id);
+    assets.push({id, sceneIds: [scene.id], prompt: scene.visualDirection?.trim() || scene.objective.trim(), output: `images/generated/${id}.png`});
+    preparedSceneIds.push(scene.id);
+  }
+  const nextConfig: Record<string, any> = {...context.config, imageGeneration: {...current, assets}};
+  writeJson(context.configPath, nextConfig);
+  return {videoId, path: relative(projectRoot, context.configPath), imageModel: typeof nextConfig.imageGeneration.model === "string" ? nextConfig.imageGeneration.model : null, assetCount: assets.length, preparedSceneIds};
 };
 
 export const buildStoryboard = (videoId: string, force = false) => {

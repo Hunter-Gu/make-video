@@ -8,7 +8,7 @@ import {z} from "zod";
 
 import {projectRoot} from "./context";
 import {getModelCatalog} from "./models";
-import {buildSourceCatalog, buildSourceList, buildStoryboard, checkGenerationReadiness, createAssetRevision, getGenerationJob, getPlan, getProjectState, getQaJob, getRenderJob, getSourceCatalog, getSourceJob, getSources, getTimingJob, listProjects, resolveMediaPath, savePlan, setCover, startGeneration, startQa, startRender, startSourceIngest, startTiming, updateCaption, updateModels, updateTimelineRange, uploadSource, validateScript} from "./service";
+import {buildSourceCatalog, buildSourceList, buildStoryboard, checkGenerationReadiness, createAssetRevision, getGenerationJob, getPlan, getProjectState, getQaJob, getRenderJob, getSourceCatalog, getSourceJob, getSources, getTimingJob, listProjects, prepareGeneration, resolveMediaPath, savePlan, setCover, startGeneration, startQa, startRender, startSourceIngest, startTiming, updateCaption, updateModels, updateTimelineRange, uploadSource, validateScript} from "./service";
 
 type CallToolResult = {
   content: Array<{type: "text"; text: string}>;
@@ -115,6 +115,12 @@ export const createMakeVideoMcpServer = () => {
     inputSchema: z.object({videoId: z.string().min(1), plan: z.any()}),
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: true},
   }, ({videoId, plan}) => run(() => savePlan(videoId, plan)));
+
+  server.registerTool("make_video_prepare_generation", {
+    description: "Materialize image generation assets from the saved host-agent plan. This writes configuration only and does not call a model.",
+    inputSchema: z.object({videoId: z.string().min(1)}),
+    annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: true},
+  }, ({videoId}) => run(() => prepareGeneration(videoId)));
 
   server.registerTool("make_video_build_storyboard", {
     description: "Materialize a storyboard outline from the saved host-agent video plan. It does not generate narration or media.",
@@ -258,6 +264,7 @@ export const startHttpServer = () => {
       if (url.pathname === "/api/plan" && request.method === "GET") return sendJson(response, 200, {videoId: requiredParam(url.searchParams.get("videoId")), plan: getPlan(requiredParam(url.searchParams.get("videoId")))});
       if (url.pathname === "/api/plan" && request.method === "PUT") { const input = await readBody(request); return sendJson(response, 200, savePlan(input.videoId, input.plan)); }
       if (url.pathname === "/api/storyboard" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 200, buildStoryboard(input.videoId, input.force ?? true)); }
+      if (url.pathname === "/api/generation/prepare" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 200, prepareGeneration(input.videoId)); }
       if (url.pathname === "/api/script/validation" && request.method === "GET") return sendJson(response, 200, validateScript(requiredParam(url.searchParams.get("videoId"))));
       if (url.pathname === "/api/timing" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 202, startTiming(input.videoId, Boolean(input.force))); }
       if (url.pathname.startsWith("/api/timing/") && request.method === "GET") return sendJson(response, 200, getTimingJob(decodeURIComponent(url.pathname.slice("/api/timing/".length))));

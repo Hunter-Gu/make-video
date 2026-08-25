@@ -76,6 +76,7 @@ The stdio and `/mcp` Streamable HTTP entries expose the same tools:
 - `make_video_build_source_list`
 - `make_video_get_plan`
 - `make_video_save_plan`
+- `make_video_prepare_generation`
 - `make_video_build_storyboard`
 - `make_video_validate_script`
 - `make_video_build_timing`
@@ -100,6 +101,8 @@ Inspectable project files remain authoritative:
   thumbnail.
 - `VIDEO_PLAN.json` stores the host-agent-authored, source-referenced plan;
   MCP validates its source block references before writing it.
+- `video.config.json.imageGeneration.assets` stores the deterministic image
+  generation configuration materialized from that plan.
 - Rendered media and QA reports remain under `output/<video-id>/`.
 
 Browser state is limited to presentation preferences. It must not become a
@@ -113,6 +116,7 @@ second production state.
 4. Caption editor with explicit save and narration-mismatch warnings.
 5. Image and voice model selectors backed by a capability registry.
 6. Outputs action to materialize the saved plan as `STORYBOARD.md`.
+7. Outputs action to prepare image generation configuration from the saved plan.
 
 Long-running generation and rendering operations use jobs. Starting an action
 returns a job id; progress and completion are read separately so HTTP or MCP

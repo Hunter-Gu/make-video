@@ -54,6 +54,7 @@ export type SourceJob = {id: string; videoId: string; status: "queued" | "runnin
 export type TimingJob = {id: string; videoId: string; status: "queued" | "running" | "succeeded" | "failed"; createdAt: string; startedAt?: string; completedAt?: string; error?: string};
 export type GenerationReadiness = {videoId: string; passed: boolean; errors: string[]; warnings: string[]; plan: {present: boolean; valid: boolean}; script: {present: boolean; valid: boolean; segments: number}; generation: {imageModel: string | null; voiceModel: string | null; imageAssets: number; assignedScenes: string[]}; timing: {planPresent: boolean; voiceManifestPresent: boolean}};
 export type StoryboardArtifact = {videoId: string; path: string; content: string};
+export type GenerationPreparation = {videoId: string; path: string; imageModel: string | null; assetCount: number; preparedSceneIds: string[]};
 export type SourceUpload = {videoId: string; source: {id: string; title: string; type: string; input: string; rights: string}};
 export type VideoPlanScene = {id: string; chapterId: string; title: string; type: SceneType; objective: string; sourceBlockIds: string[]; visualDirection?: string};
 export type VideoPlanChapter = {id: string; title: string; objective: string; sourceBlockIds: string[]; sceneIds: string[]};
@@ -80,6 +81,7 @@ export interface ProjectTransport {
   getTimingJob(jobId: string): Promise<TimingJob>;
   checkGenerationReadiness(videoId: string): Promise<GenerationReadiness>;
   buildStoryboard(videoId: string, force?: boolean): Promise<StoryboardArtifact>;
+  prepareGeneration(videoId: string): Promise<GenerationPreparation>;
   getSources(videoId: string): Promise<SourceIndex>;
   buildSourceCatalog(videoId: string, force?: boolean): Promise<SourceCatalog>;
   getPlan(videoId: string): Promise<VideoPlan | null>;

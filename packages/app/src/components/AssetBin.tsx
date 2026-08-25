@@ -64,6 +64,7 @@ export const AssetBin = ({state, selected, onSelect, transport, refresh, notice}
           <div className="mb-2 grid grid-cols-2 gap-1.5">
             <RenderButton label="Render preview" kind="preview" videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} />
             <RenderButton label="Render final" kind="final" videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} />
+            <PreparationButton videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} />
             <StoryboardButton videoId={state.videoId} transport={transport} notice={notice} />
           </div>
           <div className="mb-2 rounded-md border border-[#252c35] bg-[#14181e] p-2">
@@ -132,4 +133,15 @@ const StoryboardButton = ({videoId, transport, notice}: {videoId: string; transp
     finally { setRunning(false); }
   };
   return <Button className="col-span-2" label={running ? 'Building storyboard…' : 'Build storyboard'} variant="secondary" size="sm" width="100%" isDisabled={running} onClick={run} />;
+};
+
+const PreparationButton = ({videoId, transport, refresh, notice}: {videoId: string; transport: ProjectTransport; refresh: () => Promise<void>; notice: (value: string) => void}) => {
+  const [running, setRunning] = useState(false);
+  const run = async () => {
+    setRunning(true);
+    try { const result = await transport.prepareGeneration(videoId); await refresh(); notice(`Prepared ${result.preparedSceneIds.length} image scenes`); }
+    catch (error) { notice(error instanceof Error ? error.message : String(error)); }
+    finally { setRunning(false); }
+  };
+  return <Button className="col-span-2" label={running ? 'Preparing generation…' : 'Prepare generation config'} variant="secondary" size="sm" width="100%" isDisabled={running} onClick={run} />;
 };
