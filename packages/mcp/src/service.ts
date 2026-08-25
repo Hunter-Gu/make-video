@@ -501,6 +501,34 @@ const syncGeneratedImages = (videoId: string) => {
   return {updatedSceneIds: [...new Set(updatedSceneIds)], missingSceneIds: [...new Set(missingSceneIds)]};
 };
 
+const validateRenderInputs = (videoId: string) => {
+  syncGeneratedImages(videoId);
+  const context = loadVideoContext(videoId);
+  const indexFile = resolve(context.sourceDir, "SCENE_INDEX.json");
+  if (!existsSync(indexFile)) throw new Error(`SCENE_INDEX.json is missing for ${videoId}.`);
+  const index = readJson(indexFile, null);
+  const errors: string[] = [];
+  const scenes = Array.isArray(index?.scenes) ? index.scenes : [];
+  const duration = Number(context.composition.durationInFrames);
+  if (scenes.length === 0) errors.push("SCENE_INDEX.json has no scenes.");
+  for (const scene of scenes) {
+    if (!scene || typeof scene.id !== "string") { errors.push("SCENE_INDEX.json contains a scene without an id."); continue; }
+    const start = Number(scene.startFrame); const end = Number(scene.endFrame);
+    if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end <= start || end > duration) errors.push(`Scene ${scene.id} has an invalid frame range.`);
+    for (const assetId of Array.isArray(scene.assetIds) ? scene.assetIds : []) {
+      const configuredPath = index.assets?.[assetId];
+      if (typeof configuredPath !== "string") { errors.push(`Scene ${scene.id} references missing asset ${assetId}.`); continue; }
+      try { if (!resolveAssetFile(context, assetId, configuredPath)) errors.push(`Scene ${scene.id} asset ${assetId} is not available.`); }
+      catch (error) { errors.push(error instanceof Error ? error.message : String(error)); }
+    }
+  }
+  for (const caption of Array.isArray(index?.captions) ? index.captions : []) {
+    const start = Number(caption?.startFrame); const end = Number(caption?.endFrame);
+    if (!caption?.id || !Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end <= start || end > duration) errors.push(`Caption ${caption?.id ?? "unknown"} has an invalid frame range.`);
+  }
+  if (errors.length > 0) throw new Error(`Render inputs are invalid:\n${[...new Set(errors)].map((error) => `- ${error}`).join("\n")}`);
+};
+
 export const runGeneration = async (videoId: string, kind: "images" | "voiceover" | "music", force = false) => {
   if (!["images", "voiceover", "music"].includes(kind)) throw new Error(`Unknown generation kind: ${kind}`);
   if (kind === "voiceover") {
@@ -551,6 +579,7 @@ export const startRender = (videoId: string, kind: "still" | "preview" | "final"
     job.status = "running";
     job.startedAt = new Date().toISOString();
     try {
+      validateRenderInputs(videoId);
       await runRender(kind, videoId, force);
       job.status = "succeeded";
     } catch (error) {
