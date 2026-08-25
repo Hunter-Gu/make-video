@@ -468,6 +468,39 @@ export const updateModels = (videoId: string, input: any) => {
   return {image: config.imageGeneration?.model ?? null, voice: config.voice?.model ?? null};
 };
 
+const syncGeneratedImages = (videoId: string) => {
+  const context = loadVideoContext(videoId);
+  const manifestFile = resolve(context.publicDir, "images/generated/manifest.json");
+  if (!existsSync(manifestFile)) return {updatedSceneIds: [], missingSceneIds: []};
+  const manifest = readJson(manifestFile, {assets: []});
+  const configured = context.config.imageGeneration as Record<string, any> | undefined;
+  const configuredAssets = Array.isArray(configured?.assets) ? configured.assets : [];
+  const indexFile = resolve(context.sourceDir, "SCENE_INDEX.json");
+  const index = readJson(indexFile, {assets: {}, scenes: []});
+  if (!index.assets || typeof index.assets !== "object" || Array.isArray(index.assets)) index.assets = {};
+  const updatedSceneIds: string[] = [];
+  const missingSceneIds: string[] = [];
+  let changed = false;
+  for (const asset of configuredAssets) {
+    const generated = Array.isArray(manifest.assets) ? manifest.assets.find((item: any) => item?.id === asset?.id) : null;
+    if (!generated || typeof generated.output !== "string") continue;
+    const output = resolve(context.publicDir, generated.output);
+    const outputRelative = relative(context.publicDir, output);
+    if (outputRelative === ".." || outputRelative.startsWith(`..${sep}`) || !existsSync(output)) continue;
+    const projectPath = relative(projectRoot, output);
+    if (index.assets[asset.id] !== projectPath) { index.assets[asset.id] = projectPath; changed = true; }
+    for (const sceneId of Array.isArray(asset?.sceneIds) ? asset.sceneIds : []) {
+      const scene = Array.isArray(index.scenes) ? index.scenes.find((item: any) => item?.id === sceneId) : null;
+      if (!scene) { missingSceneIds.push(sceneId); continue; }
+      const sceneAssetIds = Array.isArray(scene.assetIds) ? scene.assetIds : [];
+      if (!sceneAssetIds.includes(asset.id)) { scene.assetIds = [...sceneAssetIds, asset.id]; changed = true; }
+      updatedSceneIds.push(sceneId);
+    }
+  }
+  if (changed) writeJson(indexFile, index);
+  return {updatedSceneIds: [...new Set(updatedSceneIds)], missingSceneIds: [...new Set(missingSceneIds)]};
+};
+
 export const runGeneration = async (videoId: string, kind: "images" | "voiceover" | "music", force = false) => {
   if (!["images", "voiceover", "music"].includes(kind)) throw new Error(`Unknown generation kind: ${kind}`);
   if (kind === "voiceover") {
@@ -475,7 +508,7 @@ export const runGeneration = async (videoId: string, kind: "images" | "voiceover
     if (!validation.passed) throw new Error(`Script validation failed: ${validation.errors.join(" ")}`);
   }
   const args = [videoId, ...(force ? ["--force"] : [])];
-  if (kind === "images") await runImages(args);
+  if (kind === "images") { await runImages(args); syncGeneratedImages(videoId); }
   else if (kind === "voiceover") await runVoiceover(args);
   else await runMusic(args);
   return getProjectState(videoId);
