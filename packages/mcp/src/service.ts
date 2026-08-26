@@ -529,6 +529,16 @@ const validateRenderInputs = (videoId: string) => {
   if (errors.length > 0) throw new Error(`Render inputs are invalid:\n${[...new Set(errors)].map((error) => `- ${error}`).join("\n")}`);
 };
 
+const qaFailureDetail = (videoId: string, kind: "video" | "images" | "generated-videos", fallback: string) => {
+  const reportName = {video: "qa-report.json", images: "image-qa-report.json", "generated-videos": "clip-qa-report.json"}[kind];
+  const report = readJson(resolve(projectRoot, "output", videoId, reportName), null);
+  if (report?.videoId !== videoId || report?.passed !== false) return fallback;
+  const failures: string[] = [];
+  for (const check of report?.checks ?? []) if (check?.pass === false) failures.push(String(check.id));
+  for (const item of [...(report?.images ?? []), ...(report?.clips ?? [])]) for (const [id, passed] of Object.entries(item?.checks ?? {})) if (passed === false) failures.push(`${item.id}:${id}`);
+  return failures.length > 0 ? `${fallback} Failed checks: ${[...new Set(failures)].join(", ")}.` : fallback;
+};
+
 export const runGeneration = async (videoId: string, kind: "images" | "voiceover" | "music", force = false) => {
   if (!["images", "voiceover", "music"].includes(kind)) throw new Error(`Unknown generation kind: ${kind}`);
   if (kind === "voiceover") {
@@ -588,8 +598,9 @@ export const startRender = (videoId: string, kind: "still" | "preview" | "final"
       }
       job.status = "succeeded";
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       job.status = "failed";
-      job.error = error instanceof Error ? error.message : String(error);
+      job.error = message.includes("QA exited") ? qaFailureDetail(videoId, "video", message) : message;
     } finally {
       job.completedAt = new Date().toISOString();
     }
@@ -614,8 +625,9 @@ export const startQa = (videoId: string, kind: "video" | "images" | "generated-v
       await runQa(kind, videoId);
       job.status = "succeeded";
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       job.status = "failed";
-      job.error = error instanceof Error ? error.message : String(error);
+      job.error = qaFailureDetail(videoId, kind, message);
     } finally {
       job.completedAt = new Date().toISOString();
     }

@@ -19,6 +19,8 @@ export const AssetBin = ({state, selected, onSelect, transport, refresh, notice}
   const [uploading, setUploading] = useState(false);
   const [renderStatus, setRenderStatus] = useState<Record<RenderKind, TaskStatus>>({preview: 'idle', final: 'idle', still: 'idle'});
   const [qaStatus, setQaStatus] = useState<Record<QaKind, TaskStatus>>({video: 'idle', images: 'idle', 'generated-videos': 'idle'});
+  const [renderErrors, setRenderErrors] = useState<Record<RenderKind, string | undefined>>({preview: undefined, final: undefined, still: undefined});
+  const [qaErrors, setQaErrors] = useState<Record<QaKind, string | undefined>>({video: undefined, images: undefined, 'generated-videos': undefined});
   const inputRef = useRef<HTMLInputElement>(null);
   const upload = async (file: File) => {
     setUploading(true);
@@ -66,20 +68,20 @@ export const AssetBin = ({state, selected, onSelect, transport, refresh, notice}
       ) : (
         <div className="grid gap-1">
           <div className="mb-2 grid grid-cols-2 gap-1.5">
-            <RenderButton label="Render preview" kind="preview" videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} onStatus={(status) => setRenderStatus((current) => ({...current, preview: status}))} />
-            <RenderButton label="Render final" kind="final" videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} onStatus={(status) => setRenderStatus((current) => ({...current, final: status}))} />
+            <RenderButton label="Render preview" kind="preview" videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} onStatus={(status, error) => { setRenderStatus((current) => ({...current, preview: status})); setRenderErrors((current) => ({...current, preview: error})); }} />
+            <RenderButton label="Render final" kind="final" videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} onStatus={(status, error) => { setRenderStatus((current) => ({...current, final: status})); setRenderErrors((current) => ({...current, final: error})); }} />
             <PreparationButton videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} />
             <StoryboardButton videoId={state.videoId} transport={transport} notice={notice} />
           </div>
-          <div className="mb-2 rounded-md border border-[#252c35] bg-[#14181e] p-2"><strong className="text-[9px]">Render jobs</strong><div className="mt-1.5 grid gap-1"><TaskRow label="Preview" status={renderStatus.preview === 'idle' && state.stages.some((stage) => stage.id === 'silent' && stage.exists) ? 'passed' : renderStatus.preview} /><TaskRow label="Final" status={renderStatus.final === 'idle' && state.stages.some((stage) => stage.id === 'final' && stage.exists) ? 'passed' : renderStatus.final} /></div></div>
+          <div className="mb-2 rounded-md border border-[#252c35] bg-[#14181e] p-2"><strong className="text-[9px]">Render jobs</strong><div className="mt-1.5 grid gap-1"><TaskRow label="Preview" status={renderStatus.preview === 'idle' && state.stages.some((stage) => stage.id === 'silent' && stage.exists) ? 'passed' : renderStatus.preview} error={renderErrors.preview} /><TaskRow label="Final" status={renderStatus.final === 'idle' && state.stages.some((stage) => stage.id === 'final' && stage.exists) ? 'passed' : renderStatus.final} error={renderErrors.final} /></div></div>
           <div className="mb-2 rounded-md border border-[#252c35] bg-[#14181e] p-2">
             <div className="mb-1.5 flex items-center justify-between text-[9px]"><strong>QA</strong><span className={state.qa?.passed ? 'text-[#61b88f]' : 'text-[#737c87]'}>{state.qa ? (state.qa.passed ? 'Passed' : 'Issues') : 'Not run'}</span></div>
             <div className="grid grid-cols-3 gap-1">
-              <QaButton label="Video" kind="video" videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} onStatus={(status) => setQaStatus((current) => ({...current, video: status}))} />
-              <QaButton label="Images" kind="images" videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} onStatus={(status) => setQaStatus((current) => ({...current, images: status}))} />
-              <QaButton label="Clips" kind="generated-videos" videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} onStatus={(status) => setQaStatus((current) => ({...current, 'generated-videos': status}))} />
+              <QaButton label="Video" kind="video" videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} onStatus={(status, error) => { setQaStatus((current) => ({...current, video: status})); setQaErrors((current) => ({...current, video: error})); }} />
+              <QaButton label="Images" kind="images" videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} onStatus={(status, error) => { setQaStatus((current) => ({...current, images: status})); setQaErrors((current) => ({...current, images: error})); }} />
+              <QaButton label="Clips" kind="generated-videos" videoId={state.videoId} transport={transport} refresh={refresh} notice={notice} onStatus={(status, error) => { setQaStatus((current) => ({...current, 'generated-videos': status})); setQaErrors((current) => ({...current, 'generated-videos': error})); }} />
             </div>
-            <div className="mt-2 grid gap-1"><TaskRow label="Video QA" status={qaStatus.video === 'idle' ? persistedQaStatus(state, 'video') : qaStatus.video} /><TaskRow label="Image QA" status={qaStatus.images === 'idle' ? persistedQaStatus(state, 'images') : qaStatus.images} /><TaskRow label="Clip QA" status={qaStatus['generated-videos'] === 'idle' ? persistedQaStatus(state, 'generated-videos') : qaStatus['generated-videos']} /></div>
+            <div className="mt-2 grid gap-1"><TaskRow label="Video QA" status={qaStatus.video === 'idle' ? persistedQaStatus(state, 'video') : qaStatus.video} error={qaErrors.video} /><TaskRow label="Image QA" status={qaStatus.images === 'idle' ? persistedQaStatus(state, 'images') : qaStatus.images} error={qaErrors.images} /><TaskRow label="Clip QA" status={qaStatus['generated-videos'] === 'idle' ? persistedQaStatus(state, 'generated-videos') : qaStatus['generated-videos']} error={qaErrors['generated-videos']} /></div>
           </div>
           {state.stages.map((stage) => (
             <div className={`grid grid-cols-[10px_1fr_auto] items-center gap-2 rounded-md bg-[#171b21] p-2 text-[10px] ${stage.exists ? '' : ''}`} key={stage.id}>
@@ -94,7 +96,7 @@ export const AssetBin = ({state, selected, onSelect, transport, refresh, notice}
   );
 };
 
-const QaButton = ({label, kind, videoId, transport, refresh, notice, onStatus}: {label: string; kind: QaKind; videoId: string; transport: ProjectTransport; refresh: () => Promise<void>; notice: (value: string) => void; onStatus: (status: TaskStatus) => void}) => {
+const QaButton = ({label, kind, videoId, transport, refresh, notice, onStatus}: {label: string; kind: QaKind; videoId: string; transport: ProjectTransport; refresh: () => Promise<void>; notice: (value: string) => void; onStatus: (status: TaskStatus, error?: string) => void}) => {
   const [running, setRunning] = useState(false);
   const run = async () => {
     setRunning(true);
@@ -108,13 +110,13 @@ const QaButton = ({label, kind, videoId, transport, refresh, notice, onStatus}: 
       if (job.status === 'failed') throw new Error(job.error ?? `${label} QA failed`);
       onStatus('passed');
       await refresh(); notice(`${label} QA complete`);
-    } catch (error) { onStatus('failed'); notice(error instanceof Error ? error.message : String(error)); }
+    } catch (error) { const message = error instanceof Error ? error.message : String(error); onStatus('failed', message); notice(message); }
     finally { setRunning(false); }
   };
   return <button className="rounded border border-[#343c47] bg-[#20252d] px-1 py-1.5 text-[8px] text-[#c7cdd4] hover:bg-[#2b323d] disabled:cursor-wait disabled:opacity-60" disabled={running} onClick={run}>{running ? `${label}…` : label}</button>;
 };
 
-const RenderButton = ({label, kind, videoId, transport, refresh, notice, onStatus}: {label: string; kind: RenderKind; videoId: string; transport: ProjectTransport; refresh: () => Promise<void>; notice: (value: string) => void; onStatus: (status: TaskStatus) => void}) => {
+const RenderButton = ({label, kind, videoId, transport, refresh, notice, onStatus}: {label: string; kind: RenderKind; videoId: string; transport: ProjectTransport; refresh: () => Promise<void>; notice: (value: string) => void; onStatus: (status: TaskStatus, error?: string) => void}) => {
   const [running, setRunning] = useState(false);
   const run = async () => {
     setRunning(true);
@@ -128,13 +130,13 @@ const RenderButton = ({label, kind, videoId, transport, refresh, notice, onStatu
       if (job.status === 'failed') throw new Error(job.error ?? `${label} failed`);
       onStatus('passed');
       await refresh(); notice(`${label} complete`);
-    } catch (error) { onStatus('failed'); notice(error instanceof Error ? error.message : String(error)); }
+    } catch (error) { const message = error instanceof Error ? error.message : String(error); onStatus('failed', message); notice(message); }
     finally { setRunning(false); }
   };
   return <button className="rounded-md border border-[#343c47] bg-[#20252d] px-2 py-2 text-[9px] text-[#d7dde5] hover:bg-[#2b323d] disabled:cursor-wait disabled:opacity-60" disabled={running} onClick={run}>{running ? `${label}…` : label}</button>;
 };
 
-const TaskRow = ({label, status}: {label: string; status: TaskStatus}) => <div className="flex items-center justify-between text-[9px]"><span className="text-[#9da6b1]">{label}</span><span className={status === 'passed' ? 'text-[#61b88f]' : status === 'failed' ? 'text-[#e08e8e]' : status === 'running' ? 'text-[#e8c78f]' : 'text-[#737c87]'}>{status === 'passed' ? 'Passed' : status === 'failed' ? 'Failed' : status === 'running' ? 'Running' : 'Not run'}</span></div>;
+const TaskRow = ({label, status, error}: {label: string; status: TaskStatus; error?: string}) => <div className="text-[9px]"><div className="flex items-center justify-between"><span className="text-[#9da6b1]">{label}</span><span className={status === 'passed' ? 'text-[#61b88f]' : status === 'failed' ? 'text-[#e08e8e]' : status === 'running' ? 'text-[#e8c78f]' : 'text-[#737c87]'}>{status === 'passed' ? 'Passed' : status === 'failed' ? 'Failed' : status === 'running' ? 'Running' : 'Not run'}</span></div>{error && <div className="mt-1 rounded bg-[#3b2426] px-2 py-1 leading-[1.35] text-[#f1b2b2]">{error}</div>}</div>;
 const persistedQaStatus = (state: ProjectState, kind: QaKind): TaskStatus => {
   const report = state.qa?.reports?.find((item) => item.kind === kind);
   return report ? (report.passed ? 'passed' : 'failed') : 'idle';
