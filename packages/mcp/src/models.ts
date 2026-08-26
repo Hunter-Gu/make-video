@@ -22,6 +22,7 @@ export const getModelCatalog = async (): Promise<ModelCatalog> => {
     .map(({releaseDate: _releaseDate, ...model}) => model));
   const value = {
     image: geminiModels.filter((model) => model.modalities?.output.includes('image')),
+    video: geminiModels.filter((model) => model.modalities?.output.includes('video')),
     voice: geminiModels.filter((model) => model.modalities?.output.includes('audio')),
   };
   cached = {expiresAt: Date.now() + 10 * 60 * 1000, value};

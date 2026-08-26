@@ -109,8 +109,8 @@ export const getProjectState = (videoId: string) => {
   return {
     videoId,
     composition: context.composition,
-    models: {image: context.config.imageGeneration?.model ?? null, voice: context.config.voice?.model ?? null},
-    registry: {image: [], voice: []},
+    models: {image: context.config.imageGeneration?.model ?? null, video: context.config.videoGeneration?.model ?? null, voice: context.config.voice?.model ?? null},
+    registry: {image: [], video: [], voice: []},
     scenes: sceneIndex.scenes.map((scene: any) => ({...scene, ...(scene.content ? {content: scene.content} : {})})),
     captions,
     effects: (remotionTimeline.effects ?? []).filter((effect: any) => Number.isInteger(effect.startFrame) && Number.isInteger(effect.endFrame) && effect.startFrame >= 0 && effect.endFrame > effect.startFrame && effect.endFrame <= context.composition.durationInFrames),
@@ -461,11 +461,13 @@ export const updateModels = (videoId: string, input: any) => {
   const context = loadVideoContext(videoId);
   const config = readJson(context.configPath);
   const image = normalizeGoogleModel(input.image);
+  const video = normalizeGoogleModel(input.video);
   const voice = normalizeGoogleModel(input.voice);
   if (image) config.imageGeneration = {...(config.imageGeneration ?? {}), model: image, assets: config.imageGeneration?.assets ?? []};
+  if (video) config.videoGeneration = {...(config.videoGeneration ?? {}), model: video, assets: config.videoGeneration?.assets ?? []};
   if (voice) config.voice = {...(config.voice ?? {}), model: voice, voiceName: config.voice?.voiceName ?? "Kore", direction: config.voice?.direction ?? "Clear documentary narration.", timingMode: config.voice?.timingMode ?? "narration"};
   writeJson(context.configPath, config);
-  return {image: config.imageGeneration?.model ?? null, voice: config.voice?.model ?? null};
+  return {image: config.imageGeneration?.model ?? null, video: config.videoGeneration?.model ?? null, voice: config.voice?.model ?? null};
 };
 
 const syncGeneratedImages = (videoId: string) => {

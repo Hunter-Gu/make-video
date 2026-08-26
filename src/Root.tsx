@@ -7,6 +7,7 @@ import timeline from "./library-of-alexandria/REMOTION_TIMELINE.json";
 import candidates from "./library-of-alexandria/CANDIDATES.json";
 
 const assetLinks = config.production.assetLinks ?? [];
+const videoGeneration = (config as typeof config & {videoGeneration?: {model?: string}}).videoGeneration;
 const sourceScenes = sceneIndex.scenes as ProjectState["scenes"];
 const projectAssets: ProjectState["assets"] = Object.entries(sceneIndex.assets ?? {}).flatMap(([id, configuredPath]) => {
   const link = assetLinks.find((item) => item.source === configuredPath);
@@ -21,8 +22,8 @@ if (hybridCandidate?.output) projectAssets.push({id: "hybrid-motion", sceneId: "
 const projectState: ProjectState = {
   videoId: config.videoId,
   composition: config.composition,
-  models: {image: config.imageGeneration?.model ?? null, voice: config.voice?.model ?? null},
-  registry: {image: [], voice: []},
+  models: {image: config.imageGeneration?.model ?? null, video: videoGeneration?.model ?? null, voice: config.voice?.model ?? null},
+  registry: {image: [], video: [], voice: []},
   scenes: sourceScenes,
   captions: sceneIndex.captions,
   effects: timeline.effects,

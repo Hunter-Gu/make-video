@@ -52,9 +52,9 @@ export const createMakeVideoMcpServer = () => {
 
   server.registerTool("make_video_update_models", {
     description: "Save the selected image and voice models without starting paid generation.",
-    inputSchema: z.object({videoId: z.string().min(1), image: z.string().min(1).optional(), voice: z.string().min(1).optional()}),
+    inputSchema: z.object({videoId: z.string().min(1), image: z.string().min(1).optional(), video: z.string().min(1).optional(), voice: z.string().min(1).optional()}),
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: true},
-  }, ({videoId, image, voice}) => run(() => updateModels(videoId, {image, voice})));
+  }, ({videoId, image, video, voice}) => run(() => updateModels(videoId, {image, video, voice})));
 
   server.registerTool("make_video_generate", {
     description: "Start one configured image, video, voiceover, or music generation job. Poll make_video_get_generation_job for completion. API keys stay on the server environment and are never passed as tool input.",

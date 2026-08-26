@@ -20,24 +20,28 @@ type ModelSettingsDialogProps = {
 
 export const ModelSettingsDialog = ({state, transport, listModels, refresh, notice, onClose}: ModelSettingsDialogProps) => {
   const [image, setImage] = useState(() => readModelSetting('image', state.models.image ?? state.registry.image[0]?.id ?? ''));
+  const [video, setVideo] = useState(() => readModelSetting('video', state.models.video ?? state.registry.video[0]?.id ?? ''));
   const [voice, setVoice] = useState(() => readModelSetting('voice', state.models.voice ?? state.registry.voice[0]?.id ?? ''));
   const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
   const [catalog, setCatalog] = useState<ModelCatalog | null>(null);
   useEffect(() => { void listModels().then(setCatalog).catch((error) => notice(error instanceof Error ? error.message : String(error))); }, [listModels, notice]);
   const imageModels = catalog?.image.length ? catalog.image : state.registry.image;
+  const videoModels = catalog?.video.length ? catalog.video : state.registry.video;
   const voiceModels = catalog?.voice.length ? catalog.voice : state.registry.voice;
-  const providers = useMemo(() => Array.from(new Set([...imageModels, ...voiceModels].map((model) => model.provider))), [imageModels, voiceModels]);
+  const providers = useMemo(() => Array.from(new Set([...imageModels, ...videoModels, ...voiceModels].map((model) => model.provider))), [imageModels, videoModels, voiceModels]);
 
   useEffect(() => {
     setImage(readModelSetting('image', state.models.image ?? state.registry.image[0]?.id ?? ''));
+    setVideo(readModelSetting('video', state.models.video ?? state.registry.video[0]?.id ?? ''));
     setVoice(readModelSetting('voice', state.models.voice ?? state.registry.voice[0]?.id ?? ''));
-  }, [state.videoId, state.models.image, state.models.voice, state.registry.image, state.registry.voice]);
+  }, [state.videoId, state.models.image, state.models.video, state.models.voice, state.registry.image, state.registry.video, state.registry.voice]);
 
   useEffect(() => {
     if (!catalog) return;
     setImage((current) => resolveModelId(current, imageModels));
+    setVideo((current) => resolveModelId(current, videoModels));
     setVoice((current) => resolveModelId(current, voiceModels));
-  }, [catalog, imageModels, voiceModels]);
+  }, [catalog, imageModels, videoModels, voiceModels]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -47,8 +51,9 @@ export const ModelSettingsDialog = ({state, transport, listModels, refresh, noti
   const save = async () => {
     try {
       writeModelSetting('image', image);
+      writeModelSetting('video', video);
       writeModelSetting('voice', voice);
-      await transport.updateModels(state.videoId, {image: image || undefined, voice: voice || undefined});
+      await transport.updateModels(state.videoId, {image: image || undefined, video: video || undefined, voice: voice || undefined});
       if (typeof window !== 'undefined') providers.forEach((provider) => {
         const key = apiKeyStorageKey(provider);
         if (apiKeys[provider]) window.localStorage.setItem(key, apiKeys[provider]);
@@ -65,9 +70,10 @@ export const ModelSettingsDialog = ({state, transport, listModels, refresh, noti
   return (
     <Dialog isOpen onOpenChange={(open) => { if (!open) onClose(); }} purpose="form" width="min(560px, calc(100vw - 32px))" maxHeight="80vh">
       <Layout
-        header={<DialogHeader title="Generation models" subtitle="Gemini image and voice models plus local provider keys" onOpenChange={() => onClose()} hasDivider />}
+        header={<DialogHeader title="Generation models" subtitle="Gemini image, video, and voice models plus local provider keys" onOpenChange={() => onClose()} hasDivider />}
         content={<LayoutContent>
           <ModelList title="Image models" models={imageModels} selected={image} onSelect={setImage} />
+          <ModelList title="Video models" models={videoModels} selected={video} onSelect={setVideo} />
           <ModelList title="Voice models" models={voiceModels} selected={voice} onSelect={setVoice} />
           <div className="mt-5 border-t border-[#252a31] pt-4"><Text type="supporting" size="3xs">PROVIDER KEYS</Text></div>
           {providers.map((provider) => <TextInput key={provider} label={`${provider} API key`} type="password" value={apiKeys[provider] ?? ''} placeholder="Stored only in this browser" onChange={(value) => setApiKeys((current) => ({...current, [provider]: value}))} />)}
@@ -90,12 +96,12 @@ const ModelList = ({title, models, selected, onSelect}: {title: string; models: 
 );
 
 const apiKeyStorageKey = (provider: string) => `make-video.api-key.${provider.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-const modelStorageKey = (kind: 'image' | 'voice') => `make-video.model.${kind}`;
-const readModelSetting = (kind: 'image' | 'voice', fallback: string) => {
+const modelStorageKey = (kind: 'image' | 'video' | 'voice') => `make-video.model.${kind}`;
+const readModelSetting = (kind: 'image' | 'video' | 'voice', fallback: string) => {
   if (typeof window === 'undefined') return fallback;
   return window.localStorage.getItem(modelStorageKey(kind)) ?? fallback;
 };
-const writeModelSetting = (kind: 'image' | 'voice', value: string) => {
+const writeModelSetting = (kind: 'image' | 'video' | 'voice', value: string) => {
   if (typeof window !== 'undefined' && value) window.localStorage.setItem(modelStorageKey(kind), value);
 };
 const resolveModelId = (current: string | null, models: Model[]) => models.find((model) => model.id === current || model.id.endsWith(`/${current ?? ''}`))?.id ?? models[0]?.id ?? current ?? '';

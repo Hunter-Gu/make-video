@@ -35,7 +35,7 @@ export type RemotionEffect = {id: string; sceneId: string; type: string; label: 
 export type Asset = {id: string; groupId?: string; sceneId: string | null; kind: "image" | "video"; selected: boolean; provider?: string; path: string; url: string};
 export type Stage = {id: string; label: string; kind?: string; path: string; exists: boolean; url: string | null};
 export type Model = {id: string; label: string; provider: string; capabilities: string[]; modalities?: {input: string[]; output: string[]}; contextWindow?: number; status?: string};
-export type ModelCatalog = {image: Model[]; voice: Model[]};
+export type ModelCatalog = {image: Model[]; video: Model[]; voice: Model[]};
 export type Cover = {assetId: string; sceneId: string | null; path: string; selectedAt: string};
 export type AudioTrack = {id: string; label: string; path: string; exists: boolean; url: string | null};
 export type ProjectAudio = {voiceover: AudioTrack; music: AudioTrack; sfx: AudioTrack[]};
@@ -59,7 +59,7 @@ export type SourceUpload = {videoId: string; source: {id: string; title: string;
 export type VideoPlanScene = {id: string; chapterId: string; title: string; type: SceneType; objective: string; sourceBlockIds: string[]; visualDirection?: string};
 export type VideoPlanChapter = {id: string; title: string; objective: string; sourceBlockIds: string[]; sceneIds: string[]};
 export type VideoPlan = {version: 1; title: string; adaptationMode: "overview" | "chapter-explanation" | "documentary" | "series-episode"; audience: string; language: string; durationSeconds: number; sourceBlockIds: string[]; chapters: VideoPlanChapter[]; scenes: VideoPlanScene[]};
-export type ProjectState = {videoId: string; composition: {fps: number; durationInFrames: number; width: number; height: number}; models: {image: string | null; voice: string | null}; registry: {image: Model[]; voice: Model[]}; scenes: Scene[]; captions: Caption[]; effects: RemotionEffect[]; audio: ProjectAudio; cover: Cover | null; assets: Asset[]; stages: Stage[]; revisions: Array<{id: string; assetId: string; instruction: string; status: string}>; sources: ProjectSource[]; plan: VideoPlan | null; qa: QaSummary | null};
+export type ProjectState = {videoId: string; composition: {fps: number; durationInFrames: number; width: number; height: number}; models: {image: string | null; video: string | null; voice: string | null}; registry: {image: Model[]; video: Model[]; voice: Model[]}; scenes: Scene[]; captions: Caption[]; effects: RemotionEffect[]; audio: ProjectAudio; cover: Cover | null; assets: Asset[]; stages: Stage[]; revisions: Array<{id: string; assetId: string; instruction: string; status: string}>; sources: ProjectSource[]; plan: VideoPlan | null; qa: QaSummary | null};
 
 export interface ProjectTransport {
   listProjects(): Promise<string[]>;
@@ -67,7 +67,7 @@ export interface ProjectTransport {
   getProject(videoId: string): Promise<ProjectState>;
   updateCaption(videoId: string, caption: Caption): Promise<void>;
   updateTimelineRange(videoId: string, input: {type: 'scene' | 'caption' | 'voice' | 'effect' | 'music'; id: string; startFrame: number; endFrame: number}): Promise<void>;
-  updateModels(videoId: string, models: {image?: string; voice?: string}): Promise<void>;
+  updateModels(videoId: string, models: {image?: string; video?: string; voice?: string}): Promise<void>;
   generate(videoId: string, kind: GenerationKind, force?: boolean): Promise<GenerationJob>;
   getGenerationJob(jobId: string): Promise<GenerationJob>;
   render(videoId: string, kind: RenderKind, force?: boolean): Promise<RenderJob>;
