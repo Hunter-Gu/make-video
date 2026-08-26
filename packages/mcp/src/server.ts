@@ -57,13 +57,13 @@ export const createMakeVideoMcpServer = () => {
   }, ({videoId, image, voice}) => run(() => updateModels(videoId, {image, voice})));
 
   server.registerTool("make_video_generate", {
-    description: "Start one configured image, voiceover, or music generation job. Poll make_video_get_generation_job for completion. API keys stay on the server environment and are never passed as tool input.",
-    inputSchema: z.object({videoId: z.string().min(1), kind: z.enum(["images", "voiceover", "music"]), force: z.boolean().optional()}),
+    description: "Start one configured image, video, voiceover, or music generation job. Poll make_video_get_generation_job for completion. API keys stay on the server environment and are never passed as tool input.",
+    inputSchema: z.object({videoId: z.string().min(1), kind: z.enum(["images", "video", "voiceover", "music"]), force: z.boolean().optional()}),
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: false},
   }, ({videoId, kind, force}) => result(startGeneration(videoId, kind, force ?? false)));
 
   server.registerTool("make_video_get_generation_job", {
-    description: "Read the status of a Make Video image, voiceover, or music generation job.",
+    description: "Read the status of a Make Video image, video, voiceover, or music generation job.",
     inputSchema: z.object({jobId: z.string().min(1)}),
     annotations: {readOnlyHint: true},
   }, ({jobId}) => run(() => getGenerationJob(jobId)));

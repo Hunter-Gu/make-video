@@ -3,7 +3,7 @@ import {existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileS
 import {basename, dirname, extname, relative, resolve, sep} from "node:path";
 
 import {linkAssets} from "@make-video/assets";
-import {runImages, runMusic, runVoiceover} from "@make-video/ai";
+import {runImages, runMusic, runVideos, runVoiceover} from "@make-video/ai";
 import {runTiming as runTimingPackage} from "@make-video/audio";
 import {runRender} from "@make-video/render";
 import {runQa} from "@make-video/qa";
@@ -501,6 +501,40 @@ const syncGeneratedImages = (videoId: string) => {
   return {updatedSceneIds: [...new Set(updatedSceneIds)], missingSceneIds: [...new Set(missingSceneIds)]};
 };
 
+const syncGeneratedVideos = (videoId: string) => {
+  const context = loadVideoContext(videoId);
+  const manifestFile = resolve(context.publicDir, "video/generated/manifest.json");
+  if (!existsSync(manifestFile)) return {updatedSceneIds: [], missingSceneIds: []};
+  const manifest = readJson(manifestFile, {assets: []});
+  const configured = context.config.videoGeneration as Record<string, any> | undefined;
+  const configuredAssets = Array.isArray(configured?.assets) ? configured.assets : [];
+  const indexFile = resolve(context.sourceDir, "SCENE_INDEX.json");
+  const index = readJson(indexFile, {assets: {}, scenes: []});
+  if (!index.assets || typeof index.assets !== "object" || Array.isArray(index.assets)) index.assets = {};
+  const updatedSceneIds: string[] = [];
+  const missingSceneIds: string[] = [];
+  let changed = false;
+  for (const asset of configuredAssets) {
+    const generated = Array.isArray(manifest.assets) ? manifest.assets.find((item: any) => item?.id === asset?.id) : null;
+    if (!generated || typeof generated.output !== "string") continue;
+    const output = resolve(context.publicDir, generated.output);
+    const outputRelative = relative(context.publicDir, output);
+    if (outputRelative === ".." || outputRelative.startsWith(`..${sep}`) || !existsSync(output)) continue;
+    const projectPath = relative(projectRoot, output);
+    if (index.assets[asset.id] !== projectPath) { index.assets[asset.id] = projectPath; changed = true; }
+    const sceneIds = Array.isArray(asset?.sceneIds) ? asset.sceneIds : asset?.sceneId ? [asset.sceneId] : [];
+    for (const sceneId of sceneIds) {
+      const scene = Array.isArray(index.scenes) ? index.scenes.find((item: any) => item?.id === sceneId) : null;
+      if (!scene) { missingSceneIds.push(sceneId); continue; }
+      const sceneAssetIds = Array.isArray(scene.assetIds) ? scene.assetIds : [];
+      if (!sceneAssetIds.includes(asset.id)) { scene.assetIds = [...sceneAssetIds, asset.id]; changed = true; }
+      updatedSceneIds.push(sceneId);
+    }
+  }
+  if (changed) writeJson(indexFile, index);
+  return {updatedSceneIds: [...new Set(updatedSceneIds)], missingSceneIds: [...new Set(missingSceneIds)]};
+};
+
 const validateRenderInputs = (videoId: string) => {
   syncGeneratedImages(videoId);
   const context = loadVideoContext(videoId);
@@ -539,14 +573,15 @@ const qaFailureDetail = (videoId: string, kind: "video" | "images" | "generated-
   return failures.length > 0 ? `${fallback} Failed checks: ${[...new Set(failures)].join(", ")}.` : fallback;
 };
 
-export const runGeneration = async (videoId: string, kind: "images" | "voiceover" | "music", force = false) => {
-  if (!["images", "voiceover", "music"].includes(kind)) throw new Error(`Unknown generation kind: ${kind}`);
+export const runGeneration = async (videoId: string, kind: "images" | "video" | "voiceover" | "music", force = false) => {
+  if (!["images", "video", "voiceover", "music"].includes(kind)) throw new Error(`Unknown generation kind: ${kind}`);
   if (kind === "voiceover") {
     const validation = validateScript(videoId);
     if (!validation.passed) throw new Error(`Script validation failed: ${validation.errors.join(" ")}`);
   }
   const args = [videoId, ...(force ? ["--force"] : [])];
   if (kind === "images") { await runImages(args); syncGeneratedImages(videoId); }
+  else if (kind === "video") { await runVideos(args); syncGeneratedVideos(videoId); }
   else if (kind === "voiceover") {
     await runVoiceover(args);
     if (existsSync(resolve(loadVideoContext(videoId).sourceDir, "TIMING_PLAN.json"))) await runTimingPackage(videoId, true);
@@ -555,8 +590,8 @@ export const runGeneration = async (videoId: string, kind: "images" | "voiceover
   return getProjectState(videoId);
 };
 
-export const startGeneration = (videoId: string, kind: "images" | "voiceover" | "music", force = false): GenerationJob => {
-  if (!["images", "voiceover", "music"].includes(kind)) throw new Error(`Unknown generation kind: ${kind}`);
+export const startGeneration = (videoId: string, kind: "images" | "video" | "voiceover" | "music", force = false): GenerationJob => {
+  if (!["images", "video", "voiceover", "music"].includes(kind)) throw new Error(`Unknown generation kind: ${kind}`);
   const job: GenerationJob = {id: randomUUID(), videoId, kind, status: "queued", createdAt: new Date().toISOString()};
   generationJobs.set(job.id, job);
   void (async () => {

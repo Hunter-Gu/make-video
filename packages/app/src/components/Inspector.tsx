@@ -164,14 +164,15 @@ const ImageInspector = ({state, asset, readiness, transport, refresh, notice}: {
         } catch (error) { notice(error instanceof Error ? error.message : String(error)); }
       }} />
       <GenerationButton label="Generate configured images" kind="images" readiness={readiness} generate={() => transport.generate(state.videoId, 'images')} getJob={transport.getGenerationJob} notice={notice} refresh={refresh} />
+      <GenerationButton label="Generate configured video clips" kind="video" generate={() => transport.generate(state.videoId, 'video')} getJob={transport.getGenerationJob} notice={notice} refresh={refresh} />
       <small className="my-2.5 block text-[9px] leading-[1.45] text-[#737c87]">Cover selection is project state. It does not overwrite a rendered thumbnail.</small>
     </div>
   );
 };
 
-const GenerationButton = ({label, kind, readiness, generate, getJob, notice, refresh}: {label: string; kind?: 'images' | 'voiceover' | 'music'; readiness?: GenerationReadiness | null; generate: () => Promise<GenerationJob>; getJob: (jobId: string) => Promise<GenerationJob>; notice: (value: string) => void; refresh: () => Promise<void>}) => {
+const GenerationButton = ({label, kind, readiness, generate, getJob, notice, refresh}: {label: string; kind?: 'images' | 'video' | 'voiceover' | 'music'; readiness?: GenerationReadiness | null; generate: () => Promise<GenerationJob>; getJob: (jobId: string) => Promise<GenerationJob>; notice: (value: string) => void; refresh: () => Promise<void>}) => {
   const [running, setRunning] = useState(false);
-  const blocked = Boolean(kind !== 'music' && readiness && !readiness.passed);
+  const blocked = Boolean(kind !== 'music' && kind !== 'video' && readiness && !readiness.passed);
   const run = async () => {
     setRunning(true);
     try {
