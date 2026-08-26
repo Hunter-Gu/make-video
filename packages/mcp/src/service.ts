@@ -581,6 +581,11 @@ export const startRender = (videoId: string, kind: "still" | "preview" | "final"
     try {
       validateRenderInputs(videoId);
       await runRender(kind, videoId, force);
+      if (kind === "preview" || kind === "final") {
+        const context = loadVideoContext(videoId);
+        const output = kind === "preview" ? context.outputs.silent : context.outputs.final;
+        await runQa("video", videoId, relative(projectRoot, output));
+      }
       job.status = "succeeded";
     } catch (error) {
       job.status = "failed";

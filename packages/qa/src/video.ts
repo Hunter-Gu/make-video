@@ -16,7 +16,7 @@ export const runVideoQa = (args: string[]) => {
   const context = loadVideoContext(videoId);
   const production = context.production;
   const qa = (production.qa ?? {}) as Record<string, any>;
-  const input = context.outputs[qa.output ?? "final"];
+  const input = process.env.MAKE_VIDEO_QA_INPUT ? context.resolveConfiguredPath(process.env.MAKE_VIDEO_QA_INPUT, "QA input override") : context.outputs[qa.output ?? "final"];
   if (!input) throw new Error("production.qa.output must name a configured output.");
   if (!existsSync(input)) throw new Error(`QA input not found: ${input}`);
   const probe = JSON.parse(run("ffprobe", ["-v", "error", "-show_entries", "format=duration:stream=codec_type,codec_name,width,height,r_frame_rate", "-of", "json", input]));
