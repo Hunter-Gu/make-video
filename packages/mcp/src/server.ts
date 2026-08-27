@@ -68,6 +68,18 @@ export const createMakeVideoMcpServer = () => {
     annotations: {readOnlyHint: true},
   }, ({jobId}) => run(() => getGenerationJob(jobId)));
 
+  server.registerTool("make_video_get_render_job", {
+    description: "Read the status of a Remotion still, preview, or final render job.",
+    inputSchema: z.object({jobId: z.string().min(1)}),
+    annotations: {readOnlyHint: true},
+  }, ({jobId}) => run(() => getRenderJob(jobId)));
+
+  server.registerTool("make_video_get_qa_job", {
+    description: "Read the status of a deterministic video, image, or generated-clip QA job.",
+    inputSchema: z.object({jobId: z.string().min(1)}),
+    annotations: {readOnlyHint: true},
+  }, ({jobId}) => run(() => getQaJob(jobId)));
+
   server.registerTool("make_video_render", {
     description: "Start a still, preview, or final Remotion render and return a task id.",
     inputSchema: z.object({videoId: z.string().min(1), kind: z.enum(["still", "preview", "final"]), force: z.boolean().optional()}),
@@ -139,6 +151,18 @@ export const createMakeVideoMcpServer = () => {
     inputSchema: z.object({videoId: z.string().min(1), force: z.boolean().optional()}),
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: false},
   }, ({videoId, force}) => result(startTiming(videoId, force ?? false)));
+
+  server.registerTool("make_video_get_timing_job", {
+    description: "Read the status of a narration timing job.",
+    inputSchema: z.object({jobId: z.string().min(1)}),
+    annotations: {readOnlyHint: true},
+  }, ({jobId}) => run(() => getTimingJob(jobId)));
+
+  server.registerTool("make_video_get_source_job", {
+    description: "Read the status of a source ingestion job.",
+    inputSchema: z.object({jobId: z.string().min(1)}),
+    annotations: {readOnlyHint: true},
+  }, ({jobId}) => run(() => getSourceJob(jobId)));
 
   server.registerTool("make_video_check_generation_readiness", {
     description: "Check whether a source-referenced plan, narration script, media configuration, and timing inputs are ready for generation.",

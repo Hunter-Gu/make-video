@@ -86,6 +86,8 @@ The stdio and `/mcp` Streamable HTTP entries expose the same tools:
 - `make_video_get_render_job`
 - `make_video_qa`
 - `make_video_get_qa_job`
+- `make_video_get_timing_job`
+- `make_video_get_source_job`
 - `make_video_check_generation_readiness`
 
 They also expose `make-video://projects` and one read-only project resource per

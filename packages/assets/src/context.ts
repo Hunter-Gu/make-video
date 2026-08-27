@@ -1,7 +1,7 @@
 import {existsSync, readFileSync} from "node:fs";
 import {isAbsolute, relative, resolve, sep} from "node:path";
 
-export const projectRoot = process.cwd();
+export const projectRoot = process.env.MAKE_VIDEO_PROJECT_ROOT ?? process.cwd();
 
 type JsonObject = Record<string, any>;
 
