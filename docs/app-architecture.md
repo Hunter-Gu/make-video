@@ -80,7 +80,12 @@ The stdio and `/mcp` Streamable HTTP entries expose the same tools:
 - `make_video_build_storyboard`
 - `make_video_validate_script`
 - `make_video_build_timing`
+- `make_video_generate`
 - `make_video_get_generation_job`
+- `make_video_render`
+- `make_video_get_render_job`
+- `make_video_qa`
+- `make_video_get_qa_job`
 - `make_video_check_generation_readiness`
 
 They also expose `make-video://projects` and one read-only project resource per
@@ -91,7 +96,7 @@ the shared MCP application service, just like the REST compatibility routes.
 
 Inspectable project files remain authoritative:
 
-- `video.config.json` stores selected image and voice models.
+- `video.config.json` stores selected image, video, and voice models.
 - `SCENE_INDEX.json` stores scene and caption timing plus optional scene content
   (`type`, titles, quotes, charts, maps, documents, and relationship data).
 - `REMOTION_TIMELINE.json` stores absolute-frame Remotion effects for the FX

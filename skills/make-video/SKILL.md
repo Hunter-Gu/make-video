@@ -71,7 +71,7 @@ the selected shots; do not replace the image-led visual plan wholesale.
 
 When manual production adjustments are useful, use the local app. It
 previews assets and videos, edits captions, inspects the scene timeline, and
-selects image and voice models without starting paid generation.
+selects image, video, and voice models without starting paid generation.
 
 Expose the same operations to a local MCP host with:
 `node skills/make-video/scripts/mcp.mjs` (stdio is the default mode).

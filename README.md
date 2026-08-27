@@ -114,8 +114,10 @@ codex mcp add make-video -- node "$PWD/skills/make-video/scripts/mcp.mjs"
 claude mcp add make-video --scope project -- node "$PWD/skills/make-video/scripts/mcp.mjs"
 ```
 
-The MCP server provides project inspection, caption and model updates, and
-non-destructive image revision requests. It does not start paid generation.
+The MCP server provides project inspection, source and plan operations, model
+updates, generation jobs, rendering, and deterministic QA. Paid generation
+uses credentials from the server environment; credentials are never sent as
+MCP tool input.
 
 ## License
 
