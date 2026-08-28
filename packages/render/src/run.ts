@@ -15,17 +15,18 @@ const runCommand = (command: string, args: string[]) => new Promise<void>((resol
 export const runRender = async (action: "studio" | "still" | "preview" | "final", videoId: string, force = false) => {
   const context = loadRenderContext(videoId);
   const {composition, outputs, production} = context;
+  const renderEnv = {...process.env, MAKE_VIDEO_VIDEO_ID: videoId};
   linkAssets(videoId);
-  if (action === "studio") return runRemotion(["studio", "src/index.ts", "--no-open"]);
+  if (action === "studio") return runRemotion(["studio", "src/index.ts", "--no-open"], renderEnv);
   if (action === "still") {
     assertOutputsAvailable([outputs.still], force, `Cover image for ${videoId}`);
     mkdirSync(dirname(outputs.still), {recursive: true});
-    return runRemotion(["still", "src/index.ts", composition.id, outputs.still, `--frame=${production.stillFrame ?? 0}`, `--props=${JSON.stringify(production.stillProps ?? production.silentProps ?? {})}`]);
+    return runRemotion(["still", "src/index.ts", composition.id, outputs.still, `--frame=${production.stillFrame ?? 0}`, `--props=${JSON.stringify(production.stillProps ?? production.silentProps ?? {})}`], renderEnv);
   }
   if (action === "preview") {
     assertOutputsAvailable([outputs.silent], force, `Preview video for ${videoId}`);
     mkdirSync(dirname(outputs.silent), {recursive: true});
-    await runRemotion(["render", "src/index.ts", composition.id, outputs.silent, "--concurrency=1", `--props=${JSON.stringify(production.silentProps ?? {})}`]);
+    await runRemotion(["render", "src/index.ts", composition.id, outputs.silent, "--concurrency=1", `--props=${JSON.stringify(production.silentProps ?? {})}`], renderEnv);
     return;
   }
   const mastering = production.mastering ?? null;
@@ -33,6 +34,6 @@ export const runRender = async (action: "studio" | "still" | "preview" | "final"
   assertOutputsAvailable(mastering ? [outputs.unmastered, outputs.final] : [outputs.final], force, `Final video for ${videoId}`);
   mkdirSync(dirname(renderOutput), {recursive: true});
   mkdirSync(dirname(outputs.final), {recursive: true});
-  await runRemotion(["render", "src/index.ts", composition.id, renderOutput, "--concurrency=1", `--props=${JSON.stringify(production.finalProps ?? {})}`]);
+  await runRemotion(["render", "src/index.ts", composition.id, renderOutput, "--concurrency=1", `--props=${JSON.stringify(production.finalProps ?? {})}`], renderEnv);
   if (mastering) await runCommand("ffmpeg", ["-hide_banner", "-loglevel", "error", force ? "-y" : "-n", "-i", outputs.unmastered, "-map", "0:v:0", "-map", "0:a:0", "-c:v", "copy", "-af", `loudnorm=I=${mastering.integratedLoudness ?? -16}:TP=${mastering.truePeak ?? -1.5}:LRA=${mastering.loudnessRange ?? 7}`, "-c:a", "aac", "-b:a", mastering.audioBitrate ?? "192k", "-ar", String(mastering.audioSampleRate ?? 48000), "-movflags", "+faststart", outputs.final]);
 };
