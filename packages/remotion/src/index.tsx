@@ -1,5 +1,5 @@
 import type {CSSProperties, ReactNode} from 'react';
-import {AbsoluteFill, Audio, Img, OffthreadVideo, interpolate, useCurrentFrame} from 'remotion';
+import {AbsoluteFill, Audio, Easing, Img, OffthreadVideo, interpolate, useCurrentFrame} from 'remotion';
 import type {ProjectState, SceneContent} from '@make-video/contracts';
 import type {Asset} from '@make-video/contracts';
 
@@ -18,6 +18,11 @@ const numberParameter = (effect: TimelineEffect | null, key: string, fallback: n
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 };
 
+const stringParameter = (effect: TimelineEffect | null, key: string, fallback: string) => {
+  const value = effect?.parameters?.[key];
+  return typeof value === 'string' && value.length > 0 ? value : fallback;
+};
+
 export const timelineEffectProgress = (frame: number, effect: TimelineEffect | null) => effect
   ? interpolate(frame, [effect.startFrame, effect.endFrame], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})
   : 0;
@@ -26,11 +31,29 @@ export const timelineEffectForScene = (effects: TimelineEffect[], sceneId: strin
   effects.find((effect) => effect.sceneId === sceneId && frame >= effect.startFrame && frame < effect.endFrame) ??
   effects.find((effect) => effect.sceneId === sceneId) ?? null;
 
-export const timelineImageTransform = (frame: number, effect: TimelineEffect | null, fallbackProgress: number, fallbackFrom = 1.03, fallbackTo = 1.11) => {
-  const progress = effect ? timelineEffectProgress(frame, effect) : fallbackProgress;
+export const timelineImageTransform = (frame: number, effect: TimelineEffect | null, fallbackProgress: number, fallbackFrom = 1.01, fallbackTo = 1.05) => {
+  const rawProgress = effect ? timelineEffectProgress(frame, effect) : fallbackProgress;
+  const duration = effect ? Math.max(effect.endFrame - effect.startFrame, 1) : 1;
+  const holdIn = effect ? Math.max(0, numberParameter(effect, 'holdInFrames', 0)) / duration : 0;
+  const holdOut = effect ? Math.max(0, numberParameter(effect, 'holdOutFrames', 0)) / duration : 0;
+  const progress = interpolate(rawProgress, [Math.min(holdIn, .45), Math.max(1 - holdOut, .55)], [0, 1], {
+    easing: Easing.inOut(Easing.cubic),
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
   const from = numberParameter(effect, 'zoomFrom', fallbackFrom);
   const to = numberParameter(effect, 'zoomTo', fallbackTo);
-  return `scale(${interpolate(progress, [0, 1], [from, to])})`;
+  const x = interpolate(progress, [0, 1], [numberParameter(effect, 'xFrom', 0), numberParameter(effect, 'xTo', 0)]);
+  const y = interpolate(progress, [0, 1], [numberParameter(effect, 'yFrom', 0), numberParameter(effect, 'yTo', 0)]);
+  return `translate3d(${x}px, ${y}px, 0) scale(${interpolate(progress, [0, 1], [from, to])})`;
+};
+
+const transitionStyle = (kind: string, progress: number): CSSProperties => {
+  if (kind === 'dissolve') return {opacity: progress};
+  if (kind === 'wipe-left') return {clipPath: `inset(0 ${100 - progress * 100}% 0 0)`};
+  if (kind === 'wipe-right') return {clipPath: `inset(0 0 0 ${100 - progress * 100}%)`};
+  if (kind === 'slide-left') return {transform: `translate3d(${(1 - progress) * 100}%, 0, 0)`};
+  return {};
 };
 
 const Overlay = ({effect, progress}: {effect: TimelineEffect | null; progress: number}) => {
@@ -126,13 +149,17 @@ export const ProjectComposition = ({state}: {state: ProjectState}) => {
   const progress = scene ? interpolate(localFrame, [0, Math.max(scene.durationInFrames, 1)], [0, 1], {extrapolateRight: 'clamp'}) : 0;
   const sceneEffect = scene ? state.effects.find((item) => item.sceneId === scene.id) ?? null : null;
   const audioTracks = [state.audio.voiceover, state.audio.music, ...state.audio.sfx].filter((track) => track.exists && track.url);
-  const transitionFrames = 18;
-  const transitionProgress = sceneIndex > 0 && scene
-    ? interpolate(frame - scene.startFrame, [0, transitionFrames], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})
+  const previousScene = sceneIndex > 0 ? state.scenes[sceneIndex - 1] : null;
+  const previousAsset = previousScene ? state.assets.find((item) => item.sceneId === previousScene.id && item.selected && item.kind === 'image') ?? null : null;
+  const previousEffect = previousScene ? state.effects.find((item) => item.sceneId === previousScene.id) ?? null : null;
+  const transitionKind = sceneIndex > 0 ? stringParameter(sceneEffect, 'transition', 'cut') : 'cut';
+  const transitionFrames = Math.max(1, numberParameter(sceneEffect, 'transitionFrames', 15));
+  const transitionProgress = transitionKind !== 'cut' && scene
+    ? interpolate(frame - scene.startFrame, [0, transitionFrames], [0, 1], {easing: Easing.inOut(Easing.cubic), extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})
     : 1;
-  // Reveal each scene from left to right at cuts.
   return <AbsoluteFill style={{background: '#090d14'}}>
-    <AbsoluteFill style={{clipPath: `inset(0 ${100 - transitionProgress * 100}% 0 0)`}}>
+    {previousAsset && previousScene && transitionProgress < 1 ? <Img src={previousAsset.url} style={{width: '100%', height: '100%', objectFit: 'cover', objectPosition: previousScene.content?.imagePosition ?? 'center', transform: timelineImageTransform(previousScene.endFrame, previousEffect, 1)}} /> : null}
+    <AbsoluteFill style={transitionStyle(transitionKind, transitionProgress)}>
       <TimelineEffectFrame effects={state.effects} sceneId={scene?.id ?? ''} globalStartFrame={0}>
         <AbsoluteFill style={{background: '#090d14', color: '#f4ead7', fontFamily: 'Georgia, serif'}}>
           {videoAsset?.url ? <OffthreadVideo src={videoAsset.url} trimBefore={scene?.content?.videoStartInFrames ?? 0} playbackRate={scene?.content?.videoPlaybackRate ?? 1} muted={scene?.content?.videoMuted ?? true} volume={scene?.content?.videoVolume ?? 1} style={{width: '100%', height: '100%', objectFit: scene?.content?.videoFit ?? 'cover'}} /> : asset?.url ? <Img src={asset.url} style={{width: '100%', height: '100%', objectFit: 'cover', transform: timelineImageTransform(frame, sceneEffect, progress)}} /> : null}
