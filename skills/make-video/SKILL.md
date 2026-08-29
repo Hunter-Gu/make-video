@@ -57,6 +57,12 @@ provides chapter, image, portrait, quotation, timeline, comparison, statistic,
 chart, map, document, relationship, montage, and caption scenes;
 extend it when the storyboard calls for a visual form it does not cover.
 
+When most shots are still images, read
+[references/still-image-motion.md](references/still-image-motion.md) before
+writing the Remotion timeline. Plan focal points, holds, camera movement, and
+each scene boundary explicitly; do not assign one default zoom or transition
+to the whole video.
+
 When the request is grounded in supplied documents, books, or web pages, read
 [references/source-workflow.md](references/source-workflow.md) and ingest the
 sources before writing the final narration.

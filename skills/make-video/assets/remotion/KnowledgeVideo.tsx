@@ -2,6 +2,7 @@ import type {CSSProperties, ReactNode} from "react";
 import {
   AbsoluteFill,
   Audio,
+  Easing,
   Img,
   OffthreadVideo,
   Sequence,
@@ -102,15 +103,16 @@ const ChapterScene = ({scene}: {scene: KnowledgeScene}) => (
 const ImageScene = ({scene, effect, globalStartFrame}: {scene: KnowledgeScene; effect: TimelineEffect | null; globalStartFrame: number}) => {
   const frame = useCurrentFrame();
   const globalFrame = frame + globalStartFrame;
-  const x = interpolate(frame, [0, scene.durationInFrames], [0, scene.panX ?? 0]);
-  const y = interpolate(frame, [0, scene.durationInFrames], [0, scene.panY ?? 0]);
+  const cameraProgress = interpolate(frame, [0, scene.durationInFrames * .1, scene.durationInFrames * .9, scene.durationInFrames], [0, 0, 1, 1], {easing: Easing.inOut(Easing.cubic), extrapolateLeft: "clamp", extrapolateRight: "clamp"});
+  const x = interpolate(cameraProgress, [0, 1], [0, scene.panX ?? 0]);
+  const y = interpolate(cameraProgress, [0, 1], [0, scene.panY ?? 0]);
   const sceneProgress = interpolate(frame, [0, scene.durationInFrames], [0, 1], {extrapolateRight: "clamp"});
   return (
     <AbsoluteFill>
       {scene.image ? (
         <Img
           src={staticFile(scene.image)}
-          style={{width: "100%", height: "100%", objectFit: "cover", objectPosition: scene.imagePosition ?? "center", transform: `translate(${x}px, ${y}px) ${timelineImageTransform(globalFrame, effect, sceneProgress, scene.zoomFrom ?? 1.02, scene.zoomTo ?? 1.12)}`, filter: scene.archival ? "sepia(.3) saturate(.72) contrast(1.08)" : undefined}}
+          style={{width: "100%", height: "100%", objectFit: "cover", objectPosition: scene.imagePosition ?? "center", transform: `translate3d(${x}px, ${y}px, 0) ${timelineImageTransform(globalFrame, effect, sceneProgress, scene.zoomFrom ?? 1.01, scene.zoomTo ?? 1.05)}`, filter: scene.archival ? "sepia(.3) saturate(.72) contrast(1.08)" : undefined}}
         />
       ) : null}
       <AbsoluteFill style={{background: "linear-gradient(90deg, rgba(8,12,18,.94) 0%, rgba(8,12,18,.42) 58%, transparent 100%)"}} />
