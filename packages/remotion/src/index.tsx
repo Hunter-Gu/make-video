@@ -110,7 +110,8 @@ const SceneContentView = ({content, progress, assetUrl, assetReferences}: {conte
 
 export const ProjectComposition = ({state}: {state: ProjectState}) => {
   const frame = useCurrentFrame();
-  const scene = state.scenes.find((item) => frame >= item.startFrame && frame < item.endFrame) ?? state.scenes.at(-1);
+  const sceneIndex = state.scenes.findIndex((item) => frame >= item.startFrame && frame < item.endFrame);
+  const scene = (sceneIndex >= 0 ? state.scenes[sceneIndex] : state.scenes.at(-1));
   const sceneAssets = scene ? state.assets.filter((item) => item.sceneId === scene.id && item.selected) : [];
   const asset = sceneAssets.find((item) => item.kind === 'image') ?? null;
   const videoAsset = sceneAssets.find((item) => item.kind === 'video') ?? null;
@@ -125,14 +126,23 @@ export const ProjectComposition = ({state}: {state: ProjectState}) => {
   const progress = scene ? interpolate(localFrame, [0, Math.max(scene.durationInFrames, 1)], [0, 1], {extrapolateRight: 'clamp'}) : 0;
   const sceneEffect = scene ? state.effects.find((item) => item.sceneId === scene.id) ?? null : null;
   const audioTracks = [state.audio.voiceover, state.audio.music, ...state.audio.sfx].filter((track) => track.exists && track.url);
-  return <TimelineEffectFrame effects={state.effects} sceneId={scene?.id ?? ''} globalStartFrame={0}>
-    <AbsoluteFill style={{background: '#090d14', color: '#f4ead7', fontFamily: 'Georgia, serif'}}>
-      {videoAsset?.url ? <OffthreadVideo src={videoAsset.url} trimBefore={scene?.content?.videoStartInFrames ?? 0} playbackRate={scene?.content?.videoPlaybackRate ?? 1} muted={scene?.content?.videoMuted ?? true} volume={scene?.content?.videoVolume ?? 1} style={{width: '100%', height: '100%', objectFit: scene?.content?.videoFit ?? 'cover'}} /> : asset?.url ? <Img src={asset.url} style={{width: '100%', height: '100%', objectFit: 'cover', transform: timelineImageTransform(frame, sceneEffect, progress)}} /> : null}
-      {scene?.content?.type === 'image' || scene?.content?.type === 'chapter' || scene?.content?.type === 'portrait' || scene?.content?.type === 'depth' || scene?.content?.type === 'video' ? <AbsoluteFill style={{background: 'linear-gradient(90deg, rgba(8,12,18,.94), rgba(8,12,18,.35) 65%, rgba(8,12,18,.1))'}} /> : null}
-      <SceneContentView content={scene?.content} progress={progress} assetUrl={asset?.url ?? null} assetReferences={assetReferences} />
-      {effect ? <div style={{position: 'absolute', left: '8%', top: '8%', color: '#d7a84b', fontFamily: 'Arial, sans-serif', fontSize: 'clamp(10px, 1.2vw, 18px)', letterSpacing: 2}}>{effect.label}</div> : null}
-      {caption ? <div style={{position: 'absolute', left: '9%', right: '9%', bottom: '5%', padding: '10px 18px', borderRadius: 8, background: '#05080db8', textAlign: 'center', fontFamily: 'Arial, sans-serif', fontSize: 'clamp(13px, 1.8vw, 30px)', lineHeight: 1.35}}>{caption.text}</div> : null}
-      {audioTracks.map((track) => <Audio key={track.id} src={track.url as string} />)}
+  const transitionFrames = 18;
+  const transitionProgress = sceneIndex > 0 && scene
+    ? interpolate(frame - scene.startFrame, [0, transitionFrames], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})
+    : 1;
+  // Reveal each scene from left to right at cuts.
+  return <AbsoluteFill style={{background: '#090d14'}}>
+    <AbsoluteFill style={{clipPath: `inset(0 ${100 - transitionProgress * 100}% 0 0)`}}>
+      <TimelineEffectFrame effects={state.effects} sceneId={scene?.id ?? ''} globalStartFrame={0}>
+        <AbsoluteFill style={{background: '#090d14', color: '#f4ead7', fontFamily: 'Georgia, serif'}}>
+          {videoAsset?.url ? <OffthreadVideo src={videoAsset.url} trimBefore={scene?.content?.videoStartInFrames ?? 0} playbackRate={scene?.content?.videoPlaybackRate ?? 1} muted={scene?.content?.videoMuted ?? true} volume={scene?.content?.videoVolume ?? 1} style={{width: '100%', height: '100%', objectFit: scene?.content?.videoFit ?? 'cover'}} /> : asset?.url ? <Img src={asset.url} style={{width: '100%', height: '100%', objectFit: 'cover', transform: timelineImageTransform(frame, sceneEffect, progress)}} /> : null}
+          {scene?.content?.type === 'image' || scene?.content?.type === 'chapter' || scene?.content?.type === 'portrait' || scene?.content?.type === 'depth' || scene?.content?.type === 'video' ? <AbsoluteFill style={{background: 'linear-gradient(90deg, rgba(8,12,18,.94), rgba(8,12,18,.35) 65%, rgba(8,12,18,.1))'}} /> : null}
+          <SceneContentView content={scene?.content} progress={progress} assetUrl={asset?.url ?? null} assetReferences={assetReferences} />
+          {effect ? <div style={{position: 'absolute', left: '8%', top: '8%', color: '#d7a84b', fontFamily: 'Arial, sans-serif', fontSize: 'clamp(10px, 1.2vw, 18px)', letterSpacing: 2}}>{effect.label}</div> : null}
+          {caption ? <div style={{position: 'absolute', left: '9%', right: '9%', bottom: '5%', padding: '10px 18px', borderRadius: 8, background: '#05080db8', textAlign: 'center', fontFamily: 'Arial, sans-serif', fontSize: 'clamp(13px, 1.8vw, 30px)', lineHeight: 1.35}}>{caption.text}</div> : null}
+          {audioTracks.map((track) => <Audio key={track.id} src={track.url as string} />)}
+        </AbsoluteFill>
+      </TimelineEffectFrame>
     </AbsoluteFill>
-  </TimelineEffectFrame>;
+  </AbsoluteFill>;
 };
