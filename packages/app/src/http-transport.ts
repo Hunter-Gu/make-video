@@ -39,6 +39,6 @@ export const httpTransport: ProjectTransport = {
   buildSourceCatalog: (videoId: string, force = true) => request<SourceCatalog>("/api/sources/catalog", {method: "POST", body: JSON.stringify({videoId, force})}),
   getPlan: async (videoId: string) => (await request<{plan: VideoPlan | null}>(`/api/plan?videoId=${encodeURIComponent(videoId)}`)).plan,
   savePlan: (videoId: string, plan: VideoPlan) => request<VideoPlan>("/api/plan", {method: "PUT", body: JSON.stringify({videoId, plan})}),
-  createAssetRevision: async (videoId, input) => { await request("/api/assets/revisions", {method: "POST", body: JSON.stringify({videoId, ...input})}); },
+  createAssetRevision: (videoId, input) => request<GenerationJob>("/api/assets/revisions", {method: "POST", body: JSON.stringify({videoId, ...input})}),
   setCover: async (videoId, assetId) => { await request("/api/cover", {method: "PUT", body: JSON.stringify({videoId, assetId})}); },
 };

@@ -171,7 +171,7 @@ export const createMakeVideoMcpServer = () => {
   }, ({videoId}) => run(() => checkGenerationReadiness(videoId)));
 
   server.registerTool("make_video_request_image_revision", {
-    description: "Create a non-destructive, versioned image revision request for an existing image asset.",
+    description: "Start a non-destructive image revision job from an existing image asset. Poll make_video_get_generation_job for completion.",
     inputSchema: z.object({videoId: z.string().min(1), assetId: z.string().min(1), modelId: z.string().min(1).nullable().optional(), instruction: z.string().min(1)}),
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: false},
   }, ({videoId, ...input}) => run(() => createAssetRevision(videoId, input)));

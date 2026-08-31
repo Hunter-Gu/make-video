@@ -145,6 +145,7 @@ const CaptionEditor = ({caption, fps, save}: {caption: Caption; fps: number; sav
 
 const ImageInspector = ({state, asset, readiness, transport, refresh, notice}: {state: ProjectState; asset: Asset | null; readiness: GenerationReadiness | null; transport: ProjectTransport; refresh: () => Promise<void>; notice: (value: string) => void}) => {
   const [instruction, setInstruction] = useState('');
+  const [revising, setRevising] = useState(false);
   const isCover = Boolean(asset && state.cover?.assetId === asset.id);
   return (
     <div className="px-4 pb-5 pt-2.5">
@@ -156,12 +157,19 @@ const ImageInspector = ({state, asset, readiness, transport, refresh, notice}: {
         catch (error) { notice(error instanceof Error ? error.message : String(error)); }
       }} />
       <TextArea label="Revision instruction" value={instruction} rows={4} onChange={setInstruction} placeholder="Describe what should change…" />
-      <Button label="Request revision" variant="primary" width="100%" isDisabled={!asset || asset.kind !== 'image' || !instruction.trim()} onClick={async () => {
+      <Button label={revising ? 'Generating revision…' : 'Generate revision'} variant="primary" width="100%" isDisabled={revising || !asset || asset.kind !== 'image' || !instruction.trim()} onClick={async () => {
         if (!asset) return;
+        setRevising(true);
         try {
-          await transport.createAssetRevision(state.videoId, {assetId: asset.id, sceneId: asset.sceneId, modelId: state.models.image, instruction});
-          setInstruction(''); await refresh(); notice('Revision request created');
+          let job = await transport.createAssetRevision(state.videoId, {assetId: asset.id, sceneId: asset.sceneId, modelId: state.models.image, instruction});
+          while (job.status === 'queued' || job.status === 'running') {
+            await new Promise((resolve) => window.setTimeout(resolve, 500));
+            job = await transport.getGenerationJob(job.id);
+          }
+          if (job.status === 'failed') throw new Error(job.error ?? 'Image revision failed');
+          setInstruction(''); await refresh(); notice('Image revision generated');
         } catch (error) { notice(error instanceof Error ? error.message : String(error)); }
+        finally { setRevising(false); }
       }} />
       <GenerationButton label="Generate configured images" kind="images" readiness={readiness} generate={() => transport.generate(state.videoId, 'images')} getJob={transport.getGenerationJob} notice={notice} refresh={refresh} />
       <GenerationButton label="Generate configured video clips" kind="video" generate={() => transport.generate(state.videoId, 'video')} getJob={transport.getGenerationJob} notice={notice} refresh={refresh} />

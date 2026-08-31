@@ -648,15 +648,73 @@ export const createAssetRevision = (videoId: string, input: any) => {
   const project = getProjectState(videoId);
   const stateFile = resolve(context.sourceDir, "PROJECT_STATE.json");
   const state = readJson(stateFile, {version: 1, revisionRequests: []});
+  if (!Array.isArray(state.revisionRequests)) state.revisionRequests = [];
   const assetId = String(input.assetId ?? "");
   const asset = project.assets.find((item: any) => item.id === assetId && item.kind === "image");
   if (!asset) throw new Error("Unknown image asset.");
   const instruction = String(input.instruction ?? "").trim();
   if (!instruction) throw new Error("An edit instruction is required.");
-  const request = {id: randomUUID(), assetId, sceneId: asset.sceneId, modelId: input.modelId ?? null, instruction, status: "pending", createdAt: new Date().toISOString()};
+  const config = readJson(context.configPath);
+  const imageGeneration = config.imageGeneration && typeof config.imageGeneration === "object" ? config.imageGeneration : {};
+  const configuredAssets = Array.isArray(imageGeneration.assets) ? imageGeneration.assets : [];
+  const modelId = normalizeGoogleModel(input.modelId ?? imageGeneration.model);
+  if (typeof modelId !== "string" || !modelId) throw new Error("Choose an image model before generating a revision.");
+  const baseId = assetId.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "image";
+  const usedIds = new Set(configuredAssets.map((item: any) => String(item?.id ?? "")));
+  let version = 1;
+  let revisionAssetId = `${baseId}-revision-${version}`;
+  while (usedIds.has(revisionAssetId)) revisionAssetId = `${baseId}-revision-${++version}`;
+  const original = configuredAssets.find((item: any) => item?.id === assetId);
+  const revisionAsset = {
+    ...(original ?? {}),
+    id: revisionAssetId,
+    model: modelId,
+    prompt: [original?.prompt, `Edit request: ${instruction}`, "Preserve every visual element not mentioned in the edit request."].filter(Boolean).join("\n\n"),
+    reference: asset.path,
+    output: `images/generated/${revisionAssetId}.png`,
+    sceneIds: asset.sceneId ? [asset.sceneId] : [],
+    aspectRatio: original?.aspectRatio ?? `${context.composition.width}:${context.composition.height}`,
+  };
+  config.imageGeneration = {...imageGeneration, model: imageGeneration.model ?? modelId, assets: [...configuredAssets, revisionAsset]};
+  const request = {id: randomUUID(), assetId, revisionAssetId, sceneId: asset.sceneId, modelId, instruction, status: "queued", createdAt: new Date().toISOString()};
+  state.selectedAssetIds ??= project.assets.filter((item: any) => item.selected).map((item: any) => item.id);
   state.revisionRequests.push(request);
+  writeJson(context.configPath, config);
   writeJson(stateFile, state);
-  return request;
+  const job: GenerationJob = {id: request.id, videoId, kind: "images", status: "queued", createdAt: request.createdAt};
+  generationJobs.set(job.id, job);
+  void (async () => {
+    job.status = "running";
+    job.startedAt = new Date().toISOString();
+    const updateRequest = (values: Record<string, unknown>) => {
+      const current = readJson(stateFile, {version: 1, revisionRequests: []});
+      if (!Array.isArray(current.revisionRequests)) current.revisionRequests = [];
+      const revision = current.revisionRequests.find((item: any) => item.id === request.id);
+      if (revision) Object.assign(revision, values);
+      writeJson(stateFile, current);
+      return current;
+    };
+    updateRequest({status: "running"});
+    try {
+      await runImages([videoId, `--asset=${revisionAssetId}`]);
+      syncGeneratedImages(videoId);
+      const current = updateRequest({status: "succeeded", completedAt: new Date().toISOString()});
+      const currentProject = getProjectState(videoId);
+      const selected = new Set(Array.isArray(current.selectedAssetIds) ? current.selectedAssetIds : []);
+      for (const item of currentProject.assets) if (item.sceneId === asset.sceneId) selected.delete(item.id);
+      selected.add(revisionAssetId);
+      current.selectedAssetIds = [...selected];
+      writeJson(stateFile, current);
+      job.status = "succeeded";
+    } catch (error) {
+      job.status = "failed";
+      job.error = error instanceof Error ? error.message : String(error);
+      updateRequest({status: "failed", error: job.error, completedAt: new Date().toISOString()});
+    } finally {
+      job.completedAt = new Date().toISOString();
+    }
+  })();
+  return job;
 };
 
 export const resolveMediaPath = (configuredPath: string) => {

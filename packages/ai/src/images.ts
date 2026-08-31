@@ -35,7 +35,7 @@ export const runImages = async (args: string[]) => {
   if (missing.length > 0) throw new Error(`Unknown generated image assets: ${missing.join(", ")}`);
   const manifestFile = resolve(context.publicDir, "images/generated/manifest.json");
   const selectedOutputs = selected.map((index: number) => outputs[index]);
-  if (assetIds.length === 0) assertOutputsAvailable([...selectedOutputs, manifestFile], {force, action: `Image generation for ${videoId}`});
+  assertOutputsAvailable(assetIds.length === 0 ? [...selectedOutputs, manifestFile] : selectedOutputs, {force, action: `Image generation for ${videoId}`});
 
   const manifest = assetIds.length > 0 && existsSync(manifestFile)
     ? readJson(manifestFile)
@@ -46,14 +46,17 @@ export const runImages = async (args: string[]) => {
     const asset = imageGeneration.assets[index] as AnyRecord;
     const output = outputs[index];
     const prompt = [imageGeneration.direction, buildVisualContext(context, asset.characters), asset.prompt].filter(Boolean).join("\n\n");
-    const result = await generateImage({model: google().image(model), prompt, aspectRatio: asset.aspectRatio as `${number}:${number}` | undefined});
+    const reference = typeof asset.reference === "string" ? context.resolveConfiguredPath(asset.reference, `Generated image "${asset.id}" reference`) : null;
+    if (reference && !existsSync(reference)) throw new Error(`Generated image "${asset.id}" reference was not found: ${reference}`);
+    const assetModel = typeof asset.model === "string" && asset.model.length > 0 ? asset.model : model;
+    const result = await generateImage({model: google().image(assetModel), prompt: reference ? {images: [readFileSync(reference)], text: prompt} : prompt, aspectRatio: asset.aspectRatio as `${number}:${number}` | undefined});
     const bytes = Buffer.from(result.image.uint8Array);
     const mimeType = result.image.mediaType;
     if (mimeType !== mediaTypeFor(output)) throw new Error(`Generated image "${asset.id}" returned ${mimeType}, which does not match ${extname(output)}.`);
     mkdirSync(dirname(output), {recursive: true});
     writeFileSync(output, bytes);
     manifest.assets = manifest.assets.filter((item: AnyRecord) => item.id !== asset.id);
-    manifest.assets.push({id: asset.id, output: relative(context.publicDir, output), mimeType, promptHash: hash(prompt), sha256: hash(bytes)});
+    manifest.assets.push({id: asset.id, output: relative(context.publicDir, output), mimeType, model: assetModel, promptHash: hash(prompt), sha256: hash(bytes)});
     console.log(`Generated ${asset.id}`);
   }
   const order = new Map(imageGeneration.assets.map((asset: AnyRecord, index: number) => [asset.id, index]));
