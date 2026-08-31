@@ -23,13 +23,9 @@ const timingJobs = new Map<string, TimingJob>();
 /** Prepare ignored public/ links before reading project media. */
 export const prepareProjectAssets = (videoId: string) => {
   if (preparedAssetProjects.has(videoId)) return true;
-  try {
-    linkAssets(videoId);
-    preparedAssetProjects.add(videoId);
-    return true;
-  } catch {
-    return false;
-  }
+  linkAssets(videoId);
+  preparedAssetProjects.add(videoId);
+  return true;
 };
 
 const readJson = (file: string, fallback: any = null): any => existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : fallback;
@@ -510,10 +506,19 @@ const validateRenderInputs = (videoId: string) => {
   const scenes = Array.isArray(index?.scenes) ? index.scenes : [];
   const duration = Number(context.composition.durationInFrames);
   if (scenes.length === 0) errors.push("SCENE_INDEX.json has no scenes.");
+  const sceneIds = new Set<string>();
+  let previousEnd = 0;
   for (const scene of scenes) {
     if (!scene || typeof scene.id !== "string") { errors.push("SCENE_INDEX.json contains a scene without an id."); continue; }
+    if (sceneIds.has(scene.id)) errors.push(`Scene id ${scene.id} is duplicated.`);
+    sceneIds.add(scene.id);
     const start = Number(scene.startFrame); const end = Number(scene.endFrame);
     if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end <= start || end > duration) errors.push(`Scene ${scene.id} has an invalid frame range.`);
+    else {
+      if (start !== previousEnd) errors.push(`Scene ${scene.id} must start at frame ${previousEnd}, not ${start}.`);
+      if (Number(scene.durationInFrames) !== end - start) errors.push(`Scene ${scene.id} duration does not match its frame range.`);
+      previousEnd = end;
+    }
     for (const assetId of Array.isArray(scene.assetIds) ? scene.assetIds : []) {
       const configuredPath = index.assets?.[assetId];
       if (typeof configuredPath !== "string") { errors.push(`Scene ${scene.id} references missing asset ${assetId}.`); continue; }
@@ -521,6 +526,7 @@ const validateRenderInputs = (videoId: string) => {
       catch (error) { errors.push(error instanceof Error ? error.message : String(error)); }
     }
   }
+  if (scenes.length > 0 && previousEnd !== duration) errors.push(`Scenes end at frame ${previousEnd}, but the composition ends at ${duration}.`);
   for (const caption of Array.isArray(index?.captions) ? index.captions : []) {
     const start = Number(caption?.startFrame); const end = Number(caption?.endFrame);
     if (!caption?.id || !Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end <= start || end > duration) errors.push(`Caption ${caption?.id ?? "unknown"} has an invalid frame range.`);
@@ -642,6 +648,13 @@ export const getQaJob = (jobId: string) => {
 };
 
 const normalizeGoogleModel = (value: unknown) => typeof value === "string" && value.startsWith("google/") ? value.slice("google/".length) : value;
+const aspectRatio = (width: number, height: number) => {
+  const left = Math.max(1, Math.round(width));
+  const right = Math.max(1, Math.round(height));
+  let a = left; let b = right;
+  while (b !== 0) [a, b] = [b, a % b];
+  return `${left / a}:${right / a}`;
+};
 
 export const createAssetRevision = (videoId: string, input: any) => {
   const context = loadVideoContext(videoId);
@@ -652,6 +665,7 @@ export const createAssetRevision = (videoId: string, input: any) => {
   const assetId = String(input.assetId ?? "");
   const asset = project.assets.find((item: any) => item.id === assetId && item.kind === "image");
   if (!asset) throw new Error("Unknown image asset.");
+  if (![".png", ".jpg", ".jpeg", ".webp"].includes(extname(asset.path).toLowerCase())) throw new Error("Image revisions require a PNG, JPEG, or WebP source.");
   const instruction = String(input.instruction ?? "").trim();
   if (!instruction) throw new Error("An edit instruction is required.");
   const config = readJson(context.configPath);
@@ -673,7 +687,7 @@ export const createAssetRevision = (videoId: string, input: any) => {
     reference: asset.path,
     output: `images/generated/${revisionAssetId}.png`,
     sceneIds: asset.sceneId ? [asset.sceneId] : [],
-    aspectRatio: original?.aspectRatio ?? `${context.composition.width}:${context.composition.height}`,
+    aspectRatio: original?.aspectRatio ?? aspectRatio(context.composition.width, context.composition.height),
   };
   config.imageGeneration = {...imageGeneration, model: imageGeneration.model ?? modelId, assets: [...configuredAssets, revisionAsset]};
   const request = {id: randomUUID(), assetId, revisionAssetId, sceneId: asset.sceneId, modelId, instruction, status: "queued", createdAt: new Date().toISOString()};

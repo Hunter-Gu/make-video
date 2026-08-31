@@ -48,6 +48,7 @@ export const runImages = async (args: string[]) => {
     const prompt = [imageGeneration.direction, buildVisualContext(context, asset.characters), asset.prompt].filter(Boolean).join("\n\n");
     const reference = typeof asset.reference === "string" ? context.resolveConfiguredPath(asset.reference, `Generated image "${asset.id}" reference`) : null;
     if (reference && !existsSync(reference)) throw new Error(`Generated image "${asset.id}" reference was not found: ${reference}`);
+    if (reference && ![".png", ".jpg", ".jpeg", ".webp"].includes(extname(reference).toLowerCase())) throw new Error(`Generated image "${asset.id}" reference must be PNG, JPEG, or WebP.`);
     const assetModel = typeof asset.model === "string" && asset.model.length > 0 ? asset.model : model;
     const result = await generateImage({model: google().image(assetModel), prompt: reference ? {images: [readFileSync(reference)], text: prompt} : prompt, aspectRatio: asset.aspectRatio as `${number}:${number}` | undefined});
     const bytes = Buffer.from(result.image.uint8Array);
