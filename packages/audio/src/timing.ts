@@ -8,7 +8,10 @@ export const buildTiming = (videoId: string, force: boolean) => {
   const planFile = resolve(context.sourceDir, "TIMING_PLAN.json");
   if (!existsSync(planFile)) throw new Error(`Timing plan not found: ${planFile}`);
   const plan = JSON.parse(readFileSync(planFile, "utf8"));
-  const manifestFile = context.resolveConfiguredPath(plan.voiceManifest, "TIMING_PLAN.voiceManifest");
+  const generatedManifest = resolve(context.audioDirs.voiceover, "manifest.json");
+  const manifestFile = existsSync(generatedManifest)
+    ? generatedManifest
+    : context.resolveConfiguredPath(plan.voiceManifest, "TIMING_PLAN.voiceManifest");
   if (!existsSync(manifestFile)) throw new Error(`Voice manifest not found: ${manifestFile}`);
   const voice = JSON.parse(readFileSync(manifestFile, "utf8"));
   const scriptFile = resolve(context.sourceDir, "SCRIPT.md");

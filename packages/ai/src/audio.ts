@@ -64,7 +64,7 @@ export const runMusic = async (args: string[]) => {
   const context = loadVideoContext(videoId);
   const music = (context.config as AnyRecord).music as AnyRecord | undefined;
   if (!music) throw new Error(`${videoId} has no music configuration.`);
-  const output = resolve(context.audioDirs.music, "lyria-underscore.mp3");
+  const output = resolve(context.audioDirs.music, "underscore.mp3");
   assertOutputsAvailable([output], {force, action: `Music generation for ${videoId}`});
   const model = process.env.LYRIA_MODEL ?? music.model;
   // Lyria is exposed through Google's Interactions API in the AI SDK.
