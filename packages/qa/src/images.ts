@@ -20,8 +20,9 @@ export const runImageQa = (args: string[]) => {
     const hash = values.map((value) => value >= mean ? "1" : "0").join("");
     const sample = spawnSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-i", file, "-frames:v", "1", "-f", "image2pipe", "-vcodec", "png", "-"], {encoding: null});
     const ocr = spawnSync("tesseract", ["stdin", "stdout", "--psm", "11", "tsv"], {input: sample.stdout, encoding: "utf8"});
+    const ocrAvailable = !ocr.error && ocr.status === 0;
     const text = (ocr.stdout ?? "").split("\n").slice(1).map((line) => line.split("\t")).filter((fields) => Number(fields[10]) >= (image.minOcrConfidence ?? 70)).map((fields) => fields[11]).filter(Boolean).join(" ");
-    results.push({id: image.id, path: image.path, visualIdea: image.visualIdea, deviation, hash, detectedText: text, checks: {information: deviation >= (image.minDeviation ?? 8), unwantedText: image.allowText === true || text.length === 0}});
+    results.push({id: image.id, path: image.path, visualIdea: image.visualIdea, deviation, hash, detectedText: text, ocrAvailable, checks: {information: deviation >= (image.minDeviation ?? 8), ocr: image.allowText === true || ocrAvailable, unwantedText: image.allowText === true || ocrAvailable && text.length === 0}});
   }
   for (let left = 0; left < results.length; left += 1) for (let right = left + 1; right < results.length; right += 1) {
     const distance = [...results[left].hash].filter((bit, index) => bit !== results[right].hash[index]).length;
@@ -39,5 +40,5 @@ export const runImageQa = (args: string[]) => {
   mkdirSync(dirname(output), {recursive: true});
   writeFileSync(output, `${JSON.stringify(report, null, 2)}\n`);
   for (const result of results) console.log(`${result.passed ? "✓" : "✗"} ${result.id}: deviation=${result.deviation.toFixed(1)}, OCR=${JSON.stringify(result.detectedText)}`);
-  if (!report.passed) process.exitCode = 1;
+  return report;
 };

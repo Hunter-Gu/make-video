@@ -23,9 +23,10 @@ export const runGeneratedVideoQa = (args: string[]) => {
     const sceneCuts = [...(cuts.stderr ?? "").matchAll(/showinfo.*? n:\s*\d+/g)].length;
     const sample = spawnSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-ss", String(duration / 2), "-i", file, "-frames:v", "1", "-f", "image2pipe", "-vcodec", "png", "-"], {encoding: null});
     const ocr = sample.status === 0 ? spawnSync("tesseract", ["stdin", "stdout", "--psm", "11", "tsv"], {input: sample.stdout, encoding: "utf8"}) : null;
+    const ocrAvailable = Boolean(ocr && !ocr.error && ocr.status === 0);
     const detectedText = (ocr?.stdout ?? "").split("\n").slice(1).map((line) => line.split("\t")).filter((fields) => Number(fields[10]) >= (clip.minOcrConfidence ?? 70)).map((fields) => fields[11]).filter(Boolean).join(" ");
-    const checks = {duration: Math.abs(duration - clip.expectedDurationSeconds) <= (clip.durationToleranceSeconds ?? .25), resolution: video?.width >= clip.minWidth && video?.height >= clip.minHeight, sceneCuts: sceneCuts <= (clip.maxSceneCuts ?? 0), unwantedText: clip.allowText === true || detectedText.length === 0};
-    results.push({id: clip.id, path: clip.path, duration, width: video?.width, height: video?.height, sceneCuts, detectedText, checks, passed: Object.values(checks).every(Boolean)});
+    const checks = {duration: Math.abs(duration - clip.expectedDurationSeconds) <= (clip.durationToleranceSeconds ?? .25), resolution: video?.width >= clip.minWidth && video?.height >= clip.minHeight, sceneCuts: sceneCuts <= (clip.maxSceneCuts ?? 0), ocr: clip.allowText === true || ocrAvailable, unwantedText: clip.allowText === true || ocrAvailable && detectedText.length === 0};
+    results.push({id: clip.id, path: clip.path, duration, width: video?.width, height: video?.height, sceneCuts, detectedText, ocrAvailable, checks, passed: Object.values(checks).every(Boolean)});
   }
   const report = {videoId, checkedAt: new Date().toISOString(), passed: results.every((result) => result.passed), clips: results};
   const output = resolve(projectRoot, "output", videoId, "clip-qa-report.json");
@@ -33,5 +34,5 @@ export const runGeneratedVideoQa = (args: string[]) => {
   writeFileSync(output, `${JSON.stringify(report, null, 2)}\n`);
   for (const result of results) console.log(`${result.passed ? "✓" : "✗"} ${result.id}: ${result.width}x${result.height}, ${result.duration}s, ${result.sceneCuts} cuts, OCR=${JSON.stringify(result.detectedText)}`);
   console.log(`Clip QA report: ${output}`);
-  if (!report.passed) process.exitCode = 1;
+  return report;
 };

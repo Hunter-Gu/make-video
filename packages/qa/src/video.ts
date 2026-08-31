@@ -8,18 +8,24 @@ const run = (command: string, args: string[]) => {
   const result = spawnSync(command, args, {cwd: projectRoot, env: process.env, encoding: "utf8"});
   if (result.error) throw result.error;
   if (result.status !== 0) throw new Error(`${command} failed:\n${result.stderr || result.stdout}`);
-  return result.stdout;
+  return {stdout: result.stdout, stderr: result.stderr, output: `${result.stdout}\n${result.stderr}`};
 };
 
-export const runVideoQa = (args: string[]) => {
+const measuredValue = (output: string, pattern: RegExp) => {
+  const matches = [...output.matchAll(pattern)];
+  const value = matches.at(-1)?.[1];
+  return value && value !== "-inf" ? Number(value) : Number.NaN;
+};
+
+export const runVideoQa = (args: string[], inputOverride?: string) => {
   const {videoId} = parseTargetArgs(args);
   const context = loadVideoContext(videoId);
   const production = context.production;
   const qa = (production.qa ?? {}) as Record<string, any>;
-  const input = process.env.MAKE_VIDEO_QA_INPUT ? context.resolveConfiguredPath(process.env.MAKE_VIDEO_QA_INPUT, "QA input override") : context.outputs[qa.output ?? "final"];
+  const input = inputOverride ? context.resolveConfiguredPath(inputOverride, "QA input override") : context.outputs[qa.output ?? "final"];
   if (!input) throw new Error("production.qa.output must name a configured output.");
   if (!existsSync(input)) throw new Error(`QA input not found: ${input}`);
-  const probe = JSON.parse(run("ffprobe", ["-v", "error", "-show_entries", "format=duration:stream=codec_type,codec_name,width,height,r_frame_rate", "-of", "json", input]));
+  const probe = JSON.parse(run("ffprobe", ["-v", "error", "-show_entries", "format=duration:stream=codec_type,codec_name,width,height,r_frame_rate", "-of", "json", input]).stdout);
   const checks: Array<{id: string; pass: boolean; expected: unknown; actual: unknown}> = [];
   const add = (id: string, pass: boolean, expected: unknown, actual: unknown) => checks.push({id, pass, expected, actual});
   const video = probe.streams?.find((stream: any) => stream.codec_type === "video");
@@ -34,6 +40,16 @@ export const runVideoQa = (args: string[]) => {
   add("duration", Number.isFinite(duration) && Math.abs(duration - expectedDuration) <= (qa.durationToleranceSeconds ?? 0.25), `${expectedDuration}s`, duration);
   const audioRequired = qa.audioRequired ?? Boolean(production.mastering || Object.values(production.audio ?? {}).some(Boolean));
   add("audio-stream", !audioRequired || Boolean(audio), audioRequired ? "present" : "optional", audio ? "present" : "missing");
+  if (audio) {
+    const analysis = run("ffmpeg", ["-hide_banner", "-nostats", "-i", input, "-map", "0:a:0", "-af", "ebur128=peak=true", "-f", "null", "-"]).output;
+    const integratedLoudness = measuredValue(analysis, /\bI:\s*(-?inf|-?[\d.]+) LUFS/g);
+    const truePeak = measuredValue(analysis, /\bPeak:\s*(-?inf|-?[\d.]+) dBFS/g);
+    const target = Number(production.mastering?.integratedLoudness ?? qa.integratedLoudness ?? -16);
+    const tolerance = Number(qa.loudnessTolerance ?? 4);
+    const maxTruePeak = Number(production.mastering?.truePeak ?? qa.maxTruePeakDbfs ?? -1);
+    add("audio-loudness", Number.isFinite(integratedLoudness) && Math.abs(integratedLoudness - target) <= tolerance, `${target} ± ${tolerance} LUFS`, integratedLoudness);
+    add("audio-true-peak", Number.isFinite(truePeak) && truePeak <= maxTruePeak, `≤ ${maxTruePeak} dBFS`, truePeak);
+  }
   const sceneIndex = readJson(resolve(context.sourceDir, "SCENE_INDEX.json"));
   const config = JSON.parse(readFileSync(resolve(context.sourceDir, "video.config.json"), "utf8"));
   const captions = Array.isArray(sceneIndex?.captions) ? sceneIndex.captions : Array.isArray(config.captions) ? config.captions : [];
@@ -43,7 +59,7 @@ export const runVideoQa = (args: string[]) => {
     add(`caption:${caption.id}`, valid, "ordered and inside timeline", {startFrame: caption.startFrame, endFrame: caption.endFrame});
     previousEnd = Math.max(previousEnd, caption.endFrame ?? 0);
   }
-  const visual = run("ffmpeg", ["-hide_banner", "-nostats", "-i", input, "-vf", "blackdetect=d=0.5:pix_th=0.02,freezedetect=n=-60dB:d=2", "-an", "-f", "null", "-"]);
+  const visual = run("ffmpeg", ["-hide_banner", "-nostats", "-i", input, "-vf", "blackdetect=d=0.5:pix_th=0.02,freezedetect=n=-60dB:d=2", "-an", "-f", "null", "-"]).output;
   const black = Math.max(0, ...[...visual.matchAll(/black_duration:([\d.]+)/g)].map((match) => Number(match[1])));
   const frozen = Math.max(0, ...[...visual.matchAll(/freeze_duration: ([\d.]+)/g)].map((match) => Number(match[1])));
   add("black-frames", black <= (qa.maxBlackSeconds ?? 0.5), `≤ ${qa.maxBlackSeconds ?? 0.5}s`, black);
@@ -55,5 +71,5 @@ export const runVideoQa = (args: string[]) => {
   writeFileSync(reportFile, `${JSON.stringify(report, null, 2)}\n`);
   for (const check of checks) console.log(`${check.pass ? "✓" : "✗"} ${check.id}: ${JSON.stringify(check.actual)}`);
   console.log(`QA report: ${reportFile}`);
-  if (!passed) process.exitCode = 1;
+  return report;
 };
