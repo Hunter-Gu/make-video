@@ -3,7 +3,7 @@ import {isAbsolute, relative, resolve, sep} from "node:path";
 
 import type {AnyRecord} from "./types";
 
-export const projectRoot = process.cwd();
+export const projectRoot = process.env.MAKE_VIDEO_PROJECT_ROOT ?? process.cwd();
 
 const videoIdPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const kebabCase = (value: string) => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);

@@ -1,23 +1,15 @@
-import {spawn} from "node:child_process";
-import {resolve} from "node:path";
+import {buildCatalog} from "./catalog";
+import {ingestSources} from "./ingest";
+import {buildSourceList} from "./list";
 
-export const runSourceIngest = (videoId: string, force = false) => new Promise<void>((resolveDone, reject) => {
-  const script = resolve(process.cwd(), "skills/make-video/scripts/sources.mjs");
-  const child = spawn(process.execPath, [script, "ingest", videoId, ...(force ? ["--force"] : [])], {cwd: process.cwd(), env: process.env, stdio: "inherit"});
-  child.once("error", reject);
-  child.once("exit", (code) => code === 0 ? resolveDone() : reject(new Error(`Source ingestion exited with code ${code ?? "unknown"}.`)));
-});
+export const runSourceIngest = async (videoId: string, force = false) => {
+  await ingestSources(videoId, force);
+};
 
-export const runSourceCatalog = (videoId: string, force = false) => new Promise<void>((resolveDone, reject) => {
-  const script = resolve(process.cwd(), "skills/make-video/scripts/sources.mjs");
-  const child = spawn(process.execPath, [script, "catalog", videoId, ...(force ? ["--force"] : [])], {cwd: process.cwd(), env: process.env, stdio: "inherit"});
-  child.once("error", reject);
-  child.once("exit", (code) => code === 0 ? resolveDone() : reject(new Error(`Source catalog exited with code ${code ?? "unknown"}.`)));
-});
+export const runSourceCatalog = async (videoId: string, force = false) => {
+  buildCatalog(videoId, force);
+};
 
-export const runSourceList = (videoId: string, force = false) => new Promise<void>((resolveDone, reject) => {
-  const script = resolve(process.cwd(), "skills/make-video/scripts/sources.mjs");
-  const child = spawn(process.execPath, [script, "list", videoId, ...(force ? ["--force"] : [])], {cwd: process.cwd(), env: process.env, stdio: "inherit"});
-  child.once("error", reject);
-  child.once("exit", (code) => code === 0 ? resolveDone() : reject(new Error(`Source list exited with code ${code ?? "unknown"}.`)));
-});
+export const runSourceList = async (videoId: string, force = false) => {
+  buildSourceList(videoId, force);
+};

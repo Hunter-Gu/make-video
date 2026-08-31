@@ -1,9 +1,7 @@
 import {existsSync, readFileSync} from "node:fs";
-import {dirname, isAbsolute, relative, resolve, sep} from "node:path";
-import {fileURLToPath} from "node:url";
+import {isAbsolute, relative, resolve, sep} from "node:path";
 
-export const scriptsDir = dirname(fileURLToPath(import.meta.url));
-export const projectRoot = resolve(process.env.MAKE_VIDEO_PROJECT_ROOT ?? resolve(scriptsDir, "../../.."));
+export const projectRoot = resolve(process.env.MAKE_VIDEO_PROJECT_ROOT ?? process.cwd());
 
 type JsonObject = Record<string, any>;
 
