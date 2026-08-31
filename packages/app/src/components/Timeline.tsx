@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {Button} from '@astryxdesign/core/Button';
 import {Slider} from '@astryxdesign/core/Slider';
 import type {ProjectState, RemotionEffect} from '@make-video/contracts';
@@ -14,7 +14,7 @@ type TimelineProps = {
   playheadFrame: number;
   onSelect: (selection: TimelineSelection) => void;
   onSeek: (frame: number) => void;
-  onRangeChange: (selection: TimelineSelection, range: Range) => void;
+  onRangeChange: (selection: TimelineSelection, range: Range) => Promise<void>;
 };
 
 export const Timeline = ({state, selection, playheadFrame, onSelect, onSeek, onRangeChange}: TimelineProps) => {
@@ -27,11 +27,11 @@ export const Timeline = ({state, selection, playheadFrame, onSelect, onSeek, onR
   const canvasWidth = Math.round((1600 * zoom) / 100);
   const setSafeZoom = (value: number) => setZoom(Math.max(50, Math.min(250, value)));
   const rangeFor = (type: TimelineSelection['type'], id: string, fallback: Range): Range => rangeOverrides[rangeKey(type, id)] ?? fallback;
-  const seekFromClientX = (clientX: number, element: HTMLElement | null) => {
+  const seekFromClientX = useCallback((clientX: number, element: HTMLElement | null) => {
     if (!element) return;
     const rect = element.getBoundingClientRect();
     onSeek(Math.round(Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)) * total));
-  };
+  }, [onSeek, total]);
 
   useEffect(() => {
     const move = (event: PointerEvent) => {
@@ -52,13 +52,19 @@ export const Timeline = ({state, selection, playheadFrame, onSelect, onSeek, onR
       const resizing = resizeRef.current;
       resizeRef.current = null;
       if (resizing && (resizing.current.startFrame !== resizing.original.startFrame || resizing.current.endFrame !== resizing.original.endFrame)) {
-        onRangeChange({type: resizing.type, id: resizing.id} as TimelineSelection, resizing.current);
+        void onRangeChange({type: resizing.type, id: resizing.id} as TimelineSelection, resizing.current).finally(() => {
+          setRangeOverrides((value) => {
+            const next = {...value};
+            delete next[resizing.key];
+            return next;
+          });
+        });
       }
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
     return () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
-  }, [onRangeChange, onSeek, total]);
+  }, [onRangeChange, seekFromClientX, total]);
 
   const beginSeek = (event: React.PointerEvent) => {
     event.preventDefault();

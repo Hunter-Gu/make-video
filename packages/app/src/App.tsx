@@ -70,7 +70,7 @@ export const App = ({transport}: {transport: ProjectTransport}) => {
       if (item.type === 'caption' || item.type === 'voice') return {...current, captions: current.captions.map((caption) => caption.id === item.id ? {...caption, ...range} : caption)};
       return current;
     });
-    try { await transport.updateTimelineRange(videoId, {...item, ...range}); setNotice('Timeline range saved'); }
+    try { await transport.updateTimelineRange(videoId, {...item, ...range}); await refreshCurrent(); setNotice('Timeline range saved'); }
     catch (error) { setNotice(error instanceof Error ? error.message : String(error)); void refreshCurrent(); }
   }, [refreshCurrent, transport, videoId]);
 
@@ -78,7 +78,8 @@ export const App = ({transport}: {transport: ProjectTransport}) => {
   const scene = state.scenes.find((item) => item.id === sceneId) ?? null;
   const asset = state.assets.find((item) => item.id === assetId) ?? null;
   const stage = state.stages.find((item) => item.id === stageId) ?? null;
-  const caption = state.captions.find((item) => item.sceneId === sceneId || item.id === sceneId) ?? null;
+  const selectedCaptionId = selection?.type === 'caption' || selection?.type === 'voice' ? selection.id : null;
+  const caption = state.captions.find((item) => item.id === selectedCaptionId) ?? state.captions.find((item) => item.sceneId === sceneId) ?? null;
   const selectScene = (id: string) => {
     setSceneId(id);
     setSelection({type: 'scene', id});

@@ -353,11 +353,26 @@ export const updateTimelineRange = (videoId: string, input: any) => {
   if (type === "scene") {
     const indexFile = resolve(context.sourceDir, "SCENE_INDEX.json");
     const index = readJson(indexFile);
-    const scene = index.scenes.find((item: any) => item.id === id);
+    const sceneIndex = index.scenes.findIndex((item: any) => item.id === id);
+    const scene = index.scenes[sceneIndex];
     if (!scene) throw new Error(`Unknown scene: ${id}`);
+    const previous = sceneIndex > 0 ? index.scenes[sceneIndex - 1] : null;
+    const next = sceneIndex < index.scenes.length - 1 ? index.scenes[sceneIndex + 1] : null;
+    if (!previous && startFrame !== 0) throw new Error("The first scene must start at frame 0.");
+    if (!next && endFrame !== context.composition.durationInFrames) throw new Error("The last scene must end at the composition duration.");
+    if (previous && startFrame <= previous.startFrame) throw new Error(`Scene ${id} would consume the previous scene.`);
+    if (next && endFrame >= next.endFrame) throw new Error(`Scene ${id} would consume the next scene.`);
+    if (previous) {
+      previous.endFrame = startFrame;
+      previous.durationInFrames = previous.endFrame - previous.startFrame;
+    }
     scene.startFrame = startFrame;
     scene.endFrame = endFrame;
     scene.durationInFrames = endFrame - startFrame;
+    if (next) {
+      next.startFrame = endFrame;
+      next.durationInFrames = next.endFrame - next.startFrame;
+    }
     writeJson(indexFile, index);
     return {type, id, startFrame, endFrame};
   }
