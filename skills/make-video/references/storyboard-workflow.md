@@ -21,7 +21,7 @@ Estimate spoken duration and revise the script until it fits. Treat the voice
 model's real output as authoritative once narration is generated.
 
 Define scene timing rules in `TIMING_PLAN.json`, then run
-`scripts/audio.mjs timing <video-id> --force` after voice generation.
+`<skill-dir>/scripts/audio.mjs timing <video-id> --force` after voice generation.
 Narrated scenes derive their duration from measured voice segments plus explicit
 lead/tail handles; non-narrated transitions may keep a fixed duration. The
 script writes `SCENE_INDEX.json` and updates the composition duration.

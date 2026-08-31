@@ -8,26 +8,27 @@ caption editing, model selection, and QA.
 ## Architecture boundary
 
 ```text
-App UI -> Transport -> MCP Streamable HTTP -> Application service
-Agent host ----------------> MCP stdio -----------> Application service
-REST compatibility adapter ----------------------> Application service
+App UI -> ProjectTransport -> REST adapter ------> Application service
+Agent host -------------> MCP stdio or HTTP -----> Application service
+Future web app -> ProjectTransport -> remote API -> Application service
 ```
 
 GUI components must never call MCP, `fetch`, the filesystem, shell commands,
 or model providers directly. Components depend only on the `ProjectTransport`
-interface. The browser uses a Streamable HTTP MCP client hidden behind that
-interface. Codex, Claude Code, and other local MCP hosts use the stdio adapter.
-Both call the same application service.
+interface. The local browser implementation is `httpTransport`, which owns the
+REST calls. Codex, Claude Code, and other agent hosts use MCP over stdio or
+Streamable HTTP. Both adapters call the same application service.
 
 The application service owns validation, path boundaries, version creation, and
 atomic writes. A future remote backend must
 be able to implement the same service contract. HTTP routes and MCP tools are
 thin adapters around that contract, not separate business logic.
 
-The frontend server owns the Streamable HTTP MCP endpoint and local filesystem
-access; React components only call `ProjectTransport`. Agent hosts spawn the
-stdio MCP server. A future remote backend can implement the same transport and
-service contracts without changing components or production rules.
+In development, Vite proxies REST calls to the HTTP server in `packages/mcp`;
+that server also exposes the Streamable HTTP MCP endpoint and serves the built
+app in production. Agent hosts normally spawn its stdio mode. A future remote
+backend can implement the same transport and service contracts without changing
+components or production rules.
 
 ## Workspace layout
 
@@ -55,7 +56,7 @@ The pnpm workspace keeps runtime boundaries explicit:
 - `skills/make-video/scripts`: generated skill entrypoints and production
   scripts; MCP source code does not live here.
 
-The app keeps UI responsibilities separate: `app/App.tsx` owns project
+The app keeps UI responsibilities separate: `packages/app/src/App.tsx` owns project
 selection and editor state; `components/` owns the asset bin, preview,
 inspector, and timeline; `lib/` contains presentation helpers. `main.tsx` only
 boots React and the Astryx theme.
@@ -68,7 +69,7 @@ The stdio and `/mcp` Streamable HTTP entries expose the same tools:
 - `make_video_get_project`
 - `make_video_update_caption`
 - `make_video_update_models`
-- `make_video_request_image_revision`
+- `make_video_request_image_revision` (starts a generation job)
 - `make_video_set_cover`
 - `make_video_ingest_sources`
 - `make_video_get_sources`
@@ -112,8 +113,9 @@ Inspectable project files remain authoritative:
   generation configuration materialized from that plan.
 - Rendered media and QA reports remain under `output/<video-id>/`.
 
-Browser state is limited to presentation preferences. It must not become a
-second production state.
+Browser state is limited to local preferences and provider keys. Model choices
+are also saved to project configuration; local storage is not a second
+production timeline or asset store.
 
 ## Initial surfaces
 
@@ -132,6 +134,8 @@ calls never remain blocked for the duration of a render.
 ## Safety
 
 - Never overwrite generated media; create a revision and select it explicitly.
-- Never expose provider credentials to the browser.
+- Provider keys entered in model settings stay in browser local storage and are
+  never sent through REST or MCP. Server-side generation reads its own
+  environment credentials.
 - Scope every path to the selected video project.
 - Keep paid generation separate from inspection and configuration actions.

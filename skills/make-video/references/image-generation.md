@@ -31,12 +31,13 @@ video's configured public directory.
 Run one target video from the caller's project root:
 
 ```bash
-node --env-file-if-exists=.env scripts/ai.mjs images <video-id>
+node --env-file-if-exists=.env <skill-dir>/scripts/ai.mjs images <video-id>
 ```
 
-Append `--asset=<id>` to regenerate only that image.
+Append `--asset=<id>` to target only that image.
 Repeat the option or use comma-separated IDs for a small affected set. Unrelated
-manifest entries remain unchanged.
+manifest entries remain unchanged. Existing output is preserved unless the
+user explicitly requested replacement and `--force` is supplied.
 
 Keep reusable style rules in `VISUAL_BIBLE.json`, recurring people and life
 stages in `CHARACTER_BIBLE.json`, and historical boundaries in
@@ -45,7 +46,7 @@ request exact character stages with `characters: [{"id":"...","stage":"..."}]`.
 
 List selected visual assets in `IMAGE_QA.json` with a semantic `visualIdea`,
 text policy, and minimum information threshold. Run
-`scripts/qa.mjs images <video-id>` to reject near-duplicate perceptual hashes,
+`<skill-dir>/scripts/qa.mjs images <video-id>` to reject near-duplicate perceptual hashes,
 repeated visual ideas,
 low-variance images, and high-confidence OCR text that was not allowed.
 

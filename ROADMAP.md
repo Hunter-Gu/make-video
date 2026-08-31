@@ -1,19 +1,18 @@
 # Roadmap
 
-## Implementation status
+## MVP implementation status
 
-The current implementation covers the core image-led video loop: project
-configuration, media generation, Remotion rendering, captions, audio, and
-deterministic QA.
+The current implementation proves the local, MCP-first image-led video loop.
+It is not the completed long-term roadmap.
 
-| Phase | Shipped evidence |
-| --- | --- |
-| Topic to video | Plan, script, storyboard, narration-derived timing, Remotion render, captions, configurable audio mix, and final-file QA |
-| Visual storytelling | Fourteen scene examples, 2.5D/focus motion, visual and character bibles, historical constraints, image QA, and render QA |
-| Source to video | Markdown/text/web/PDF/DOCX/EPUB ingestion, location-preserving index, annotations, source catalog, rights, and source list |
-| Book to series | Adaptation modes, compression estimate, episode/source allocation, continuity tracking, and shared series bibles |
-| Hybrid scenes | Replaceable image/video adapters, conditioning and resume support, provenance, clip QA, and Remotion video scenes |
-| Iteration and delivery | Timeline editing, targeted asset regeneration, preview/final exports, captions, thumbnails, and source metadata |
+| Area | Status | Current scope |
+| --- | --- | --- |
+| Topic to video | Implemented MVP | Host-authored plan, script/storyboard validation, generated media, narration timing, generic Remotion render, captions, audio, and final-file QA |
+| Visual storytelling | Implemented MVP | Reusable scene types, still-image motion guidance, timeline effects, visual/character constraints, image QA, and render QA |
+| Source to video | Implemented MVP | Markdown/text/web/PDF/DOCX/EPUB ingestion, location-preserving index, annotations, source catalog, rights, and source list |
+| Book to series | Guidance and data only | Adaptation guidance and series manifests exist; MCP/app orchestration for producing a full series does not |
+| Hybrid scenes | Partial | Image/video generation, reference frames, provenance, clip QA, and Remotion video scenes; interrupted provider requests cannot resume |
+| Iteration and delivery | Partial | Timeline/caption editing, image revisions, preview/final exports, covers, and source metadata; delivery variants remain future work |
 
 Paid model calls require the caller's API credentials. Deterministic local
 fixtures keep QA runs from creating model charges.
