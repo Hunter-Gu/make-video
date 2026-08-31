@@ -256,6 +256,9 @@ importers:
       '@make-video/assets':
         specifier: workspace:*
         version: link:../assets
+      '@make-video/contracts':
+        specifier: workspace:*
+        version: link:../contracts
     devDependencies:
       '@types/node':
         specifier: ^26.1.1

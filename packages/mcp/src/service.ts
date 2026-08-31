@@ -5,7 +5,7 @@ import {basename, dirname, extname, relative, resolve, sep} from "node:path";
 import {linkAssets} from "@make-video/assets";
 import {runImages, runMusic, runVideos, runVoiceover} from "@make-video/ai";
 import {runTiming as runTimingPackage} from "@make-video/audio";
-import {runRender} from "@make-video/render";
+import {buildProjectState, resolveProjectAssetFile, runRender} from "@make-video/render";
 import {runQa} from "@make-video/qa";
 import {runSourceCatalog, runSourceIngest, runSourceList} from "@make-video/sources";
 import type {GenerationJob} from "@make-video/contracts";
@@ -42,8 +42,6 @@ const writeJson = (file: string, value: any) => {
   writeFileSync(temporary, `${JSON.stringify(value, null, 2)}\n`);
   renameSync(temporary, file);
 };
-const mediaUrl = (file: string) => `/media?path=${encodeURIComponent(relative(projectRoot, file))}`;
-const mediaKind = (file: string): "image" | "video" => /\.(mp4|mov|webm|m4v)$/i.test(file) ? "video" : "image";
 const sourceType = (file: string) => ({".md": "markdown", ".txt": "text", ".pdf": "pdf", ".docx": "docx", ".epub": "epub"} as Record<string, string>)[extname(file).toLowerCase()];
 const sourceId = (name: string, used: Set<string>) => {
   const base = basename(name, extname(name)).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "source";
@@ -52,53 +50,14 @@ const sourceId = (name: string, used: Set<string>) => {
   return id;
 };
 
-const resolveAssetFile = (context: ReturnType<typeof loadVideoContext>, id: string, configuredPath: string) => {
-  const configuredFile = context.resolveConfiguredPath(configuredPath, `scene asset ${id}`);
-  if (existsSync(configuredFile) && extname(configuredFile).toLowerCase() !== ".json") return configuredFile;
-  if (extname(configuredFile).toLowerCase() !== ".json") return null;
-  const metadata = readJson(configuredFile, null);
-  const candidate = metadata?.output ?? metadata?.groups?.find((group: any) => group?.id === id)?.output;
-  if (typeof candidate !== "string" || candidate.length === 0) return null;
-  const output = resolve(context.publicDir, candidate);
-  return insideRoot(output) && existsSync(output) ? output : null;
-};
-
 export const listProjects = () => readdirSync(resolve(projectRoot, "src"), {withFileTypes: true})
   .filter((entry) => entry.isDirectory() && existsSync(resolve(projectRoot, "src", entry.name, "video.config.json")))
   .map((entry) => entry.name)
   .sort();
 
-const parseScript = (file: string) => new Map(
-  [...readFileSync(file, "utf8").matchAll(/^- `([^`]+)`: (.+)$/gm)].map((match) => [match[1], match[2]]),
-);
-
 export const getProjectState = (videoId: string) => {
   prepareProjectAssets(videoId);
-  const context = loadVideoContext(videoId);
-  const sceneIndex = readJson(resolve(context.sourceDir, "SCENE_INDEX.json"), {scenes: [], captions: []});
-  const projectState = readJson(resolve(context.sourceDir, "PROJECT_STATE.json"), {version: 1, revisionRequests: []});
-  const remotionTimeline = readJson(resolve(context.sourceDir, "REMOTION_TIMELINE.json"), {version: 1, effects: []});
-  const cover = readJson(resolve(context.sourceDir, "COVER.json"), null);
-  const script = parseScript(resolve(context.sourceDir, "SCRIPT.md"));
-  const captions = sceneIndex.captions.map((caption: any) => ({...caption, text: script.get(caption.id) ?? ""}));
-  const assets: any[] = [];
-
-  for (const [id, configuredPath] of Object.entries(sceneIndex.assets ?? {})) {
-    const file = resolveAssetFile(context, id, String(configuredPath));
-    if (file) assets.push({id, sceneId: sceneIndex.scenes.find((scene: any) => scene.assetIds?.includes(id))?.id ?? null, kind: mediaKind(file), selected: true, path: relative(projectRoot, file), url: mediaUrl(file)});
-  }
-  const outputLabels: Record<string, string> = {still: "Cover image", silent: "Preview video", unmastered: "Intermediate render", final: "Final video"};
-  const audioTrack = (id: string, label: string, file: string) => ({id, label, path: relative(projectRoot, file), exists: existsSync(file), url: existsSync(file) ? mediaUrl(file) : null});
-  const audioDir = resolve(context.publicDir, "audio");
-  const sfxDir = resolve(audioDir, "sfx");
-  const audio = {
-    voiceover: audioTrack("voiceover", "Voiceover", resolve(audioDir, "voiceover", "voiceover.wav")),
-    music: audioTrack("music", "Music", resolve(audioDir, "music", "underscore.mp3")),
-    sfx: existsSync(sfxDir) ? readdirSync(sfxDir).filter((file) => /\.(wav|mp3|m4a)$/i.test(file)).sort().map((file) => audioTrack(file, file.replace(/\.[^.]+$/, ""), resolve(sfxDir, file))) : [],
-  };
-  const stages = [
-    ...Object.entries(context.outputs).filter(([id]) => id !== "unmastered").map(([id, file]) => ({id, label: outputLabels[id] ?? id, path: relative(projectRoot, file), exists: existsSync(file), url: existsSync(file) ? mediaUrl(file) : null})),
-  ].filter((stage, index, all) => all.findIndex((item) => item.path === stage.path) === index);
+  const state = buildProjectState(videoId, "server");
   const qaReports = ([
     ["video", "qa-report.json"],
     ["images", "image-qa-report.json"],
@@ -107,18 +66,7 @@ export const getProjectState = (videoId: string) => {
   const sourceIndex = getSources(videoId);
 
   return {
-    videoId,
-    composition: context.composition,
-    models: {image: context.config.imageGeneration?.model ?? null, video: context.config.videoGeneration?.model ?? null, voice: context.config.voice?.model ?? null},
-    registry: {image: [], video: [], voice: []},
-    scenes: sceneIndex.scenes.map((scene: any) => ({...scene, ...(scene.content ? {content: scene.content} : {})})),
-    captions,
-    effects: (remotionTimeline.effects ?? []).filter((effect: any) => Number.isInteger(effect.startFrame) && Number.isInteger(effect.endFrame) && effect.startFrame >= 0 && effect.endFrame > effect.startFrame && effect.endFrame <= context.composition.durationInFrames),
-    audio,
-    cover,
-    assets,
-    stages,
-    revisions: projectState.revisionRequests ?? [],
+    ...state,
     sources: sourceIndex.sources,
     plan: getPlan(videoId),
     qa: qaReports.length > 0 ? {passed: qaReports.every((item) => item.report.passed === true), reports: qaReports.map((item) => ({kind: item.kind, passed: item.report.passed === true, checkedAt: item.report.checkedAt}))} : null,
@@ -554,7 +502,7 @@ const validateRenderInputs = (videoId: string) => {
     for (const assetId of Array.isArray(scene.assetIds) ? scene.assetIds : []) {
       const configuredPath = index.assets?.[assetId];
       if (typeof configuredPath !== "string") { errors.push(`Scene ${scene.id} references missing asset ${assetId}.`); continue; }
-      try { if (!resolveAssetFile(context, assetId, configuredPath)) errors.push(`Scene ${scene.id} asset ${assetId} is not available.`); }
+      try { if (!resolveProjectAssetFile(videoId, assetId, configuredPath)) errors.push(`Scene ${scene.id} asset ${assetId} is not available.`); }
       catch (error) { errors.push(error instanceof Error ? error.message : String(error)); }
     }
   }
