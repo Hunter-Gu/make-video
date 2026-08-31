@@ -30,6 +30,7 @@ export const Inspector = ({state, mode, setMode, scene, caption, asset, effect, 
     {mode === 'scene' && <SceneInspector scene={scene} asset={asset} fps={state.composition.fps} effects={state.effects.filter((item) => item.sceneId === scene?.id)} />}
     {mode === 'caption' && (caption ? (
       <CaptionEditor
+        key={`${caption.id}:${caption.text}:${caption.startFrame}:${caption.endFrame}`}
         caption={caption}
         fps={state.composition.fps}
         save={async (next) => {
@@ -128,7 +129,6 @@ const EffectInspector = ({effect, fps}: {effect: RemotionEffect | null; fps: num
 
 const CaptionEditor = ({caption, fps, save}: {caption: Caption; fps: number; save: (caption: Caption) => Promise<void>}) => {
   const [draft, setDraft] = useState(caption);
-  useEffect(() => setDraft(caption), [caption]);
   return (
     <div className="px-4 pb-5 pt-2.5">
       <span className="text-[9px] tracking-[.13em] text-[#6e7884]">CAPTION</span><h2 className="my-2 mb-5 font-serif text-[22px] font-medium">{caption.id}</h2>

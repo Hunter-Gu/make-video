@@ -29,34 +29,20 @@ export const ModelSettingsDialog = ({state, transport, listModels, refresh, noti
   const videoModels = catalog?.video.length ? catalog.video : state.registry.video;
   const voiceModels = catalog?.voice.length ? catalog.voice : state.registry.voice;
   const providers = useMemo(() => Array.from(new Set([...imageModels, ...videoModels, ...voiceModels].map((model) => model.provider))), [imageModels, videoModels, voiceModels]);
-
-  useEffect(() => {
-    setImage(readModelSetting('image', state.models.image ?? state.registry.image[0]?.id ?? ''));
-    setVideo(readModelSetting('video', state.models.video ?? state.registry.video[0]?.id ?? ''));
-    setVoice(readModelSetting('voice', state.models.voice ?? state.registry.voice[0]?.id ?? ''));
-  }, [state.videoId, state.models.image, state.models.video, state.models.voice, state.registry.image, state.registry.video, state.registry.voice]);
-
-  useEffect(() => {
-    if (!catalog) return;
-    setImage((current) => resolveModelId(current, imageModels));
-    setVideo((current) => resolveModelId(current, videoModels));
-    setVoice((current) => resolveModelId(current, voiceModels));
-  }, [catalog, imageModels, videoModels, voiceModels]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    setApiKeys(Object.fromEntries(providers.map((provider) => [provider, window.localStorage.getItem(apiKeyStorageKey(provider)) ?? ''])));
-  }, [providers]);
+  const selectedImage = resolveModelId(image, imageModels);
+  const selectedVideo = resolveModelId(video, videoModels);
+  const selectedVoice = resolveModelId(voice, voiceModels);
 
   const save = async () => {
     try {
-      writeModelSetting('image', image);
-      writeModelSetting('video', video);
-      writeModelSetting('voice', voice);
-      await transport.updateModels(state.videoId, {image: image || undefined, video: video || undefined, voice: voice || undefined});
+      writeModelSetting('image', selectedImage);
+      writeModelSetting('video', selectedVideo);
+      writeModelSetting('voice', selectedVoice);
+      await transport.updateModels(state.videoId, {image: selectedImage || undefined, video: selectedVideo || undefined, voice: selectedVoice || undefined});
       if (typeof window !== 'undefined') providers.forEach((provider) => {
         const key = apiKeyStorageKey(provider);
-        if (apiKeys[provider]) window.localStorage.setItem(key, apiKeys[provider]);
+        const value = apiKeys[provider] ?? window.localStorage.getItem(key) ?? '';
+        if (value) window.localStorage.setItem(key, value);
         else window.localStorage.removeItem(key);
       });
       await refresh();
@@ -72,11 +58,11 @@ export const ModelSettingsDialog = ({state, transport, listModels, refresh, noti
       <Layout
         header={<DialogHeader title="Generation models" subtitle="Gemini image, video, and voice models plus local provider keys" onOpenChange={() => onClose()} hasDivider />}
         content={<LayoutContent>
-          <ModelList title="Image models" models={imageModels} selected={image} onSelect={setImage} />
-          <ModelList title="Video models" models={videoModels} selected={video} onSelect={setVideo} />
-          <ModelList title="Voice models" models={voiceModels} selected={voice} onSelect={setVoice} />
+          <ModelList title="Image models" models={imageModels} selected={selectedImage} onSelect={setImage} />
+          <ModelList title="Video models" models={videoModels} selected={selectedVideo} onSelect={setVideo} />
+          <ModelList title="Voice models" models={voiceModels} selected={selectedVoice} onSelect={setVoice} />
           <div className="mt-5 border-t border-[#252a31] pt-4"><Text type="supporting" size="3xs">PROVIDER KEYS</Text></div>
-          {providers.map((provider) => <TextInput key={provider} label={`${provider} API key`} type="password" value={apiKeys[provider] ?? ''} placeholder="Stored only in this browser" onChange={(value) => setApiKeys((current) => ({...current, [provider]: value}))} />)}
+          {providers.map((provider) => <TextInput key={provider} label={`${provider} API key`} type="password" value={apiKeys[provider] ?? readApiKey(provider)} placeholder="Stored only in this browser" onChange={(value) => setApiKeys((current) => ({...current, [provider]: value}))} />)}
           <Text type="supporting" size="2xs" display="block">API keys stay in this browser and are not sent through MCP. Saving model selection does not start generation.</Text>
         </LayoutContent>}
         footer={<LayoutFooter hasDivider><HStack hAlign="end" gap={2}><Button label="Cancel" variant="secondary" onClick={onClose} /><Button label="Save settings" variant="primary" onClick={save} /></HStack></LayoutFooter>}
@@ -96,6 +82,7 @@ const ModelList = ({title, models, selected, onSelect}: {title: string; models: 
 );
 
 const apiKeyStorageKey = (provider: string) => `make-video.api-key.${provider.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+const readApiKey = (provider: string) => typeof window === 'undefined' ? '' : window.localStorage.getItem(apiKeyStorageKey(provider)) ?? '';
 const modelStorageKey = (kind: 'image' | 'video' | 'voice') => `make-video.model.${kind}`;
 const readModelSetting = (kind: 'image' | 'video' | 'voice', fallback: string) => {
   if (typeof window === 'undefined') return fallback;

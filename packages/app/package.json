@@ -12,7 +12,6 @@
   "dependencies": {
     "@astryxdesign/core": "^0.4.5",
     "@astryxdesign/theme-neutral": "^0.4.3",
-    "@make-video/ai": "workspace:*",
     "@make-video/contracts": "workspace:*",
     "@make-video/remotion": "workspace:*",
     "@remotion/player": "4.0.506",

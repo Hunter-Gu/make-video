@@ -2,6 +2,9 @@ node_modules/
 out/
 output/
 packages/app/dist/
+.env
+.env.*
+!.env.example
 
 # Generated runtime assets.
 public/
