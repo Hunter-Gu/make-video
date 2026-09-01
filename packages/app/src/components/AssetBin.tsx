@@ -103,6 +103,7 @@ const DeliveryPanel = ({state, transport, refresh, notice}: {state: ProjectState
   if (!delivery) return null;
   const rendered = delivery.report?.variants ?? {};
   const pending = delivery.variants.filter((variant) => !rendered[variant.id]);
+  const readyCount = delivery.variants.length - pending.length;
   const run = async (variantIds: string[]) => {
     setRunning(true);
     try {
@@ -119,7 +120,7 @@ const DeliveryPanel = ({state, transport, refresh, notice}: {state: ProjectState
   };
   return (
     <div className="mb-2 rounded-md border border-[#252c35] bg-[#14181e] p-2">
-      <div className="mb-1.5 flex items-center justify-between text-[9px]"><strong>Delivery variants</strong><span className="text-[#737c87]">{Object.keys(rendered).length}/{delivery.variants.length} rendered</span></div>
+      <div className="mb-1.5 flex items-center justify-between text-[9px]"><strong>Delivery variants</strong><span className="text-[#737c87]">{readyCount}/{delivery.variants.length} rendered</span></div>
       {delivery.error && <div className="mb-1.5 rounded bg-[#3b2426] px-2 py-1 text-[9px] leading-[1.35] text-[#f1b2b2]">{delivery.error}</div>}
       <div className="grid gap-1">
         {delivery.variants.map((variant) => {
