@@ -58,6 +58,7 @@ export const App = ({transport}: {transport: ProjectTransport}) => {
       setProjects(items);
       setVideoId(items[0] ?? '');
       if (items[0]) return refresh(items[0]);
+      setNotice('No video projects found.');
       return undefined;
     }).catch((error) => setNotice(error instanceof Error ? error.message : String(error)));
   }, [refresh, transport]);

@@ -89,11 +89,20 @@ this local acceptance path and requires the caller's API credentials.
 The local production GUI is documented in
 [docs/app-architecture.md](docs/app-architecture.md). Its screens
 depend on a transport interface rather than calling MCP directly. The current
-transport invokes the frontend server's Streamable HTTP MCP endpoint. Browser,
-stdio MCP, and REST adapters share one application service, so they do not
-duplicate project validation or production rules.
+browser transport uses REST; agent hosts use MCP over stdio or Streamable HTTP.
+Both adapters share one application service, so they do not duplicate project
+validation or production rules.
 
-Build and open the local app with:
+Start the development frontend and MCP/REST server together with:
+
+```bash
+pnpm dev
+```
+
+Open `http://127.0.0.1:4318` for the Vite app with hot reload. The local
+MCP/REST server runs on `http://127.0.0.1:4317`.
+
+For a production-style local build, run:
 
 ```bash
 cd packages/app

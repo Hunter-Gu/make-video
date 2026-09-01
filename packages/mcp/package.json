@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts http",
+    "dev": "MAKE_VIDEO_PROJECT_ROOT=../.. tsx watch src/index.ts http",
     "build": "tsc --noEmit && esbuild src/index.ts --bundle --minify --platform=node --format=esm --target=node22 --outfile=../../skills/make-video/scripts/mcp.mjs --banner:js='import {createRequire} from \"node:module\"; const require = createRequire(import.meta.url);'",
     "test": "pnpm build && tsx --test test/stdio.test.ts"
   },
