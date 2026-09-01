@@ -40,7 +40,9 @@ export const runVideoQa = (args: string[], inputOverride?: string) => {
   add("duration", Number.isFinite(duration) && Math.abs(duration - expectedDuration) <= (qa.durationToleranceSeconds ?? 0.25), `${expectedDuration}s`, duration);
   const audioRequired = qa.audioRequired ?? Boolean(production.mastering || Object.values(production.audio ?? {}).some(Boolean));
   add("audio-stream", !audioRequired || Boolean(audio), audioRequired ? "present" : "optional", audio ? "present" : "missing");
-  if (audio) {
+  // Remotion writes a silent audio track into MP4 output even for a silent edit.
+  // Measure loudness only where the project declares that audio carries content.
+  if (audio && audioRequired) {
     const analysis = run("ffmpeg", ["-hide_banner", "-nostats", "-i", input, "-map", "0:a:0", "-af", "ebur128=peak=true", "-f", "null", "-"]).output;
     const integratedLoudness = measuredValue(analysis, /\bI:\s*(-?inf|-?[\d.]+) LUFS/g);
     const truePeak = measuredValue(analysis, /\bPeak:\s*(-?inf|-?[\d.]+) dBFS/g);

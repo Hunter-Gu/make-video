@@ -119,6 +119,11 @@ text readability, safe areas, scene boundaries, generated-text integrity,
 source claims, audio synchronization, loudness, ending, black/frozen ranges,
 and encoding. Record known limitations and publication status.
 
+Loudness and true-peak checks run when the project declares that audio carries
+content — `production.qa.audioRequired`, or, when that is unset, configured
+mastering or audio generation. A silent edit is not measured for loudness:
+Remotion writes a silent audio track into MP4 output regardless.
+
 ## Targeted commands
 
 Replace `<skill-dir>` with this skill's absolute directory and run from the
@@ -138,6 +143,7 @@ node --env-file-if-exists=.env <skill-dir>/scripts/ai.mjs voiceover <video-id>
 node --env-file-if-exists=.env <skill-dir>/scripts/ai.mjs music <video-id>
 node --env-file-if-exists=.env <skill-dir>/scripts/audio.mjs prepare <video-id>
 node --env-file-if-exists=.env <skill-dir>/scripts/render.mjs final <video-id>
+node --env-file-if-exists=.env <skill-dir>/scripts/render.mjs deliver <video-id>
 ```
 
 Generation and render commands preserve existing outputs. Use `--force` only
