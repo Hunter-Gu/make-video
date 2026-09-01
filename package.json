@@ -16,11 +16,15 @@
   "scripts": {
     "dev": "pnpm --parallel --filter @make-video/app --filter @make-video/mcp dev",
     "assets:link": "node skills/make-video/scripts/assets.mjs link",
+    "example:install": "node skills/make-video/scripts/assets.mjs example",
+    "series:verify": "node skills/make-video/scripts/series.mjs verify",
+    "series:coverage": "node skills/make-video/scripts/series.mjs coverage",
     "sources:ingest": "node skills/make-video/scripts/sources.mjs ingest",
     "audio:prepare": "node skills/make-video/scripts/audio.mjs prepare",
     "video:qa": "node skills/make-video/scripts/qa.mjs video",
     "render:preview": "node skills/make-video/scripts/render.mjs preview",
     "render": "node skills/make-video/scripts/render.mjs final",
+    "deliver": "node skills/make-video/scripts/render.mjs deliver",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.packages.json"
   },
   "dependencies": {

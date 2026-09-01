@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "variants": [
+    {"id": "horizontal-captioned", "kind": "video", "width": 1920, "height": 1080, "captions": true, "output": "output/library-of-alexandria/horizontal-captioned.mp4"},
+    {"id": "horizontal-clean", "kind": "video", "width": 1920, "height": 1080, "captions": false, "output": "output/library-of-alexandria/horizontal-clean.mp4"},
+    {"id": "vertical-captioned", "kind": "video", "width": 1080, "height": 1920, "captions": true, "output": "output/library-of-alexandria/vertical-captioned.mp4"},
+    {"id": "zh-captioned", "kind": "video", "width": 1920, "height": 1080, "captions": true, "translation": "src/library-of-alexandria/translations/zh-CN.json", "output": "output/library-of-alexandria/zh-captioned.mp4"},
+    {"id": "thumbnail", "kind": "still", "width": 1280, "height": 720, "captions": false, "frame": 240, "output": "output/library-of-alexandria/thumbnail.png"},
+    {"id": "trailer", "kind": "video", "width": 1920, "height": 1080, "captions": true, "frames": [0, 366], "output": "output/library-of-alexandria/trailer.mp4"},
+    {"id": "vertical-short", "kind": "video", "width": 1080, "height": 1920, "captions": true, "frames": [1371, 1431], "output": "output/library-of-alexandria/vertical-short.mp4"}
+  ]
+}

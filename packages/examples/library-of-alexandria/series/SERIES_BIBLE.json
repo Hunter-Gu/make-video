@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "adaptation": {"mode": "series", "wordsPerMinute": 145, "compressionPolicy": "Preserve the uncertainty argument; omit title and production notes from narration.", "coverageNote": "This miniature source is a workflow fixture; production episodes would require the full book or additional approved research."},
+  "rights": {"status": "original", "intendedUse": "public demonstration and education"},
+  "sharedFiles": {
+    "visual": "src/library-of-alexandria/VISUAL_BIBLE.json",
+    "characters": "src/library-of-alexandria/CHARACTER_BIBLE.json",
+    "audio": "projects/alexandria-history/AUDIO_BIBLE.json",
+    "pronunciation": "projects/alexandria-history/PRONUNCIATION.json"
+  },
+  "canonicalPositions": {"destruction-model": "gradual-complex-process"},
+  "timeline": [
+    {"id": "ptolemaic-foundation", "order": 1, "label": "Ptolemaic period", "sourceBlockIds": ["demo-brief-2"]},
+    {"id": "institutional-change", "order": 2, "label": "Change across later periods", "sourceBlockIds": ["demo-brief-3"]}
+  ],
+  "terms": [
+    {"id": "mouseion", "canonical": "Mouseion", "pronunciationId": "mouseion"},
+    {"id": "alexandria", "canonical": "Alexandria", "pronunciationId": "alexandria"}
+  ]
+}

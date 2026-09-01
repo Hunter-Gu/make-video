@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "voiceManifest": "packages/examples/library-of-alexandria/voice-manifest.json",
+  "assets": {
+    "alexandria-illustration": "packages/examples/library-of-alexandria/assets/alexandria.svg",
+    "hybrid-motion": "src/library-of-alexandria/CANDIDATES.json"
+  },
+  "scenes": [
+    {"id": "opening", "narrationIds": ["opening"], "leadFrames": 15, "tailFrames": 30, "minFrames": 120, "sourceBlockIds": ["demo-brief-2"], "assetIds": [], "codeFiles": ["src/library-of-alexandria/content.ts"]},
+    {"id": "city", "narrationIds": ["city"], "leadFrames": 15, "tailFrames": 30, "minFrames": 150, "sourceBlockIds": ["demo-brief-2"], "assetIds": ["alexandria-illustration"], "codeFiles": ["src/library-of-alexandria/content.ts"]},
+    {"id": "timeline", "narrationIds": ["timeline"], "leadFrames": 15, "tailFrames": 30, "minFrames": 150, "sourceBlockIds": ["demo-brief-3"], "assetIds": [], "codeFiles": ["src/library-of-alexandria/content.ts"]},
+    {"id": "myth", "narrationIds": ["myth"], "leadFrames": 15, "tailFrames": 30, "minFrames": 150, "sourceBlockIds": ["demo-brief-3"], "assetIds": [], "codeFiles": ["src/library-of-alexandria/content.ts"]},
+    {"id": "legacy", "narrationIds": ["legacy"], "leadFrames": 15, "tailFrames": 30, "minFrames": 150, "sourceBlockIds": [], "assetIds": [], "codeFiles": ["src/library-of-alexandria/content.ts"]},
+    {"id": "route", "narrationIds": [], "fixedFrames": 60, "sourceBlockIds": [], "assetIds": [], "codeFiles": ["src/library-of-alexandria/content.ts"]},
+    {"id": "collection", "narrationIds": [], "fixedFrames": 60, "sourceBlockIds": [], "assetIds": [], "codeFiles": ["src/library-of-alexandria/content.ts"]},
+    {"id": "scale", "narrationIds": [], "fixedFrames": 60, "sourceBlockIds": [], "assetIds": [], "codeFiles": ["src/library-of-alexandria/content.ts"]},
+    {"id": "document", "narrationIds": [], "fixedFrames": 60, "sourceBlockIds": [], "assetIds": [], "codeFiles": ["src/library-of-alexandria/content.ts"]},
+    {"id": "relationships", "narrationIds": [], "fixedFrames": 60, "sourceBlockIds": [], "assetIds": [], "codeFiles": ["src/library-of-alexandria/content.ts"]},
+    {"id": "montage", "narrationIds": [], "fixedFrames": 60, "sourceBlockIds": [], "assetIds": ["alexandria-illustration"], "codeFiles": ["src/library-of-alexandria/content.ts"]},
+    {"id": "hybrid-clip", "narrationIds": [], "fixedFrames": 60, "sourceBlockIds": [], "assetIds": ["hybrid-motion"], "codeFiles": ["src/library-of-alexandria/content.ts"]},
+    {"id": "portrait-reveal", "narrationIds": [], "fixedFrames": 60, "sourceBlockIds": [], "assetIds": ["alexandria-illustration"], "codeFiles": ["src/library-of-alexandria/content.ts"]},
+    {"id": "depth-study", "narrationIds": [], "fixedFrames": 60, "sourceBlockIds": [], "assetIds": ["alexandria-illustration"], "codeFiles": ["src/library-of-alexandria/content.ts"]}
+  ]
+}

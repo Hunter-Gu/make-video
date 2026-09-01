@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "maxNearDuplicateDistance": 8,
+  "images": [
+    {"id": "route-concept", "path": "packages/examples/library-of-alexandria/assets/qa-map.png", "visualIdea": "geographic movement", "minDeviation": 8, "allowText": false},
+    {"id": "document-concept", "path": "packages/examples/library-of-alexandria/assets/qa-document.png", "visualIdea": "source evidence", "minDeviation": 8, "allowText": false}
+  ]
+}

@@ -73,6 +73,19 @@ canonical positions, timeline events, and terminology. Episodes declare ideas
 they introduce or require, canonical positions, and ordered timeline event IDs.
 The verifier rejects missing bibles, premature dependencies, chronology errors,
 and silent contradictions, and reports the source-to-narration compression ratio.
+An episode that deliberately moves back in time declares `"outOfOrderTimeline":
+true`; the chronology finding is then reported as a warning instead.
+
+Run it before writing any episode script:
+
+```bash
+node <skill-dir>/scripts/series.mjs verify <series-id>
+node <skill-dir>/scripts/series.mjs coverage <series-id> --force
+```
+
+Over MCP: `make_video_list_series`, `make_video_get_series`,
+`make_video_verify_series`, and `make_video_build_series_coverage`. `COVERAGE.md`
+is generated from the verified plan; do not hand-edit it.
 
 ## Regeneration boundaries
 

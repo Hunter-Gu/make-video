@@ -10,9 +10,9 @@ It is not the completed long-term roadmap.
 | Topic to video | Implemented MVP | Host-authored plan, script/storyboard validation, generated media, narration timing, generic Remotion render, captions, audio, and final-file QA |
 | Visual storytelling | Implemented MVP | Reusable scene types, still-image motion guidance, timeline effects, visual/character constraints, image QA, and render QA |
 | Source to video | Implemented MVP | Markdown/text/web/PDF/DOCX/EPUB ingestion, location-preserving index, annotations, source catalog, rights, and source list |
-| Book to series | Guidance and data only | Adaptation guidance and series manifests exist; MCP/app orchestration for producing a full series does not |
+| Book to series | Partial | Adaptation guidance, series manifests, deterministic plan verification (ordering, coverage, repetition, dependencies, chronology, contradictions, rights, compression), generated coverage records, and MCP tools; per-episode project scaffolding is still manual |
 | Hybrid scenes | Partial | Image/video generation, reference frames, provenance, clip QA, and Remotion video scenes; interrupted provider requests cannot resume |
-| Iteration and delivery | Partial | Timeline/caption editing, image revisions, preview/final exports, covers, and source metadata; delivery variants remain future work |
+| Iteration and delivery | Partial | Timeline/caption editing, image revisions, preview/final exports, covers, source metadata, and declared delivery variants (aspect ratios, clean and captioned cuts, translations, thumbnails, trailers, short extracts); region-specific feedback and incremental rebuild remain future work |
 
 Paid model calls require the caller's API credentials. Deterministic local
 fixtures keep QA runs from creating model charges.
@@ -119,6 +119,9 @@ Scale source-grounded production from one video to a coherent series.
 - Track people, locations, terminology, chronology, and unresolved ideas across
   chapters and episodes.
 - Prevent accidental repetition and contradictions between episodes.
+  Implemented: the series verifier rejects reused source blocks, ideas required
+  before they are introduced, chronology regressions, contradicted canonical
+  positions, missing shared bibles, and unknown pronunciation references.
 - Share character, visual, pronunciation, music, intro, outro, and citation
   bibles across the series.
 - Allow one episode or scene to be regenerated without rebuilding completed
@@ -156,6 +159,8 @@ Make collaboration with the agent practical for long videos and series.
   known limitations with the project.
 - Export multiple aspect ratios, captioned and clean versions, translated
   versions, thumbnails, trailers, and short-form extracts where requested.
+  Implemented: `DELIVERABLES.json` declares variants and each one is rendered
+  from the same project timeline, so a variant cannot drift from the edit.
 - Keep the app as a view and editor for the same project files; it must
   not become a second source of truth.
 
@@ -177,7 +182,7 @@ Make collaboration with the agent practical for long videos and series.
 
 These may be useful later but should not displace the knowledge-video roadmap:
 
-- Multi-language caption and narration translation.
+- Multi-language narration (translated captions already ship as delivery variants; translated voiceover does not).
 - Dead-air and filler-word removal for supplied footage.
 - Word-level transcript editing and multi-take selection.
 - General-purpose talking-head or podcast editing.

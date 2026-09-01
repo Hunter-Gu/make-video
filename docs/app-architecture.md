@@ -38,13 +38,18 @@ The pnpm workspace keeps runtime boundaries explicit:
 - `packages/contracts`: shared project and transport types.
 - `packages/ai`: AI SDK provider adapters and the unified media-generation
   command.
-- `packages/assets`: canonical project asset linking and preparation.
+- `packages/assets`: canonical project asset linking, preparation, and example
+  project installation.
 - `packages/audio`: audio preparation, narration timing, and deterministic UI
   sound effects; its build emits one `skills/make-video/scripts/audio.mjs`.
 - `packages/qa`: deterministic media and timeline QA; its build emits one
   `skills/make-video/scripts/qa.mjs` entrypoint with mode arguments.
-- `packages/render`: Remotion and FFmpeg rendering; its build emits one
-  `skills/make-video/scripts/render.mjs` entrypoint with mode arguments.
+- `packages/render`: Remotion and FFmpeg rendering, including declared delivery
+  variants; its build emits one `skills/make-video/scripts/render.mjs`
+  entrypoint with mode arguments.
+- `packages/series`: deterministic multi-episode plan verification and coverage
+  records; its build emits one `skills/make-video/scripts/series.mjs` entrypoint
+  with mode arguments.
 - `packages/sources`: source ingestion, catalog validation, and human-readable
   source-list generation; its build emits one `skills/make-video/scripts/sources.mjs`
   entrypoint with mode arguments.
@@ -90,6 +95,13 @@ The stdio and `/mcp` Streamable HTTP entries expose the same tools:
 - `make_video_get_timing_job`
 - `make_video_get_source_job`
 - `make_video_check_generation_readiness`
+- `make_video_get_deliverables`
+- `make_video_deliver` (starts a delivery render job)
+- `make_video_get_delivery_job`
+- `make_video_list_series`
+- `make_video_get_series`
+- `make_video_verify_series`
+- `make_video_build_series_coverage`
 
 They also expose `make-video://projects` and one read-only project resource per
 video. Tool handlers contain no filesystem rules; they delegate to
@@ -111,7 +123,12 @@ Inspectable project files remain authoritative:
   MCP validates its source block references before writing it.
 - `video.config.json.imageGeneration.assets` stores the deterministic image
   generation configuration materialized from that plan.
-- Rendered media and QA reports remain under `output/<video-id>/`.
+- `DELIVERABLES.json` stores the declared delivery variants; every variant is a
+  render of the same timeline, never a re-cut of the master.
+- `projects/<series-id>/series-plan.json` and `SERIES_BIBLE.json` store series
+  structure and shared canon; `COVERAGE.md` is generated from them.
+- Rendered media, QA reports, and `delivery-report.json` remain under
+  `output/<video-id>/`.
 
 Browser state is limited to local preferences and provider keys. Model choices
 are also saved to project configuration; local storage is not a second
@@ -126,6 +143,8 @@ production timeline or asset store.
 5. Image and voice model selectors backed by a capability registry.
 6. Outputs action to materialize the saved plan as `STORYBOARD.md`.
 7. Outputs action to prepare image generation configuration from the saved plan.
+8. Delivery variant list with per-variant render state and a pending-variant
+   render action.
 
 Long-running generation and rendering operations use jobs. Starting an action
 returns a job id; progress and completion are read separately so HTTP or MCP

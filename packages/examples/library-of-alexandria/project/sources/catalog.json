@@ -1,0 +1,80 @@
+{
+  "videoId": "library-of-alexandria",
+  "entities": [
+    {
+      "id": "alexandria",
+      "type": "place",
+      "name": "Alexandria",
+      "sourceBlockIds": [
+        "demo-brief-2",
+        "demo-brief-3"
+      ]
+    },
+    {
+      "id": "ptolemaic-egypt",
+      "type": "place",
+      "name": "Ptolemaic Egypt",
+      "sourceBlockIds": [
+        "demo-brief-2"
+      ]
+    },
+    {
+      "id": "mouseion",
+      "type": "concept",
+      "name": "Mouseion",
+      "sourceBlockIds": [
+        "demo-brief-2"
+      ]
+    },
+    {
+      "id": "single-fire-story",
+      "type": "event",
+      "name": "Single-fire destruction story",
+      "sourceBlockIds": [
+        "demo-brief-3"
+      ],
+      "notes": "Presented as an oversimplification, not a certain event."
+    }
+  ],
+  "quotations": [],
+  "claims": [
+    {
+      "id": "symbol-of-knowledge",
+      "type": "paraphrase",
+      "sourceBlockIds": [
+        "demo-brief-2"
+      ]
+    },
+    {
+      "id": "ptolemaic-center",
+      "type": "paraphrase",
+      "sourceBlockIds": [
+        "demo-brief-2"
+      ]
+    },
+    {
+      "id": "gradual-change",
+      "type": "paraphrase",
+      "sourceBlockIds": [
+        "demo-brief-3"
+      ]
+    },
+    {
+      "id": "legacy-interpretation",
+      "type": "inference",
+      "sourceBlockIds": []
+    }
+  ],
+  "illustrations": [
+    {
+      "id": "alexandria-reconstruction",
+      "sourceId": "demo-brief",
+      "sourceBlockId": "demo-brief-4",
+      "path": "packages/examples/library-of-alexandria/assets/alexandria.svg",
+      "caption": "Original illustrative reconstruction",
+      "rights": "original project material",
+      "reuseAllowed": true,
+      "evidenceStatus": "illustration-not-documentary-evidence"
+    }
+  ]
+}

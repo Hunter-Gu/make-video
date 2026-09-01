@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "currency": "USD",
+  "assets": [
+    {"id": "harbor-establishing-still", "kind": "image", "provider": "Gemini", "model": "configured-image-model", "units": 1, "costPerUnit": 0.04, "latencySeconds": [8, 30], "sceneIds": ["city"]},
+    {"id": "scroll-transition-shot", "kind": "video", "provider": "Gemini", "model": "configured-veo-model", "units": 8, "unit": "seconds", "costPerUnit": 0.35, "latencySeconds": [60, 600], "sceneIds": ["hybrid-clip"]},
+    {"id": "documentary-voice", "kind": "voice", "provider": "Gemini", "model": "configured-tts-model", "units": 26.2, "unit": "seconds", "costPerUnit": 0.0004, "latencySeconds": [10, 60], "sceneIds": ["opening", "city", "timeline", "myth", "legacy"]}
+  ]
+}

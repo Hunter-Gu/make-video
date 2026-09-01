@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "compositionId": "LibraryOfAlexandria",
+  "effects": [
+    {"id": "opening-title", "sceneId": "opening", "type": "title-reveal", "label": "Title reveal", "startFrame": 8, "endFrame": 72, "parameters": {"easing": "spring"}},
+    {"id": "city-camera", "sceneId": "city", "type": "ken-burns", "label": "Pan + zoom", "startFrame": 171, "endFrame": 396, "parameters": {"zoomFrom": 1.02, "zoomTo": 1.12}},
+    {"id": "timeline-reveal", "sceneId": "timeline", "type": "progressive-reveal", "label": "Timeline reveal", "startFrame": 406, "endFrame": 551, "parameters": {"staggerFrames": 18}},
+    {"id": "comparison-split", "sceneId": "myth", "type": "split-reveal", "label": "Split comparison", "startFrame": 586, "endFrame": 756, "parameters": {"direction": "center-out"}},
+    {"id": "quote-focus", "sceneId": "legacy", "type": "quote-reveal", "label": "Quote focus", "startFrame": 796, "endFrame": 951, "parameters": {"easing": "ease-out"}},
+    {"id": "route-draw", "sceneId": "route", "type": "path-draw", "label": "Map route", "startFrame": 1016, "endFrame": 1066, "parameters": {"points": 3}},
+    {"id": "chart-grow", "sceneId": "collection", "type": "bar-grow", "label": "Chart grow", "startFrame": 1076, "endFrame": 1126, "parameters": {"staggerFrames": 6}},
+    {"id": "stat-count", "sceneId": "scale", "type": "count-up", "label": "Number count", "startFrame": 1136, "endFrame": 1181, "parameters": {"easing": "spring"}},
+    {"id": "document-enter", "sceneId": "document", "type": "document-reveal", "label": "Document reveal", "startFrame": 1196, "endFrame": 1241, "parameters": {"rotation": -1.5}},
+    {"id": "network-connect", "sceneId": "relationships", "type": "network-draw", "label": "Connections", "startFrame": 1256, "endFrame": 1306, "parameters": {"staggerFrames": 8}},
+    {"id": "montage-cuts", "sceneId": "montage", "type": "montage", "label": "Montage cuts", "startFrame": 1311, "endFrame": 1371, "parameters": {"items": 4}},
+    {"id": "clip-playback", "sceneId": "hybrid-clip", "type": "video", "label": "Video clip", "startFrame": 1371, "endFrame": 1431, "parameters": {"fit": "cover"}},
+    {"id": "portrait-enter", "sceneId": "portrait-reveal", "type": "portrait-reveal", "label": "Portrait reveal", "startFrame": 1436, "endFrame": 1486, "parameters": {"position": "65% center"}},
+    {"id": "depth-focus", "sceneId": "depth-study", "type": "depth-focus", "label": "2.5D focus", "startFrame": 1491, "endFrame": 1551, "parameters": {"fromDepth": 0, "toDepth": 1}}
+  ]
+}

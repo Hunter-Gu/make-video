@@ -1,0 +1,35 @@
+{
+  "videoId": "library-of-alexandria",
+  "sources": [
+    {
+      "id": "demo-brief",
+      "title": "Library of Alexandria demo brief",
+      "type": "markdown",
+      "origin": "packages/examples/library-of-alexandria/sources/brief.md",
+      "rights": "original project material",
+      "sha256": "5f1c5950a90eb72a7f16844ca0a1d5481b7b73994d04f360984506e977757970",
+      "blocks": [
+        {
+          "id": "demo-brief-1",
+          "locator": "document:paragraph-1",
+          "text": "# Library of Alexandria demo brief"
+        },
+        {
+          "id": "demo-brief-2",
+          "locator": "document:paragraph-2",
+          "text": "The Library of Alexandria was associated with the Mouseion in Ptolemaic Egypt and became a symbol of collecting and comparing knowledge."
+        },
+        {
+          "id": "demo-brief-3",
+          "locator": "document:paragraph-3",
+          "text": "Its history should not be reduced to a confidently documented single fire that destroyed one complete collection at one moment. The institutions and collections associated with Alexandria changed across different periods."
+        },
+        {
+          "id": "demo-brief-4",
+          "locator": "document:paragraph-4",
+          "text": "This demo uses an original illustration and cautious explanatory language. It does not present the illustration as an authentic image of the ancient library."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "groups": [
+    {
+      "id": "hybrid-motion",
+      "kind": "motion",
+      "sceneId": "hybrid-clip",
+      "output": "videos/selected-hybrid.mp4",
+      "selectedId": "cool-grid",
+      "candidates": [
+        {
+          "id": "cool-grid",
+          "path": "packages/examples/library-of-alexandria/assets/alexandria-clip.mp4",
+          "provider": "deterministic-ffmpeg",
+          "cost": 0
+        },
+        {
+          "id": "warm-grid",
+          "path": "packages/examples/library-of-alexandria/assets/alexandria-clip-warm.mp4",
+          "provider": "deterministic-ffmpeg",
+          "cost": 0
+        }
+      ],
+      "selectedAt": "2026-08-21T01:49:20.428Z"
+    }
+  ]
+}

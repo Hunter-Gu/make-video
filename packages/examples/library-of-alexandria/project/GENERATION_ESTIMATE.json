@@ -1,0 +1,78 @@
+{
+  "videoId": "library-of-alexandria",
+  "currency": "USD",
+  "planHash": "17500ac9248b4f1202cb92b41896e7013e4552e3d4883b52cf843f27a4d292e4",
+  "totalEstimatedCost": 2.85048,
+  "sequentialLatencySeconds": {
+    "min": 78,
+    "max": 690
+  },
+  "assets": [
+    {
+      "id": "harbor-establishing-still",
+      "kind": "image",
+      "provider": "Gemini",
+      "model": "configured-image-model",
+      "units": 1,
+      "costPerUnit": 0.04,
+      "latencySeconds": [
+        8,
+        30
+      ],
+      "sceneIds": [
+        "city"
+      ],
+      "estimatedCost": 0.04,
+      "estimatedLatencySeconds": {
+        "min": 8,
+        "max": 30
+      }
+    },
+    {
+      "id": "scroll-transition-shot",
+      "kind": "video",
+      "provider": "Gemini",
+      "model": "configured-veo-model",
+      "units": 8,
+      "unit": "seconds",
+      "costPerUnit": 0.35,
+      "latencySeconds": [
+        60,
+        600
+      ],
+      "sceneIds": [
+        "hybrid-clip"
+      ],
+      "estimatedCost": 2.8,
+      "estimatedLatencySeconds": {
+        "min": 60,
+        "max": 600
+      }
+    },
+    {
+      "id": "documentary-voice",
+      "kind": "voice",
+      "provider": "Gemini",
+      "model": "configured-tts-model",
+      "units": 26.2,
+      "unit": "seconds",
+      "costPerUnit": 0.0004,
+      "latencySeconds": [
+        10,
+        60
+      ],
+      "sceneIds": [
+        "opening",
+        "city",
+        "timeline",
+        "myth",
+        "legacy"
+      ],
+      "estimatedCost": 0.01048,
+      "estimatedLatencySeconds": {
+        "min": 10,
+        "max": 60
+      }
+    }
+  ]
+}

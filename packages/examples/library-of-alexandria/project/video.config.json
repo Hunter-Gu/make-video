@@ -1,0 +1,49 @@
+{
+  "videoId": "library-of-alexandria",
+  "sources": [
+    {
+      "id": "demo-brief",
+      "title": "Library of Alexandria demo brief",
+      "input": "packages/examples/library-of-alexandria/sources/brief.md",
+      "rights": "original project material"
+    }
+  ],
+  "composition": {
+    "id": "LibraryOfAlexandria",
+    "fps": 30,
+    "width": 1920,
+    "height": 1080,
+    "durationInFrames": 1551
+  },
+  "production": {
+    "publicPath": "library-of-alexandria",
+    "assetLinks": [
+      {
+        "source": "packages/examples/library-of-alexandria/assets/alexandria.svg",
+        "output": "images/alexandria.svg"
+      }
+    ],
+    "outputs": {
+      "still": "output/library-of-alexandria/still.png",
+      "silent": "output/library-of-alexandria/silent.mp4",
+      "unmastered": "output/library-of-alexandria/unmastered.mp4",
+      "final": "output/library-of-alexandria/final.mp4"
+    },
+    "stillFrame": 240,
+    "qa": {
+      "output": "silent",
+      "audioRequired": false
+    },
+    "mastering": null
+  },
+  "imageGeneration": {
+    "model": "gemini-2.5-flash-image",
+    "assets": []
+  },
+  "voice": {
+    "model": "gemini-2.5-flash-preview-tts",
+    "voiceName": "Kore",
+    "direction": "Clear documentary narration.",
+    "timingMode": "narration"
+  }
+}

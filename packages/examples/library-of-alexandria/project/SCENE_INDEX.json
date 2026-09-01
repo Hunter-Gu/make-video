@@ -1,0 +1,422 @@
+{
+  "version": 1,
+  "fps": 30,
+  "voiceManifest": "packages/examples/library-of-alexandria/voice-manifest.json",
+  "assets": {
+    "alexandria-illustration": "packages/examples/library-of-alexandria/assets/alexandria.svg",
+    "hybrid-motion": "src/library-of-alexandria/CANDIDATES.json"
+  },
+  "captions": [
+    {
+      "id": "opening",
+      "sceneId": "opening",
+      "text": "The Library of Alexandria became a lasting symbol of humanity's ambition to gather knowledge.",
+      "startFrame": 15,
+      "endFrame": 141
+    },
+    {
+      "id": "city",
+      "sceneId": "city",
+      "text": "In Ptolemaic Egypt, Alexandria grew into a center where scholars studied texts from across the Mediterranean world.",
+      "startFrame": 186,
+      "endFrame": 366
+    },
+    {
+      "id": "timeline",
+      "sceneId": "timeline",
+      "text": "The institution was not created, transformed, or lost in a single dramatic moment.",
+      "startFrame": 411,
+      "endFrame": 546
+    },
+    {
+      "id": "myth",
+      "sceneId": "myth",
+      "text": "Modern historians usually treat the library's decline as a complex process rather than one total destruction event.",
+      "startFrame": 591,
+      "endFrame": 756
+    },
+    {
+      "id": "legacy",
+      "sceneId": "legacy",
+      "text": "Whatever its exact size and fate, Alexandria still represents the hope that collected knowledge can outlast any one generation.",
+      "startFrame": 801,
+      "endFrame": 981
+    }
+  ],
+  "scenes": [
+    {
+      "id": "opening",
+      "narrationIds": [
+        "opening"
+      ],
+      "leadFrames": 15,
+      "tailFrames": 30,
+      "minFrames": 120,
+      "sourceBlockIds": [
+        "demo-brief-2"
+      ],
+      "assetIds": [],
+      "codeFiles": [
+        "src/library-of-alexandria/content.ts"
+      ],
+      "startFrame": 0,
+      "endFrame": 171,
+      "content": {
+        "type": "chapter",
+        "title": "The Library of Alexandria",
+        "subtitle": "A KNOWLEDGE VIDEO DEMO"
+      },
+      "durationInFrames": 171,
+      "timingSource": "voice-manifest"
+    },
+    {
+      "id": "city",
+      "narrationIds": [
+        "city"
+      ],
+      "leadFrames": 15,
+      "tailFrames": 30,
+      "minFrames": 150,
+      "sourceBlockIds": [
+        "demo-brief-2"
+      ],
+      "assetIds": [
+        "alexandria-illustration"
+      ],
+      "codeFiles": [
+        "src/library-of-alexandria/content.ts"
+      ],
+      "startFrame": 171,
+      "endFrame": 396,
+      "content": {
+        "type": "image",
+        "title": "A new city of learning",
+        "subtitle": "Founded in Ptolemaic Egypt, Alexandria connected Mediterranean cultures and scholarship.",
+        "image": "library-of-alexandria/images/alexandria.svg"
+      },
+      "durationInFrames": 225,
+      "timingSource": "voice-manifest"
+    },
+    {
+      "id": "timeline",
+      "narrationIds": [
+        "timeline"
+      ],
+      "leadFrames": 15,
+      "tailFrames": 30,
+      "minFrames": 150,
+      "sourceBlockIds": [
+        "demo-brief-3"
+      ],
+      "assetIds": [],
+      "codeFiles": [
+        "src/library-of-alexandria/content.ts"
+      ],
+      "startFrame": 396,
+      "endFrame": 576,
+      "content": {
+        "type": "timeline",
+        "title": "An institution changed over centuries",
+        "events": [
+          {
+            "label": "3rd c. BCE",
+            "detail": "Royal patronage supports the Mouseion and its collections."
+          },
+          {
+            "label": "1st c. BCE",
+            "detail": "War and political change place parts of Alexandria at risk."
+          },
+          {
+            "label": "Late Antiquity",
+            "detail": "Institutions, collections, and scholarly life continue to change."
+          }
+        ]
+      },
+      "durationInFrames": 180,
+      "timingSource": "voice-manifest"
+    },
+    {
+      "id": "myth",
+      "narrationIds": [
+        "myth"
+      ],
+      "leadFrames": 15,
+      "tailFrames": 30,
+      "minFrames": 150,
+      "sourceBlockIds": [
+        "demo-brief-3"
+      ],
+      "assetIds": [],
+      "codeFiles": [
+        "src/library-of-alexandria/content.ts"
+      ],
+      "startFrame": 576,
+      "endFrame": 786,
+      "content": {
+        "type": "comparison",
+        "title": "The famous fire is not the whole story",
+        "left": {
+          "label": "Popular image",
+          "detail": "One enormous library disappears in a single catastrophic fire."
+        },
+        "right": {
+          "label": "Historical caution",
+          "detail": "Several collections and institutions changed or declined across different periods."
+        }
+      },
+      "durationInFrames": 210,
+      "timingSource": "voice-manifest"
+    },
+    {
+      "id": "legacy",
+      "narrationIds": [
+        "legacy"
+      ],
+      "leadFrames": 15,
+      "tailFrames": 30,
+      "minFrames": 150,
+      "sourceBlockIds": [],
+      "assetIds": [],
+      "codeFiles": [
+        "src/library-of-alexandria/content.ts"
+      ],
+      "startFrame": 786,
+      "endFrame": 1011,
+      "content": {
+        "type": "quote",
+        "quote": "Its greatest legacy may be the idea that knowledge can be gathered, compared, and shared.",
+        "attribution": "Closing interpretation"
+      },
+      "durationInFrames": 225,
+      "timingSource": "voice-manifest"
+    },
+    {
+      "id": "route",
+      "narrationIds": [],
+      "fixedFrames": 60,
+      "sourceBlockIds": [],
+      "assetIds": [],
+      "codeFiles": [
+        "src/library-of-alexandria/content.ts"
+      ],
+      "startFrame": 1011,
+      "endFrame": 1071,
+      "content": {
+        "type": "map",
+        "title": "Texts moved across the Mediterranean",
+        "points": [
+          {
+            "label": "Athens",
+            "x": 20,
+            "y": 18
+          },
+          {
+            "label": "Rhodes",
+            "x": 48,
+            "y": 28
+          },
+          {
+            "label": "Alexandria",
+            "x": 75,
+            "y": 42
+          }
+        ]
+      },
+      "durationInFrames": 60,
+      "timingSource": "fixed"
+    },
+    {
+      "id": "collection",
+      "narrationIds": [],
+      "fixedFrames": 60,
+      "sourceBlockIds": [],
+      "assetIds": [],
+      "codeFiles": [
+        "src/library-of-alexandria/content.ts"
+      ],
+      "startFrame": 1071,
+      "endFrame": 1131,
+      "content": {
+        "type": "chart",
+        "title": "Illustrative collection growth",
+        "items": [
+          {
+            "label": "Early",
+            "value": 28
+          },
+          {
+            "label": "Expansion",
+            "value": 65
+          },
+          {
+            "label": "Peak tradition",
+            "value": 92
+          }
+        ]
+      },
+      "durationInFrames": 60,
+      "timingSource": "fixed"
+    },
+    {
+      "id": "scale",
+      "narrationIds": [],
+      "fixedFrames": 60,
+      "sourceBlockIds": [],
+      "assetIds": [],
+      "codeFiles": [
+        "src/library-of-alexandria/content.ts"
+      ],
+      "startFrame": 1131,
+      "endFrame": 1191,
+      "content": {
+        "type": "statistic",
+        "value": "Centuries",
+        "label": "of institutional change",
+        "subtitle": "Not one isolated event"
+      },
+      "durationInFrames": 60,
+      "timingSource": "fixed"
+    },
+    {
+      "id": "document",
+      "narrationIds": [],
+      "fixedFrames": 60,
+      "sourceBlockIds": [],
+      "assetIds": [],
+      "codeFiles": [
+        "src/library-of-alexandria/content.ts"
+      ],
+      "startFrame": 1191,
+      "endFrame": 1251,
+      "content": {
+        "type": "document",
+        "title": "Historical caution",
+        "documentText": "Ancient claims about the collection vary. Numbers and dramatic stories should be presented with their uncertainty.",
+        "attribution": "Editorial source note"
+      },
+      "durationInFrames": 60,
+      "timingSource": "fixed"
+    },
+    {
+      "id": "relationships",
+      "narrationIds": [],
+      "fixedFrames": 60,
+      "sourceBlockIds": [],
+      "assetIds": [],
+      "codeFiles": [
+        "src/library-of-alexandria/content.ts"
+      ],
+      "startFrame": 1251,
+      "endFrame": 1311,
+      "content": {
+        "type": "relationship",
+        "title": "A network of patronage and scholarship",
+        "relations": [
+          {
+            "from": "Ptolemaic court",
+            "to": "Mouseion",
+            "label": "patronage"
+          },
+          {
+            "from": "Mouseion",
+            "to": "Scholars",
+            "label": "institution"
+          }
+        ]
+      },
+      "durationInFrames": 60,
+      "timingSource": "fixed"
+    },
+    {
+      "id": "montage",
+      "narrationIds": [],
+      "fixedFrames": 60,
+      "sourceBlockIds": [],
+      "assetIds": [
+        "alexandria-illustration"
+      ],
+      "codeFiles": [
+        "src/library-of-alexandria/content.ts"
+      ],
+      "startFrame": 1311,
+      "endFrame": 1371,
+      "content": {
+        "type": "montage",
+        "title": "One city, many forms of knowledge",
+        "images": [
+          "alexandria-illustration",
+          "alexandria-illustration",
+          "alexandria-illustration",
+          "alexandria-illustration"
+        ]
+      },
+      "durationInFrames": 60,
+      "timingSource": "fixed"
+    },
+    {
+      "id": "hybrid-clip",
+      "narrationIds": [],
+      "fixedFrames": 60,
+      "sourceBlockIds": [],
+      "assetIds": [
+        "hybrid-motion"
+      ],
+      "codeFiles": [
+        "src/library-of-alexandria/content.ts"
+      ],
+      "startFrame": 1371,
+      "endFrame": 1431,
+      "content": {
+        "type": "video",
+        "title": "Generated and sourced clips can coexist",
+        "subtitle": "Video remains one visual tool, not the whole production system",
+        "video": "videos/selected-hybrid.mp4"
+      },
+      "durationInFrames": 60,
+      "timingSource": "fixed"
+    },
+    {
+      "id": "portrait-reveal",
+      "narrationIds": [],
+      "fixedFrames": 60,
+      "sourceBlockIds": [],
+      "assetIds": [
+        "alexandria-illustration"
+      ],
+      "codeFiles": [
+        "src/library-of-alexandria/content.ts"
+      ],
+      "startFrame": 1431,
+      "endFrame": 1491,
+      "content": {
+        "type": "portrait",
+        "title": "A scholar enters the story",
+        "image": "library-of-alexandria/images/alexandria.svg",
+        "imagePosition": "65% center"
+      },
+      "durationInFrames": 60,
+      "timingSource": "fixed"
+    },
+    {
+      "id": "depth-study",
+      "narrationIds": [],
+      "fixedFrames": 60,
+      "sourceBlockIds": [],
+      "assetIds": [
+        "alexandria-illustration"
+      ],
+      "codeFiles": [
+        "src/library-of-alexandria/content.ts"
+      ],
+      "startFrame": 1491,
+      "endFrame": 1551,
+      "content": {
+        "type": "depth",
+        "title": "Focus moves with the explanation",
+        "image": "library-of-alexandria/images/alexandria.svg"
+      },
+      "durationInFrames": 60,
+      "timingSource": "fixed"
+    }
+  ]
+}

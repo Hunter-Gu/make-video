@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "title": "The Library of Alexandria",
+  "adaptationMode": "documentary",
+  "audience": "General viewers who want an accurate short explanation.",
+  "language": "en",
+  "durationSeconds": 52,
+  "sourceBlockIds": ["demo-brief-2", "demo-brief-3", "demo-brief-4"],
+  "chapters": [
+    {
+      "id": "foundation",
+      "title": "A city of learning",
+      "objective": "Place the library inside the Ptolemaic institution that produced it.",
+      "sourceBlockIds": ["demo-brief-2"],
+      "sceneIds": ["opening", "city"]
+    },
+    {
+      "id": "change",
+      "title": "Change instead of one catastrophe",
+      "objective": "Replace the single-fire story with the gradual change historians describe.",
+      "sourceBlockIds": ["demo-brief-3"],
+      "sceneIds": ["timeline", "myth"]
+    },
+    {
+      "id": "legacy",
+      "title": "What lasted",
+      "objective": "State the idea that outlived the building.",
+      "sourceBlockIds": ["demo-brief-4"],
+      "sceneIds": ["legacy"]
+    },
+    {
+      "id": "scene-library",
+      "title": "Explanatory scene forms",
+      "objective": "Demonstrate the reusable knowledge-video scene types on the same subject.",
+      "sourceBlockIds": [],
+      "sceneIds": ["route", "collection", "scale", "document", "relationships", "montage", "hybrid-clip", "portrait-reveal", "depth-study"]
+    }
+  ],
+  "scenes": [
+    {"id": "opening", "chapterId": "foundation", "title": "The Library of Alexandria", "type": "chapter", "objective": "Open on the subject and the ambition it stands for.", "sourceBlockIds": ["demo-brief-2"], "visualDirection": "Title card over a restrained archival palette."},
+    {"id": "city", "chapterId": "foundation", "title": "A new city of learning", "type": "image", "objective": "Locate the institution in Ptolemaic Alexandria.", "sourceBlockIds": ["demo-brief-2"], "visualDirection": "Supplied illustration of the harbour city with a slow push in."},
+    {"id": "timeline", "chapterId": "change", "title": "An institution changed over centuries", "type": "timeline", "objective": "Show that creation, change, and loss were not one moment.", "sourceBlockIds": ["demo-brief-3"], "visualDirection": "Three staged timeline entries revealed in order."},
+    {"id": "myth", "chapterId": "change", "title": "The famous fire is not the whole story", "type": "comparison", "objective": "Separate the popular image from the historical reading.", "sourceBlockIds": ["demo-brief-3"], "visualDirection": "Split comparison between the popular story and the cautious reading."},
+    {"id": "legacy", "chapterId": "legacy", "title": "What lasted", "type": "quote", "objective": "Close on the idea that collected knowledge can outlast a generation.", "sourceBlockIds": ["demo-brief-4"], "visualDirection": "Quotation card with attribution."},
+    {"id": "route", "chapterId": "scene-library", "title": "Texts moved across the Mediterranean", "type": "map", "objective": "Show movement of texts as a drawn route.", "sourceBlockIds": [], "visualDirection": "Schematic map with an animated route."},
+    {"id": "collection", "chapterId": "scene-library", "title": "Illustrative collection growth", "type": "chart", "objective": "Present an explicitly illustrative quantity.", "sourceBlockIds": [], "visualDirection": "Bar chart that grows with the narration."},
+    {"id": "scale", "chapterId": "scene-library", "title": "Scale", "type": "statistic", "objective": "Hold one number long enough to register.", "sourceBlockIds": [], "visualDirection": "Single large statistic with a caption."},
+    {"id": "document", "chapterId": "scene-library", "title": "Historical caution", "type": "document", "objective": "Show the wording of a cautious historical claim.", "sourceBlockIds": [], "visualDirection": "Document close-up on aged paper."},
+    {"id": "relationships", "chapterId": "scene-library", "title": "A network of patronage and scholarship", "type": "relationship", "objective": "Show who depended on whom.", "sourceBlockIds": [], "visualDirection": "Relationship diagram drawn during the line."},
+    {"id": "montage", "chapterId": "scene-library", "title": "One city, many forms of knowledge", "type": "montage", "objective": "Cover breadth without dwelling on any single image.", "sourceBlockIds": [], "visualDirection": "Four-panel montage revealed in sequence."},
+    {"id": "hybrid-clip", "chapterId": "scene-library", "title": "Generated and sourced clips can coexist", "type": "video", "objective": "Prove hybrid playback inside the image-led edit.", "sourceBlockIds": [], "visualDirection": "Selected candidate clip, muted, cut into the image sequence."},
+    {"id": "portrait-reveal", "chapterId": "scene-library", "title": "A scholar enters the story", "type": "portrait", "objective": "Introduce a person with a controlled reveal.", "sourceBlockIds": [], "visualDirection": "Portrait reveal with masking."},
+    {"id": "depth-study", "chapterId": "scene-library", "title": "Focus moves with the explanation", "type": "depth", "objective": "Move attention through depth rather than cutting.", "sourceBlockIds": [], "visualDirection": "Layered 2.5D parallax with a focus change."}
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "palette": {"background": "#090d14", "foreground": "#f4ead7", "muted": "#b7ad9e", "accent": "#d7a84b"},
+  "typography": {"display": "Georgia", "utility": "Arial", "rules": "Large editorial headings; short utility labels."},
+  "imageTreatment": "Restrained archival palette, soft directional light, no embedded text or decorative pseudo-writing.",
+  "motion": "Purpose-led reveals, route drawing, document focus, and slow depth moves; avoid identical zooms.",
+  "aspectRatios": ["16:9", "9:16"],
+  "recurringElements": ["gold evidence line", "dark blue field", "paper document surface"],
+  "promptDirection": "Cinematic historical editorial illustration with restrained navy, parchment, and gold; clear focal hierarchy; no text in image."
+}

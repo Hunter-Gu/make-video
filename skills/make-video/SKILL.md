@@ -49,6 +49,12 @@ project store or a second planning agent in code.
    `make_video_qa` or the deterministic QA entrypoint for duration, dimensions,
    fps, audio, loudness, true peak, black/frozen intervals, and configured OCR
    checks.
+9. **Deliver the requested variants last.** When the request needs more than one
+   file — another aspect ratio, a clean version, a translation, a thumbnail, a
+   trailer, a short extract — read
+   [references/delivery-workflow.md](references/delivery-workflow.md), declare
+   them in `DELIVERABLES.json`, and render them with `make_video_deliver`. Never
+   hand-cut a variant out of the master.
 
 When the storyboard uses Gemini-generated stills, read
 [references/image-generation.md](references/image-generation.md) before
@@ -66,7 +72,9 @@ sources before writing the final narration.
 
 When one long source should become multiple videos, read
 [references/series-workflow.md](references/series-workflow.md) after ingestion
-before developing any episode.
+before developing any episode. Check the series plan with
+`make_video_verify_series` before writing an episode script, and record what each
+episode uses or omits with `make_video_build_series_coverage`.
 
 When the storyboard justifies generated motion, read
 [references/video-generation.md](references/video-generation.md). Generate only
@@ -113,6 +121,9 @@ node --env-file-if-exists=.env <skill-dir>/scripts/ai.mjs voiceover <video-id>
 node --env-file-if-exists=.env <skill-dir>/scripts/ai.mjs music <video-id>
 node --env-file-if-exists=.env <skill-dir>/scripts/audio.mjs timing <video-id>
 node --env-file-if-exists=.env <skill-dir>/scripts/render.mjs final <video-id>
+node --env-file-if-exists=.env <skill-dir>/scripts/render.mjs deliver <video-id>
+node --env-file-if-exists=.env <skill-dir>/scripts/series.mjs verify <series-id>
+node --env-file-if-exists=.env <skill-dir>/scripts/series.mjs coverage <series-id>
 ```
 
 Full detail on the project files and production workflow lives in

@@ -1,0 +1,8 @@
+{
+  "claims": [
+    {"id": "symbol-of-knowledge", "type": "paraphrase", "narrationIds": ["opening"], "text": "The library became a symbol of collecting knowledge.", "sourceBlockIds": ["demo-brief-2"]},
+    {"id": "ptolemaic-center", "type": "paraphrase", "narrationIds": ["city"], "text": "The institution belonged to Ptolemaic Alexandria.", "sourceBlockIds": ["demo-brief-2"]},
+    {"id": "gradual-change", "type": "paraphrase", "narrationIds": ["timeline", "myth"], "text": "Its history spans multiple periods rather than one certain destruction event.", "sourceBlockIds": ["demo-brief-3"]},
+    {"id": "legacy-interpretation", "type": "inference", "narrationIds": ["legacy"], "text": "Its legacy represents knowledge shared across generations.", "sourceBlockIds": [], "disclosure": "Closing interpretation based on the video's theme."}
+  ]
+}

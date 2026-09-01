@@ -76,11 +76,24 @@ generation.
 The implemented plan for turning topics, documents, and books into image-led
 knowledge videos and documentary series is in [ROADMAP.md](ROADMAP.md).
 
-The repository includes a reproducible Library of Alexandria acceptance case.
-After installing project dependencies, render and verify it with:
+The repository ships a reproducible Library of Alexandria acceptance case as a
+tracked example. `src/` and `projects/` hold user-owned state and stay out of
+version control, so install the example into them first:
 
 ```bash
+pnpm install
+pnpm example:install library-of-alexandria
 pnpm render:preview library-of-alexandria
+pnpm video:qa library-of-alexandria
+```
+
+The same example carries a two-episode series plan and a set of delivery
+variants:
+
+```bash
+pnpm series:verify alexandria-history
+pnpm series:coverage alexandria-history --force
+pnpm deliver library-of-alexandria --variant=thumbnail
 ```
 
 Model-backed image, video, voice, and music generation stays separate from
@@ -124,9 +137,29 @@ claude mcp add make-video --scope project -- node "$PWD/skills/make-video/script
 ```
 
 The MCP server provides project inspection, source and plan operations, model
-updates, generation jobs, rendering, and deterministic QA. Paid generation
-uses credentials from the server environment; credentials are never sent as
-MCP tool input.
+updates, generation jobs, rendering, deterministic QA, delivery variants, and
+series verification. Paid generation uses credentials from the server
+environment; credentials are never sent as MCP tool input.
+
+## Delivery variants
+
+`DELIVERABLES.json` declares the files one edit has to ship as: other aspect
+ratios, clean versions without burned-in captions, translated versions,
+thumbnails, trailers, and short extracts. Each variant is rendered from the same
+project timeline rather than re-cut from the master, so a variant cannot drift
+from the edit. See
+[skills/make-video/references/delivery-workflow.md](skills/make-video/references/delivery-workflow.md).
+
+## Series
+
+`projects/<series-id>/series-plan.json` and `SERIES_BIBLE.json` describe a
+multi-episode adaptation. `pnpm series:verify <series-id>` rejects broken
+episode ordering, repeated or unaccounted source material, ideas required before
+they are introduced, chronology regressions, contradicted canonical positions,
+missing shared bibles, and unknown pronunciation references, and reports the
+source-to-narration compression the requested runtimes imply.
+`pnpm series:coverage <series-id>` writes the coverage record. See
+[skills/make-video/references/series-workflow.md](skills/make-video/references/series-workflow.md).
 
 ## License
 

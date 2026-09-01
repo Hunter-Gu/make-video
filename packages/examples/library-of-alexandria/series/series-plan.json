@@ -1,0 +1,11 @@
+{
+  "seriesId": "alexandria-history",
+  "title": "Alexandria and its library",
+  "sourceIndex": "src/library-of-alexandria/sources/index.json",
+  "sharedSourceBlockIds": ["demo-brief-2"],
+  "omittedSourceBlockIds": ["demo-brief-1"],
+  "episodes": [
+    {"id": "founding", "title": "A city of learning", "question": "Why did Alexandria become a symbol of knowledge?", "estimatedMinutes": 6, "previous": null, "next": "decline", "topics": ["Ptolemaic institution"], "sourceBlockIds": ["demo-brief-2"], "introduces": ["institution-versus-building"], "requires": [], "timelineEventIds": ["ptolemaic-foundation"], "positions": {}},
+    {"id": "decline", "title": "Beyond the single fire", "question": "What can we responsibly say about its decline?", "estimatedMinutes": 7, "previous": "founding", "next": null, "topics": ["historical uncertainty"], "sourceBlockIds": ["demo-brief-3", "demo-brief-4"], "introduces": [], "requires": ["institution-versus-building"], "timelineEventIds": ["institutional-change"], "positions": {"destruction-model": "gradual-complex-process"}}
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "clips": [
+    {"id": "cool-grid", "path": "packages/examples/library-of-alexandria/assets/alexandria-clip.mp4", "expectedDurationSeconds": 2, "durationToleranceSeconds": 0.1, "minWidth": 640, "minHeight": 360, "maxSceneCuts": 0, "allowText": false, "review": {"reviewedBy": "project fixture review", "subjectConsistent": true, "visualContinuity": true, "historicallySuitable": true, "suitableForScene": true, "notes": "Abstract motion-system demonstration; it makes no documentary claim."}},
+    {"id": "warm-grid", "path": "packages/examples/library-of-alexandria/assets/alexandria-clip-warm.mp4", "expectedDurationSeconds": 2, "durationToleranceSeconds": 0.1, "minWidth": 640, "minHeight": 360, "maxSceneCuts": 0, "allowText": false, "review": {"reviewedBy": "project fixture review", "subjectConsistent": true, "visualContinuity": true, "historicallySuitable": true, "suitableForScene": true, "notes": "Abstract alternate candidate; it makes no documentary claim."}}
+  ]
+}
