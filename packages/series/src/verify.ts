@@ -163,7 +163,8 @@ export const verifySeries = (seriesId: string): SeriesVerification => {
   const sourceWords = [...blocks.values()].reduce((total, text) => total + words(text), 0);
   const narrationCapacityWords = Math.round(episodes.reduce((total, episode) => total + (Number.isFinite(episode.estimatedMinutes) ? episode.estimatedMinutes : 0), 0) * (Number.isFinite(wordsPerMinute) ? wordsPerMinute : 0));
   const compressionRatio = narrationCapacityWords > 0 ? sourceWords / narrationCapacityWords : Infinity;
-  if (Number.isFinite(compressionRatio) && compressionRatio > 1) warn(`Planned runtime covers ${narrationCapacityWords} narration words for ${sourceWords} source words; state what the series omits or add episodes.`);
+  if (sourceWords > 0 && narrationCapacityWords <= 0) fail("Planned episode runtimes carry no narration words; check estimatedMinutes and adaptation.wordsPerMinute.");
+  else if (Number.isFinite(compressionRatio) && compressionRatio > 1) warn(`Planned runtime covers ${narrationCapacityWords} narration words for ${sourceWords} source words; state what the series omits or add episodes.`);
 
   const plan: SeriesPlan = {
     seriesId,

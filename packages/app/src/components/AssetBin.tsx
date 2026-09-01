@@ -103,7 +103,7 @@ const DeliveryPanel = ({state, transport, refresh, notice}: {state: ProjectState
   if (!delivery) return null;
   const rendered = delivery.report?.variants ?? {};
   const pending = delivery.variants.filter((variant) => !rendered[variant.id]);
-  const readyCount = delivery.variants.length - pending.length;
+  const readyCount = delivery.variants.filter((variant) => rendered[variant.id] && rendered[variant.id].passed !== false).length;
   const run = async (variantIds: string[]) => {
     setRunning(true);
     try {
@@ -125,11 +125,12 @@ const DeliveryPanel = ({state, transport, refresh, notice}: {state: ProjectState
       <div className="grid gap-1">
         {delivery.variants.map((variant) => {
           const result = rendered[variant.id];
+          const failed = result?.passed === false;
           return (
             <div className="grid grid-cols-[10px_1fr_auto] items-center gap-2 text-[9px]" key={variant.id}>
-              <i className={`h-1.5 w-1.5 rounded-full ${result ? 'bg-[#61b88f]' : 'bg-[#4a5059]'}`} />
-              <span className="truncate" title={variant.output}>{variant.id}</span>
-              <small className="text-[#737b86]">{variant.width}×{variant.height}{variant.captions ? '' : ' · clean'}{variant.translation ? ' · translated' : ''}</small>
+              <i className={`h-1.5 w-1.5 rounded-full ${failed ? 'bg-[#d1746d]' : result ? 'bg-[#61b88f]' : 'bg-[#4a5059]'}`} />
+              <span className="truncate" title={failed ? result?.issues?.join('; ') : variant.output}>{variant.id}</span>
+              <small className={failed ? 'text-[#f1b2b2]' : 'text-[#737b86]'}>{failed ? 'does not match declaration' : `${variant.width}×${variant.height}${variant.captions ? '' : ' · clean'}${variant.translation ? ' · translated' : ''}`}</small>
             </div>
           );
         })}

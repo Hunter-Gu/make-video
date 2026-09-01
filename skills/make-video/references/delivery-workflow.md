@@ -81,8 +81,11 @@ Each variant refuses to overwrite an existing file. Pass `--force` (or
 are generated media, not a cache.
 
 Every run writes `output/<video-id>/delivery-report.json` with the measured
-width, height, and duration of each rendered variant, so the delivered files can
-be checked against what was declared.
+width, height, and duration of each rendered variant, and checks them against the
+declaration: a still or video that came out at the wrong size, or an extract
+whose length does not match its frame range, is recorded with `passed: false` and
+the reason, and the run fails. The report is written before the failure is
+raised, so the record of what is on disk survives.
 
 ## Order of work
 
@@ -91,3 +94,6 @@ be checked against what was declared.
 3. Render the cheap ones (stills, short extracts) first when validating a new
    `DELIVERABLES.json`; a full-length re-render costs the same as the master.
 4. Check `delivery-report.json` before handing the files over.
+5. After a later edit, run `make_video_get_build_status` — it lists the variants
+   that are now older than the timeline, script, assets, or translation they were
+   rendered from, so only those are delivered again.

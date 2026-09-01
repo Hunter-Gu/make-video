@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {spawn, type ChildProcess} from "node:child_process";
-import {chmod, mkdtemp, mkdir, rm, writeFile} from "node:fs/promises";
+import {chmod, copyFile, mkdtemp, mkdir, rm, writeFile} from "node:fs/promises";
 import {createServer, type AddressInfo} from "node:net";
 import {tmpdir} from "node:os";
 import {fileURLToPath} from "node:url";
@@ -22,7 +22,7 @@ const createFixture = async () => {
   await mkdir(resolve(root, "output", videoId), {recursive: true});
   const remotionBin = resolve(root, "node_modules", ".bin", "remotion");
   await mkdir(dirname(remotionBin), {recursive: true});
-  await writeFile(remotionBin, "#!/usr/bin/env node\nconst {mkdirSync, writeFileSync} = require('node:fs');\nconst {dirname} = require('node:path');\nconst output = process.argv.find((value) => value.endsWith('.png'));\nif (output) { mkdirSync(dirname(output), {recursive: true}); writeFileSync(output, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')); }\n");
+  await copyFile(resolve(dirname(fileURLToPath(import.meta.url)), "remotion-stub.cjs"), remotionBin);
   await chmod(remotionBin, 0o755);
   await writeFile(resolve(sourceDir, "video.config.json"), JSON.stringify({
     videoId,
@@ -43,6 +43,7 @@ const createFixture = async () => {
     version: 1,
     variants: [
       {id: "thumbnail", kind: "still", width: 160, height: 90, captions: false, frame: 0, output: "output/mcp-e2e/thumbnail.png"},
+      {id: "extract", kind: "video", width: 320, height: 180, frames: [0, 15], output: "output/mcp-e2e/extract.mp4"},
       {id: "stale-translation", kind: "still", translation: `src/${videoId}/translations/stale.json`, output: "output/mcp-e2e/stale.png"},
     ],
   }, null, 2));
@@ -189,6 +190,15 @@ test("MCP completes the host-agent preparation and deterministic production path
     assert.equal(delivery.status, "succeeded", delivery.error);
     const delivered = await call(client, "make_video_get_deliverables", {videoId: fixture.videoId});
     assert.equal(delivered.report.variants.thumbnail.output, "output/mcp-e2e/thumbnail.png");
+    assert.equal(delivered.report.variants.thumbnail.width, 160);
+    assert.equal(delivered.report.variants.thumbnail.passed, true);
+
+    const extractStart = await call(client, "make_video_deliver", {videoId: fixture.videoId, variantIds: ["extract"]});
+    const extract = await waitForJob(client, "make_video_get_delivery_job", extractStart.id);
+    assert.equal(extract.status, "succeeded", extract.error);
+    const withExtract = await call(client, "make_video_get_deliverables", {videoId: fixture.videoId});
+    assert.equal(withExtract.report.variants.extract.passed, true);
+    assert.ok(Math.abs(withExtract.report.variants.extract.duration - 15 / 30) <= 0.25, JSON.stringify(withExtract.report.variants.extract));
     const blocked = await client.callTool({name: "make_video_deliver", arguments: {videoId: fixture.videoId, variantIds: ["missing-variant"]}});
     assert.equal(blocked.isError, true);
     const staleStart = await call(client, "make_video_deliver", {videoId: fixture.videoId, variantIds: ["stale-translation"]});

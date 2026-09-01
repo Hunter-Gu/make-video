@@ -7,12 +7,12 @@ It is not the completed long-term roadmap.
 
 | Area | Status | Current scope |
 | --- | --- | --- |
-| Topic to video | Implemented MVP | Host-authored plan, script/storyboard validation, generated media, narration timing, generic Remotion render, captions, audio, and final-file QA |
+| Topic to video | Implemented MVP | Project scaffolding, host-authored plan, script/storyboard validation, generated media, narration timing, generic Remotion render, captions, audio, and final-file QA |
 | Visual storytelling | Implemented MVP | Reusable scene types, still-image motion guidance, timeline effects, visual/character constraints, image QA, and render QA |
 | Source to video | Implemented MVP | Markdown/text/web/PDF/DOCX/EPUB ingestion, location-preserving index, annotations, source catalog, rights, and source list |
-| Book to series | Partial | Adaptation guidance, series manifests, deterministic plan verification (ordering, coverage, repetition, dependencies, chronology, contradictions, rights, compression), generated coverage records, and MCP tools; per-episode project scaffolding is still manual |
+| Book to series | Partial | Adaptation guidance, series manifests, deterministic plan verification (ordering, coverage, repetition, dependencies, chronology, contradictions, rights, compression), generated coverage records, MCP tools, and per-episode project scaffolding from a verified plan; shared bibles are still authored by hand |
 | Hybrid scenes | Partial | Image/video generation, reference frames, provenance, clip QA, and Remotion video scenes; interrupted provider requests cannot resume |
-| Iteration and delivery | Partial | Timeline/caption editing, image revisions, preview/final exports, covers, source metadata, and declared delivery variants (aspect ratios, clean and captioned cuts, translations, thumbnails, trailers, short extracts); region-specific feedback and incremental rebuild remain future work |
+| Iteration and delivery | Partial | Timeline/caption editing, image revisions, preview/final exports, covers, source metadata, verified delivery variants (aspect ratios, clean and captioned cuts, translations, thumbnails, trailers, short extracts), and a stale-output report that names what a change invalidated; region-specific feedback and automatic partial rebuilds remain future work |
 
 Paid model calls require the caller's API credentials. Deterministic local
 fixtures keep QA runs from creating model charges.
@@ -51,6 +51,7 @@ shot type, not a replacement for the rest of the visual system.
 
 Prove the complete production loop with a single image-led explanatory video.
 
+- Create a project from a request without hand-writing its configuration.
 - Generate a structured plan from a topic, target audience, duration, language,
   and visual direction.
 - Turn the plan into chapters, scenes, narration, and image prompts.
@@ -126,6 +127,8 @@ Scale source-grounded production from one video to a coherent series.
   bibles across the series.
 - Allow one episode or scene to be regenerated without rebuilding completed
   episodes or replacing unrelated assets.
+  Implemented: each episode is scaffolded as its own project from the verified
+  series plan, so regenerating one cannot touch another.
 - Record rights and intended-use status for supplied books and source assets;
   do not assume possession of a file grants publication or adaptation rights.
 
@@ -155,12 +158,16 @@ Make collaboration with the agent practical for long videos and series.
   scene, source claim, asset, and composition code.
 - Rebuild only the affected outputs after a script, prompt, asset, or styling
   change.
+  Implemented: the build status reports which outputs and delivery variants are
+  missing or older than the inputs they were built from, and names the inputs
+  that moved ahead of them. Choosing what to re-render is still the caller's.
 - Keep the storyboard, narration, sources, asset provenance, technical QA, and
   known limitations with the project.
 - Export multiple aspect ratios, captioned and clean versions, translated
   versions, thumbnails, trailers, and short-form extracts where requested.
   Implemented: `DELIVERABLES.json` declares variants and each one is rendered
-  from the same project timeline, so a variant cannot drift from the edit.
+  from the same project timeline, so a variant cannot drift from the edit. Every
+  delivered file is measured against its declaration before the run succeeds.
 - Keep the app as a view and editor for the same project files; it must
   not become a second source of truth.
 

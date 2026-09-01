@@ -48,10 +48,15 @@ export type QaKind = "video" | "images" | "generated-videos";
 export type QaJob = {id: string; videoId: string; kind: QaKind; status: "queued" | "running" | "succeeded" | "failed"; createdAt: string; startedAt?: string; completedAt?: string; error?: string};
 export type QaSummary = {passed: boolean; reports?: Array<{kind: QaKind; passed: boolean; checkedAt?: string}>};
 export type DeliveryVariant = {id: string; kind: "video" | "still"; width: number; height: number; captions: boolean; translation: string | null; frame: number | null; frames: [number, number] | null; output: string; master: boolean};
-export type DeliveryVariantResult = {output: string; kind: "video" | "still"; width: number | null; height: number | null; duration: number | null; captions: boolean; translation: string | null; frame?: number | null; frames?: [number, number] | null; renderedAt?: string};
-export type DeliveryReport = {videoId: string; variants: Record<string, DeliveryVariantResult>; generatedAt: string};
+export type DeliveryVariantResult = {output: string; kind: "video" | "still"; width: number | null; height: number | null; duration: number | null; captions: boolean; translation: string | null; frame?: number | null; frames?: [number, number] | null; passed?: boolean; issues?: string[]; renderedAt?: string};
+export type DeliveryReport = {videoId: string; variants: Record<string, DeliveryVariantResult>; passed?: boolean; generatedAt: string};
 export type DeliveryJob = {id: string; videoId: string; variantIds: string[]; status: "queued" | "running" | "succeeded" | "failed"; createdAt: string; startedAt?: string; completedAt?: string; error?: string};
 export type ProjectDelivery = {variants: DeliveryVariant[]; report: DeliveryReport | null; error: string | null};
+export type CreateProjectInput = {videoId?: string; title?: string; width?: number; height?: number; fps?: number; durationSeconds?: number; seriesId?: string; episodeId?: string; force?: boolean};
+export type CreatedProject = {videoId: string; path: string; title: string; composition: {id: string; fps: number; width: number; height: number; durationInFrames: number}; created: string[]; skipped: string[]; series?: {seriesId: string; episodeId: string} | null};
+export type BuildInput = {path: string; modifiedAt: string};
+export type BuildOutput = {id: string; kind: "render" | "delivery"; label: string; path: string; exists: boolean; modifiedAt: string | null; stale: boolean; staleInputs: string[]};
+export type BuildStatus = {videoId: string; checkedAt: string; upToDate: boolean; inputs: BuildInput[]; outputs: BuildOutput[]; stale: string[]; missing: string[]};
 export type SeriesEpisode = {id: string; title: string; question: string; estimatedMinutes: number; previous: string | null; next: string | null; topics: string[]; sourceBlockIds: string[]; introduces: string[]; requires: string[]; timelineEventIds: string[]; positions: Record<string, string>};
 export type SeriesPlan = {seriesId: string; title: string; sourceIndex: string; sharedSourceBlockIds: string[]; omittedSourceBlockIds: string[]; episodes: SeriesEpisode[]};
 export type SeriesCoverage = {episodes: number; totalBlocks: number; assignedBlocks: number; omittedBlocks: number; unassignedBlockIds: string[]; adaptationMode: string; sourceWords: number; narrationCapacityWords: number; compressionRatio: number; rights: {status: string; intendedUse: string}};
@@ -63,7 +68,7 @@ export type SourceIndex = {videoId: string; sources: ProjectSource[]};
 export type SourceCatalog = {videoId: string; entities: Array<Record<string, unknown>>; quotations: Array<Record<string, unknown>>; claims: Array<Record<string, unknown>>; illustrations: Array<Record<string, unknown>>};
 export type SourceJob = {id: string; videoId: string; status: "queued" | "running" | "succeeded" | "failed"; createdAt: string; startedAt?: string; completedAt?: string; error?: string};
 export type TimingJob = {id: string; videoId: string; status: "queued" | "running" | "succeeded" | "failed"; createdAt: string; startedAt?: string; completedAt?: string; error?: string};
-export type GenerationReadiness = {videoId: string; passed: boolean; errors: string[]; warnings: string[]; plan: {present: boolean; valid: boolean}; script: {present: boolean; valid: boolean; segments: number}; generation: {imageModel: string | null; voiceModel: string | null; imageAssets: number; assignedScenes: string[]}; timing: {planPresent: boolean; voiceManifestPresent: boolean}};
+export type GenerationReadiness = {videoId: string; passed: boolean; errors: string[]; warnings: string[]; plan: {present: boolean; valid: boolean}; script: {present: boolean; valid: boolean; segments: number}; generation: {imageModel: string | null; videoModel: string | null; voiceModel: string | null; imageAssets: number; videoAssets: number; assignedScenes: string[]}; timing: {planPresent: boolean; voiceManifestPresent: boolean}};
 export type StoryboardArtifact = {videoId: string; path: string; content: string};
 export type GenerationPreparation = {videoId: string; path: string; imageModel: string | null; assetCount: number; preparedSceneIds: string[]};
 export type SourceUpload = {videoId: string; source: {id: string; title: string; type: string; input: string; rights: string}};
@@ -74,6 +79,7 @@ export type ProjectState = {videoId: string; composition: {fps: number; duration
 
 export interface ProjectTransport {
   listProjects(): Promise<string[]>;
+  createProject(input: CreateProjectInput): Promise<CreatedProject>;
   listModels(): Promise<ModelCatalog>;
   getProject(videoId: string): Promise<ProjectState>;
   updateCaption(videoId: string, caption: Caption): Promise<void>;
@@ -102,6 +108,7 @@ export interface ProjectTransport {
   getDeliverables(videoId: string): Promise<{videoId: string; variants: DeliveryVariant[]; report: DeliveryReport | null}>;
   deliver(videoId: string, variantIds?: string[], force?: boolean): Promise<DeliveryJob>;
   getDeliveryJob(jobId: string): Promise<DeliveryJob>;
+  getBuildStatus(videoId: string): Promise<BuildStatus>;
   listSeries(): Promise<string[]>;
   getSeries(seriesId: string): Promise<{seriesId: string; plan: SeriesPlan | null; bible: Record<string, unknown> | null}>;
   verifySeries(seriesId: string): Promise<SeriesVerification>;

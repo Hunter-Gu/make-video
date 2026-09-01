@@ -30,10 +30,13 @@ project store or a second planning agent in code.
    [references/storyboard-workflow.md](references/storyboard-workflow.md).
    Write the narration and visual storyboard, check their pacing and factual
    coverage before generating visual assets.
-3. **Use an existing project.** Call `make_video_list_projects` and select the
-   intended video ID. Project creation is outside the current MCP surface; do
-   not create directories or scaffold a project unless the user explicitly
-   asks for repository work.
+3. **Select or create the project.** Call `make_video_list_projects` and select
+   the intended video ID. When the request needs a new one, call
+   `make_video_create_project` — it writes the composition, production, and
+   timeline files and nothing creative. For an episode of a planned series pass
+   `seriesId` and `episodeId`: the episode takes its title, runtime, and source
+   documents from the verified series plan. Do not hand-create project
+   directories.
 4. **Inspect supplied assets** with `ffprobe`/`ffmpeg`/`sox` before generation.
    Know the real duration, codecs, and resolution of what was provided.
 5. **Build the silent visual edit first.** Render representative frames or a
@@ -54,7 +57,12 @@ project store or a second planning agent in code.
    trailer, a short extract — read
    [references/delivery-workflow.md](references/delivery-workflow.md), declare
    them in `DELIVERABLES.json`, and render them with `make_video_deliver`. Never
-   hand-cut a variant out of the master.
+   hand-cut a variant out of the master. Delivery measures every file it writes
+   and fails the variant when it does not match what was declared.
+10. **Rebuild only what changed.** After editing the script, timeline, assets, or
+   a translation, call `make_video_get_build_status` before re-rendering. It
+   names the outputs that are missing or older than the files they were built
+   from, so a caption fix does not cost a full re-render of every variant.
 
 When the storyboard uses Gemini-generated stills, read
 [references/image-generation.md](references/image-generation.md) before
@@ -110,6 +118,7 @@ directory, run from the project root, and target exactly one video ID.
 `--env-file-if-exists=.env` loads local provider credentials when present:
 
 ```bash
+node --env-file-if-exists=.env <skill-dir>/scripts/assets.mjs create <video-id>
 node --env-file-if-exists=.env <skill-dir>/scripts/qa.mjs video <video-id>
 node --env-file-if-exists=.env <skill-dir>/scripts/assets.mjs link <video-id>
 node --env-file-if-exists=.env <skill-dir>/scripts/ai.mjs images <video-id>

@@ -76,6 +76,22 @@ generation.
 The implemented plan for turning topics, documents, and books into image-led
 knowledge videos and documentary series is in [ROADMAP.md](ROADMAP.md).
 
+## Start a project
+
+A video project is a directory under `src/`. Create one before planning:
+
+```bash
+pnpm project:create my-video --title="My video" --duration=180
+```
+
+Over MCP the same operation is `make_video_create_project`. Pass `seriesId` and
+`episodeId` instead to scaffold an episode of a verified series; the episode
+inherits the title, runtime, and source documents from the series plan. Model
+selection stays unset, because choosing one is a cost decision — configure it
+with `make_video_update_models` or the app's model settings.
+
+## Acceptance example
+
 The repository ships a reproducible Library of Alexandria acceptance case as a
 tracked example. `src/` and `projects/` hold user-owned state and stay out of
 version control, so install the example into them first:
@@ -98,6 +114,16 @@ pnpm deliver library-of-alexandria --variant=thumbnail
 
 Model-backed image, video, voice, and music generation stays separate from
 this local acceptance path and requires the caller's API credentials.
+
+## Rebuilding only what changed
+
+`make_video_get_build_status` (REST: `GET /api/build-status`) reports which
+rendered outputs and delivery variants are missing, and which are older than the
+project files they were built from — naming the exact inputs that moved ahead of
+them. Use it after a script, timeline, asset, or translation edit so a small
+change does not cost a full re-render.
+
+## Local app
 
 The local production GUI is documented in
 [docs/app-architecture.md](docs/app-architecture.md). Its screens
@@ -136,9 +162,9 @@ codex mcp add make-video -- node "$PWD/skills/make-video/scripts/mcp.mjs"
 claude mcp add make-video --scope project -- node "$PWD/skills/make-video/scripts/mcp.mjs"
 ```
 
-The MCP server provides project inspection, source and plan operations, model
-updates, generation jobs, rendering, deterministic QA, delivery variants, and
-series verification. Paid generation uses credentials from the server
+The MCP server provides project creation, project inspection, source and plan
+operations, model updates, generation jobs, rendering, deterministic QA, build
+status, delivery variants, and series verification. Paid generation uses credentials from the server
 environment; credentials are never sent as MCP tool input.
 
 ## Delivery variants
@@ -153,13 +179,29 @@ from the edit. See
 ## Series
 
 `projects/<series-id>/series-plan.json` and `SERIES_BIBLE.json` describe a
-multi-episode adaptation. `pnpm series:verify <series-id>` rejects broken
+multi-episode adaptation. Each episode becomes its own video project through
+`make_video_create_project`, which refuses to scaffold an episode of a series
+that does not verify. `pnpm series:verify <series-id>` rejects broken
 episode ordering, repeated or unaccounted source material, ideas required before
 they are introduced, chronology regressions, contradicted canonical positions,
 missing shared bibles, and unknown pronunciation references, and reports the
 source-to-narration compression the requested runtimes imply.
 `pnpm series:coverage <series-id>` writes the coverage record. See
 [skills/make-video/references/series-workflow.md](skills/make-video/references/series-workflow.md).
+
+## Development
+
+```bash
+pnpm typecheck
+pnpm test
+```
+
+`pnpm test` rebuilds the bundled skill entrypoints under
+`skills/make-video/scripts/` and runs the deterministic suites for narration
+timing, delivery variants, series verification, source ingestion, and the MCP
+service — plus an end-to-end MCP run over stdio and Streamable HTTP. It needs
+`ffmpeg` and `ffprobe` on `PATH`. CI additionally fails when the committed skill
+entrypoints do not match their source.
 
 ## License
 

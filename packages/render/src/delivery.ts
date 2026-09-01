@@ -115,6 +115,31 @@ export const applyTranslation = (state: ProjectState, file: string): ProjectStat
   return {...state, scenes, captions: captions.map((caption) => ({...caption, text: captionText.get(caption.id) ?? caption.text}))};
 };
 
+export type DeliveryMeasurement = {width: number | null; height: number | null; duration: number | null};
+
+/**
+ * Compare a rendered variant against what DELIVERABLES.json declared. A variant is
+ * only delivered if the file on disk carries the dimensions and length that were
+ * asked for; otherwise the report says which part of the declaration it missed.
+ */
+export const verifyDeliveredVariant = (
+  variant: DeliveryVariant,
+  measured: DeliveryMeasurement,
+  timing: {fps: number; durationInFrames: number; durationToleranceSeconds?: number},
+): string[] => {
+  const issues: string[] = [];
+  if (measured.width !== variant.width) issues.push(`width is ${measured.width ?? "unreadable"}, declared ${variant.width}`);
+  if (measured.height !== variant.height) issues.push(`height is ${measured.height ?? "unreadable"}, declared ${variant.height}`);
+  if (variant.kind === "still") return issues;
+  const frames = variant.frames ? variant.frames[1] - variant.frames[0] : timing.durationInFrames;
+  const expected = frames / timing.fps;
+  const tolerance = timing.durationToleranceSeconds ?? 0.25;
+  if (!Number.isFinite(measured.duration as number) || Math.abs((measured.duration as number) - expected) > tolerance) {
+    issues.push(`duration is ${measured.duration ?? "unreadable"}s, expected ${expected.toFixed(3)}s ± ${tolerance}s`);
+  }
+  return issues;
+};
+
 const probe = (file: string) => {
   const result = spawnSync("ffprobe", ["-v", "error", "-show_entries", "format=duration:stream=width,height", "-of", "json", file], {encoding: "utf8"});
   if (result.error) throw result.error;
@@ -178,6 +203,7 @@ export const runDelivery = async (videoId: string, options: {variantIds?: string
   const report: DeliveryReport = getDeliveryReport(videoId) ?? {videoId, variants: {}, generatedAt: new Date().toISOString()};
   report.videoId = videoId;
   if (!report.variants || typeof report.variants !== "object") report.variants = {};
+  const failures: string[] = [];
 
   for (const variant of variants) {
     const output = resolve(projectRoot, variant.output);
@@ -191,6 +217,11 @@ export const runDelivery = async (videoId: string, options: {variantIds?: string
     else await runRemotion(["render", "src/index.ts", compositionId, renderTarget, "--concurrency=1", ...(variant.frames ? [`--frames=${variant.frames[0]}-${variant.frames[1] - 1}`] : []), `--props=${props}`], renderEnv);
     if (unmastered) master(context, unmastered, output, force);
     const measured = probe(output);
+    const issues = verifyDeliveredVariant(variant, measured, {
+      fps: Number(context.composition.fps),
+      durationInFrames: Number(context.composition.durationInFrames),
+      durationToleranceSeconds: Number(context.production.qa?.durationToleranceSeconds ?? 0.25),
+    });
     report.variants[variant.id] = {
       output: variant.output,
       kind: variant.kind,
@@ -201,12 +232,19 @@ export const runDelivery = async (videoId: string, options: {variantIds?: string
       translation: variant.translation,
       frame: variant.frame,
       frames: variant.frames,
+      passed: issues.length === 0,
+      issues,
       renderedAt: new Date().toISOString(),
     };
-    console.log(`Delivered ${variant.id}: ${variant.output}`);
+    if (issues.length > 0) failures.push(`${variant.id}: ${issues.join("; ")}`);
+    console.log(`${issues.length === 0 ? "Delivered" : "Delivered with issues"} ${variant.id}: ${variant.output}`);
   }
   report.generatedAt = new Date().toISOString();
+  report.passed = Object.values(report.variants).every((result) => result.passed !== false);
   const file = writeReport(videoId, report);
   console.log(`Delivery report: ${file}`);
+  // The report is written first: a variant that missed its declaration is still a
+  // recorded fact about the files on disk, not something to lose with the error.
+  if (failures.length > 0) throw new Error(`Delivered files do not match DELIVERABLES.json:\n${failures.map((failure) => `- ${failure}`).join("\n")}`);
   return report;
 };

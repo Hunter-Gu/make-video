@@ -49,6 +49,19 @@ Save the overview as `projects/<project-id>/PRODUCTION_PLAN.md`. Give each episo
 own directory and the same plan, script, storyboard, configuration, render, and
 QA lifecycle as a standalone video.
 
+Scaffold each episode with `make_video_create_project`, passing `seriesId` and
+`episodeId` rather than writing a configuration by hand:
+
+```bash
+# over MCP: make_video_create_project {"seriesId": "…", "episodeId": "…"}
+```
+
+The series must verify first — an episode of a broken plan is not created. The
+new project is `src/<series-id>-<episode-id>/` unless a `videoId` is given, takes
+its title and runtime from the episode, reuses the source documents behind the
+series `sourceIndex`, and records the link in `SERIES_EPISODE.json`. From there
+the episode follows the standalone production workflow.
+
 ## Maintain series bibles
 
 Keep shared, inspectable files under `projects/<project-id>/` when they are relevant:

@@ -50,6 +50,20 @@ must read into `public/`; never edit a canonical asset through its runtime copy.
 
 ## Production stages
 
+### 0. Create the project
+
+`make_video_create_project` writes `video.config.json`, an empty
+`SCENE_INDEX.json`, and an empty `REMOTION_TIMELINE.json` under
+`src/<video-id>/`. It sets the composition size, frame rate, and a placeholder
+duration — narration timing replaces that duration later — and leaves the image,
+video, and voice models unset, because selecting one is a cost decision. It never
+replaces an existing project unless replacement was explicitly requested.
+
+For an episode of a planned series, pass `seriesId` and `episodeId` instead of a
+video id. The series must verify first; the episode then takes its id, title,
+runtime, and source documents from the plan and records the link in
+`SERIES_EPISODE.json`.
+
 ### 1. Write the production plan
 
 Follow [planning-workflow.md](planning-workflow.md). The host agent saves a
@@ -112,7 +126,19 @@ loudness, transcodes when configured, and writes the delivery file. Confirm the
 duration, dimensions, frame rate, codecs, and intended audio stream with
 `ffprobe` after rendering.
 
-### 8. Perform final QA
+### 8. Rebuild only what a change invalidated
+
+`make_video_get_build_status` compares each rendered output and delivery variant
+against the project files it was built from — configuration, scene index,
+Remotion timeline, script, referenced assets, generated audio, and a variant's
+translation — and reports which outputs are missing, which are stale, and which
+inputs moved ahead of them. Re-render those, not everything.
+
+It compares modification times of project files only. Changing the composition
+code under `packages/remotion` or `src/` is not tracked; re-render deliberately
+after a code change.
+
+### 9. Perform final QA
 
 Check the actual rendered file, not just source code. Inspect the first frame,
 text readability, safe areas, scene boundaries, generated-text integrity,
@@ -130,6 +156,7 @@ Replace `<skill-dir>` with this skill's absolute directory and run from the
 project root. Every command requires exactly one video id.
 
 ```bash
+node --env-file-if-exists=.env <skill-dir>/scripts/assets.mjs create <video-id> [--title=…] [--width=…] [--height=…] [--fps=…] [--duration=…]
 node --env-file-if-exists=.env <skill-dir>/scripts/qa.mjs video <video-id>
 node --env-file-if-exists=.env <skill-dir>/scripts/assets.mjs link <video-id>
 node --env-file-if-exists=.env <skill-dir>/scripts/ai.mjs images <video-id>

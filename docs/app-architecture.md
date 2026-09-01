@@ -38,8 +38,8 @@ The pnpm workspace keeps runtime boundaries explicit:
 - `packages/contracts`: shared project and transport types.
 - `packages/ai`: AI SDK provider adapters and the unified media-generation
   command.
-- `packages/assets`: canonical project asset linking, preparation, and example
-  project installation.
+- `packages/assets`: project scaffolding, canonical asset linking, preparation,
+  and example project installation.
 - `packages/audio`: audio preparation, narration timing, and deterministic UI
   sound effects; its build emits one `skills/make-video/scripts/audio.mjs`.
 - `packages/qa`: deterministic media and timeline QA; its build emits one
@@ -71,6 +71,7 @@ boots React and the Astryx theme.
 The stdio and `/mcp` Streamable HTTP entries expose the same tools:
 
 - `make_video_list_projects`
+- `make_video_create_project`
 - `make_video_get_project`
 - `make_video_update_caption`
 - `make_video_update_models`
@@ -95,6 +96,7 @@ The stdio and `/mcp` Streamable HTTP entries expose the same tools:
 - `make_video_get_timing_job`
 - `make_video_get_source_job`
 - `make_video_check_generation_readiness`
+- `make_video_get_build_status`
 - `make_video_get_deliverables`
 - `make_video_deliver` (starts a delivery render job)
 - `make_video_get_delivery_job`
@@ -124,7 +126,10 @@ Inspectable project files remain authoritative:
 - `video.config.json.imageGeneration.assets` stores the deterministic image
   generation configuration materialized from that plan.
 - `DELIVERABLES.json` stores the declared delivery variants; every variant is a
-  render of the same timeline, never a re-cut of the master.
+  render of the same timeline, never a re-cut of the master. Delivery measures
+  each file it writes and records whether it matches its declaration.
+- `SERIES_EPISODE.json` records which series episode a project was scaffolded
+  from, so an episode stays traceable to its plan.
 - `projects/<series-id>/series-plan.json` and `SERIES_BIBLE.json` store series
   structure and shared canon; `COVERAGE.md` is generated from them.
 - Rendered media, QA reports, and `delivery-report.json` remain under
@@ -145,6 +150,10 @@ production timeline or asset store.
 7. Outputs action to prepare image generation configuration from the saved plan.
 8. Delivery variant list with per-variant render state and a pending-variant
    render action.
+
+Build status is a separate read: it compares output modification times against
+the project files an output was built from, so the caller can rebuild only what a
+change invalidated without probing or re-rendering anything.
 
 Long-running generation and rendering operations use jobs. Starting an action
 returns a job id; progress and completion are read separately so HTTP or MCP

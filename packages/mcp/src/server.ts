@@ -8,7 +8,7 @@ import {z} from "zod";
 
 import {projectRoot} from "./context";
 import {getModelCatalog} from "./models";
-import {buildSeriesCoverage, buildSourceCatalog, buildSourceList, buildStoryboard, checkGenerationReadiness, createAssetRevision, getDeliverables, getDeliveryJob, getGenerationJob, getPlan, getProjectState, getQaJob, getRenderJob, getSeries, getSourceCatalog, getSourceJob, getSources, getTimingJob, listProjects, listSeries, prepareGeneration, resolveMediaPath, savePlan, setCover, startDelivery, startGeneration, startQa, startRender, startSourceIngest, startTiming, updateCaption, updateModels, updateTimelineRange, uploadSource, validateScript, verifySeries} from "./service";
+import {buildSeriesCoverage, buildSourceCatalog, buildSourceList, buildStoryboard, checkGenerationReadiness, createAssetRevision, createProject, getBuildStatus, getDeliverables, getDeliveryJob, getGenerationJob, getPlan, getProjectState, getQaJob, getRenderJob, getSeries, getSourceCatalog, getSourceJob, getSources, getTimingJob, listProjects, listSeries, prepareGeneration, resolveMediaPath, savePlan, setCover, startDelivery, startGeneration, startQa, startRender, startSourceIngest, startTiming, updateCaption, updateModels, updateTimelineRange, uploadSource, validateScript, verifySeries} from "./service";
 
 type CallToolResult = {
   content: Array<{type: "text"; text: string}>;
@@ -37,6 +37,22 @@ export const createMakeVideoMcpServer = () => {
     inputSchema: z.object({}),
     annotations: {readOnlyHint: true},
   }, () => result({projects: listProjects()}));
+
+  server.registerTool("make_video_create_project", {
+    description: "Create a new video project directory with its composition, production, and timeline files. Pass seriesId and episodeId to scaffold an episode of a verified series, which takes its title, runtime, and source documents from the series plan. This writes project files only and does not call a model.",
+    inputSchema: z.object({
+      videoId: z.string().min(1).optional(),
+      title: z.string().min(1).optional(),
+      width: z.number().int().positive().optional(),
+      height: z.number().int().positive().optional(),
+      fps: z.number().positive().optional(),
+      durationSeconds: z.number().positive().optional(),
+      seriesId: z.string().min(1).optional(),
+      episodeId: z.string().min(1).optional(),
+      force: z.boolean().optional(),
+    }),
+    annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: false},
+  }, (input) => run(() => createProject(input)));
 
   server.registerTool("make_video_get_project", {
     description: "Read scenes, captions, assets, render stages, models, revisions, and QA for one video project.",
@@ -200,6 +216,12 @@ export const createMakeVideoMcpServer = () => {
     annotations: {readOnlyHint: true},
   }, ({jobId}) => run(() => getDeliveryJob(jobId)));
 
+  server.registerTool("make_video_get_build_status", {
+    description: "Report which rendered outputs and delivery variants are missing or older than the project files they were built from, so only the affected outputs are rebuilt.",
+    inputSchema: z.object({videoId: z.string().min(1)}),
+    annotations: {readOnlyHint: true},
+  }, ({videoId}) => run(() => getBuildStatus(videoId)));
+
   server.registerTool("make_video_list_series", {
     description: "List multi-episode series projects that declare an ordered episode plan.",
     inputSchema: z.object({}),
@@ -313,6 +335,7 @@ export const startHttpServer = () => {
         return handleMcp(request, response);
       }
       if (url.pathname === "/api/projects" && request.method === "GET") return sendJson(response, 200, listProjects());
+      if (url.pathname === "/api/projects" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 201, createProject(input)); }
       if (url.pathname === "/api/models" && request.method === "GET") return sendJson(response, 200, await getModelCatalog());
       if (url.pathname === "/api/project" && request.method === "GET") return sendJson(response, 200, getProjectState(requiredParam(url.searchParams.get("videoId"))));
       if (url.pathname.startsWith("/api/captions/") && request.method === "PATCH") { const input = await readBody(request); return sendJson(response, 200, updateCaption(input.videoId, decodeURIComponent(url.pathname.slice(14)), input)); }
@@ -343,6 +366,7 @@ export const startHttpServer = () => {
       if (url.pathname === "/api/deliverables" && request.method === "GET") return sendJson(response, 200, getDeliverables(requiredParam(url.searchParams.get("videoId"))));
       if (url.pathname === "/api/delivery" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 202, startDelivery(input.videoId, Array.isArray(input.variantIds) ? input.variantIds : [], Boolean(input.force))); }
       if (url.pathname.startsWith("/api/delivery/") && request.method === "GET") return sendJson(response, 200, getDeliveryJob(decodeURIComponent(url.pathname.slice("/api/delivery/".length))));
+      if (url.pathname === "/api/build-status" && request.method === "GET") return sendJson(response, 200, getBuildStatus(requiredParam(url.searchParams.get("videoId"))));
       if (url.pathname === "/api/series" && request.method === "GET") return sendJson(response, 200, listSeries());
       if (url.pathname === "/api/series/detail" && request.method === "GET") return sendJson(response, 200, getSeries(requiredParam(url.searchParams.get("seriesId"))));
       if (url.pathname === "/api/series/verification" && request.method === "GET") return sendJson(response, 200, verifySeries(requiredParam(url.searchParams.get("seriesId"))));

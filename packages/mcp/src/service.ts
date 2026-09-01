@@ -1,8 +1,9 @@
 import {randomUUID} from "node:crypto";
-import {existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync} from "node:fs";
+import {existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, writeFileSync} from "node:fs";
 import {basename, dirname, extname, relative, resolve, sep} from "node:path";
 
-import {linkAssets} from "@make-video/assets";
+import {createProject as createProjectFiles, linkAssets} from "@make-video/assets";
+import type {CreatedProject} from "@make-video/assets";
 import {runImages, runMusic, runVideos, runVoiceover} from "@make-video/ai";
 import {runTiming as runTimingPackage} from "@make-video/audio";
 import {buildProjectState, getDeliveryReport, loadDeliverables, resolveProjectAssetFile, runDelivery, runRender} from "@make-video/render";
@@ -11,7 +12,7 @@ import {buildSeriesCoverage as buildSeriesCoverageFile, listSeriesProjects, load
 import {runSourceCatalog, runSourceIngest, runSourceList} from "@make-video/sources";
 import type {GenerationJob} from "@make-video/contracts";
 import type {RenderJob} from "@make-video/contracts";
-import type {DeliveryJob, GenerationPreparation, GenerationReadiness, ProjectDelivery, QaJob, SeriesCoverageArtifact, SeriesVerification, SourceCatalog, SourceIndex, SourceJob, SourceUpload, TimingJob, VideoPlan} from "@make-video/contracts";
+import type {BuildOutput, BuildStatus, DeliveryJob, GenerationPreparation, GenerationReadiness, ProjectDelivery, QaJob, SeriesCoverageArtifact, SeriesVerification, SourceCatalog, SourceIndex, SourceJob, SourceUpload, TimingJob, VideoPlan} from "@make-video/contracts";
 import {loadVideoContext, projectRoot} from "./context";
 
 const preparedAssetProjects = new Set<string>();
@@ -48,10 +49,53 @@ const sourceId = (name: string, used: Set<string>) => {
   return id;
 };
 
-export const listProjects = () => readdirSync(resolve(projectRoot, "src"), {withFileTypes: true})
-  .filter((entry) => entry.isDirectory() && existsSync(resolve(projectRoot, "src", entry.name, "video.config.json")))
-  .map((entry) => entry.name)
-  .sort();
+export const listProjects = () => existsSync(resolve(projectRoot, "src"))
+  ? readdirSync(resolve(projectRoot, "src"), {withFileTypes: true})
+    .filter((entry) => entry.isDirectory() && existsSync(resolve(projectRoot, "src", entry.name, "video.config.json")))
+    .map((entry) => entry.name)
+    .sort()
+  : [];
+
+/**
+ * Create the project directory a video needs before anything else can run. When it
+ * is an episode of a verified series, the runtime, title, and source documents come
+ * from the series plan so the episode reads the same material as its siblings.
+ */
+export const createProject = (input: any): CreatedProject & {series: {seriesId: string; episodeId: string} | null} => {
+  const seriesId = typeof input?.seriesId === "string" && input.seriesId ? input.seriesId : null;
+  const episodeId = typeof input?.episodeId === "string" && input.episodeId ? input.episodeId : null;
+  if (Boolean(seriesId) !== Boolean(episodeId)) throw new Error("A series episode needs both seriesId and episodeId.");
+  if (!seriesId || !episodeId) {
+    if (typeof input?.videoId !== "string") throw new Error("videoId is required when the project is not a series episode.");
+    return {...createProjectFiles(input), series: null};
+  }
+
+  const verification = verifySeriesPlan(seriesId);
+  if (!verification.passed || !verification.plan) throw new Error(`Series ${seriesId} does not verify, so its episodes cannot be scaffolded:\n${verification.errors.map((error) => `- ${error}`).join("\n")}`);
+  const episode = verification.plan.episodes.find((item) => item.id === episodeId);
+  if (!episode) throw new Error(`Series ${seriesId} has no episode "${episodeId}".`);
+
+  return {
+    ...createProjectFiles({
+      ...input,
+      videoId: typeof input.videoId === "string" && input.videoId ? input.videoId : `${seriesId}-${episodeId}`,
+      title: input.title ?? episode.title,
+      durationSeconds: input.durationSeconds ?? episode.estimatedMinutes * 60,
+      sources: input.sources ?? seriesSourceDeclarations(verification.plan.sourceIndex),
+      series: {seriesId, episodeId, question: episode.question, topics: episode.topics, sourceBlockIds: episode.sourceBlockIds},
+    }),
+    series: {seriesId, episodeId},
+  };
+};
+
+/** Reuse the source documents of the project that owns the series source index. */
+const seriesSourceDeclarations = (sourceIndex: string) => {
+  const indexFile = resolve(projectRoot, sourceIndex);
+  const configFile = resolve(dirname(dirname(indexFile)), "video.config.json");
+  if (!insideRoot(configFile) || !existsSync(configFile)) return [];
+  const sources = readJson(configFile, {}).sources;
+  return Array.isArray(sources) ? sources : [];
+};
 
 export const getProjectState = (videoId: string) => {
   prepareProjectAssets(videoId);
@@ -135,6 +179,14 @@ export const savePlan = (videoId: string, value: unknown): VideoPlan => {
   return plan;
 };
 
+const normalizeGoogleModel = (value: unknown) => typeof value === "string" && value.startsWith("google/") ? value.slice("google/".length) : value;
+const aspectRatio = (width: number, height: number) => {
+  const left = Math.max(1, Math.round(width));
+  const right = Math.max(1, Math.round(height));
+  let a = left; let b = right;
+  while (b !== 0) [a, b] = [b, a % b];
+  return `${left / a}:${right / a}`;
+};
 const generatedImageSceneTypes = new Set(["image", "portrait", "depth"]);
 const kebabId = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "scene";
 
@@ -149,6 +201,8 @@ export const prepareGeneration = (videoId: string): GenerationPreparation => {
     : {};
   const assets = Array.isArray(current.assets) ? current.assets.map((asset: any) => ({...asset})) : [];
   const usedIds = new Set(assets.map((asset: any) => typeof asset?.id === "string" ? asset.id : ""));
+  // Generated stills are composed full-frame, so they are requested at the composition's ratio.
+  const sceneAspectRatio = aspectRatio(context.composition.width, context.composition.height);
   const preparedSceneIds: string[] = [];
   for (const scene of plan.scenes) {
     if (!generatedImageSceneTypes.has(scene.type)) continue;
@@ -162,7 +216,7 @@ export const prepareGeneration = (videoId: string): GenerationPreparation => {
     let suffix = 2;
     while (usedIds.has(id)) id = `${kebabId(scene.id)}-${suffix++}`;
     usedIds.add(id);
-    assets.push({id, sceneIds: [scene.id], prompt: scene.visualDirection?.trim() || scene.objective.trim(), output: `images/generated/${id}.png`});
+    assets.push({id, sceneIds: [scene.id], prompt: scene.visualDirection?.trim() || scene.objective.trim(), aspectRatio: sceneAspectRatio, output: `images/generated/${id}.png`});
     preparedSceneIds.push(scene.id);
   }
   const nextConfig: Record<string, any> = {...context.config, imageGeneration: {...current, assets}};
@@ -245,6 +299,12 @@ export const checkGenerationReadiness = (videoId: string): GenerationReadiness =
     for (const sceneId of Array.isArray(asset?.sceneIds) ? asset.sceneIds : []) if (typeof sceneId === "string") assignedScenes.add(sceneId);
   }
   if (imageAssets.length > 0 && typeof imageGeneration?.model !== "string") errors.push("imageGeneration.model is missing.");
+  const videoGeneration = config.videoGeneration as Record<string, any> | undefined;
+  const videoAssets = Array.isArray(videoGeneration?.assets) ? videoGeneration.assets : [];
+  for (const asset of videoAssets) {
+    for (const sceneId of Array.isArray(asset?.sceneIds) ? asset.sceneIds : asset?.sceneId ? [asset.sceneId] : []) if (typeof sceneId === "string") assignedScenes.add(sceneId);
+  }
+  if (videoAssets.length > 0 && typeof videoGeneration?.model !== "string") errors.push("videoGeneration.model is missing.");
   const voiceModel = typeof config.voice?.model === "string" && config.voice.model.length > 0 ? config.voice.model : null;
   if (!voiceModel) errors.push("voice.model is missing.");
   const planScenes = Array.isArray(savedPlan?.scenes) ? savedPlan.scenes : [];
@@ -263,7 +323,7 @@ export const checkGenerationReadiness = (videoId: string): GenerationReadiness =
     }
     if (!voiceManifestPresent) warnings.push("TIMING_PLAN.json exists but its voice manifest is missing.");
   } else warnings.push("TIMING_PLAN.json is missing; build timing after voiceover generation.");
-  return {videoId, passed: errors.length === 0, errors: [...new Set(errors)], warnings: [...new Set(warnings)], plan: {present: Boolean(savedPlan), valid: planValid}, script: {present: existsSync(scriptFile), valid: script.passed, segments: script.segments.length}, generation: {imageModel: typeof imageGeneration?.model === "string" ? imageGeneration.model : null, voiceModel, imageAssets: imageAssets.length, assignedScenes: [...assignedScenes]}, timing: {planPresent: timingPlanPresent, voiceManifestPresent}};
+  return {videoId, passed: errors.length === 0, errors: [...new Set(errors)], warnings: [...new Set(warnings)], plan: {present: Boolean(savedPlan), valid: planValid}, script: {present: existsSync(scriptFile), valid: script.passed, segments: script.segments.length}, generation: {imageModel: typeof imageGeneration?.model === "string" ? imageGeneration.model : null, videoModel: typeof videoGeneration?.model === "string" ? videoGeneration.model : null, voiceModel, imageAssets: imageAssets.length, videoAssets: videoAssets.length, assignedScenes: [...assignedScenes]}, timing: {planPresent: timingPlanPresent, voiceManifestPresent}};
 };
 
 export const startTiming = (videoId: string, force = false): TimingJob => {
@@ -432,45 +492,16 @@ export const updateModels = (videoId: string, input: any) => {
   return {image: config.imageGeneration?.model ?? null, video: config.videoGeneration?.model ?? null, voice: config.voice?.model ?? null};
 };
 
-const syncGeneratedImages = (videoId: string) => {
+/**
+ * Link the media a generator actually wrote back onto the scenes that requested it.
+ * The manifest is the generator's record; SCENE_INDEX.json is what the renderer reads.
+ */
+const syncGeneratedAssets = (videoId: string, kind: "images" | "video") => {
   const context = loadVideoContext(videoId);
-  const manifestFile = resolve(context.publicDir, "images/generated/manifest.json");
+  const manifestFile = resolve(context.publicDir, kind === "images" ? "images/generated/manifest.json" : "video/generated/manifest.json");
   if (!existsSync(manifestFile)) return {updatedSceneIds: [], missingSceneIds: []};
   const manifest = readJson(manifestFile, {assets: []});
-  const configured = context.config.imageGeneration as Record<string, any> | undefined;
-  const configuredAssets = Array.isArray(configured?.assets) ? configured.assets : [];
-  const indexFile = resolve(context.sourceDir, "SCENE_INDEX.json");
-  const index = readJson(indexFile, {assets: {}, scenes: []});
-  if (!index.assets || typeof index.assets !== "object" || Array.isArray(index.assets)) index.assets = {};
-  const updatedSceneIds: string[] = [];
-  const missingSceneIds: string[] = [];
-  let changed = false;
-  for (const asset of configuredAssets) {
-    const generated = Array.isArray(manifest.assets) ? manifest.assets.find((item: any) => item?.id === asset?.id) : null;
-    if (!generated || typeof generated.output !== "string") continue;
-    const output = resolve(context.publicDir, generated.output);
-    const outputRelative = relative(context.publicDir, output);
-    if (outputRelative === ".." || outputRelative.startsWith(`..${sep}`) || !existsSync(output)) continue;
-    const projectPath = relative(projectRoot, output);
-    if (index.assets[asset.id] !== projectPath) { index.assets[asset.id] = projectPath; changed = true; }
-    for (const sceneId of Array.isArray(asset?.sceneIds) ? asset.sceneIds : []) {
-      const scene = Array.isArray(index.scenes) ? index.scenes.find((item: any) => item?.id === sceneId) : null;
-      if (!scene) { missingSceneIds.push(sceneId); continue; }
-      const sceneAssetIds = Array.isArray(scene.assetIds) ? scene.assetIds : [];
-      if (!sceneAssetIds.includes(asset.id)) { scene.assetIds = [...sceneAssetIds, asset.id]; changed = true; }
-      updatedSceneIds.push(sceneId);
-    }
-  }
-  if (changed) writeJson(indexFile, index);
-  return {updatedSceneIds: [...new Set(updatedSceneIds)], missingSceneIds: [...new Set(missingSceneIds)]};
-};
-
-const syncGeneratedVideos = (videoId: string) => {
-  const context = loadVideoContext(videoId);
-  const manifestFile = resolve(context.publicDir, "video/generated/manifest.json");
-  if (!existsSync(manifestFile)) return {updatedSceneIds: [], missingSceneIds: []};
-  const manifest = readJson(manifestFile, {assets: []});
-  const configured = context.config.videoGeneration as Record<string, any> | undefined;
+  const configured = context.config[kind === "images" ? "imageGeneration" : "videoGeneration"] as Record<string, any> | undefined;
   const configuredAssets = Array.isArray(configured?.assets) ? configured.assets : [];
   const indexFile = resolve(context.sourceDir, "SCENE_INDEX.json");
   const index = readJson(indexFile, {assets: {}, scenes: []});
@@ -500,7 +531,8 @@ const syncGeneratedVideos = (videoId: string) => {
 };
 
 const validateRenderInputs = (videoId: string) => {
-  syncGeneratedImages(videoId);
+  syncGeneratedAssets(videoId, "images");
+  syncGeneratedAssets(videoId, "video");
   const context = loadVideoContext(videoId);
   const indexFile = resolve(context.sourceDir, "SCENE_INDEX.json");
   if (!existsSync(indexFile)) throw new Error(`SCENE_INDEX.json is missing for ${videoId}.`);
@@ -554,8 +586,8 @@ export const runGeneration = async (videoId: string, kind: "images" | "video" | 
     if (!validation.passed) throw new Error(`Script validation failed: ${validation.errors.join(" ")}`);
   }
   const args = [videoId, ...(force ? ["--force"] : [])];
-  if (kind === "images") { await runImages(args); syncGeneratedImages(videoId); }
-  else if (kind === "video") { await runVideos(args); syncGeneratedVideos(videoId); }
+  if (kind === "images") { await runImages(args); syncGeneratedAssets(videoId, "images"); }
+  else if (kind === "video") { await runVideos(args); syncGeneratedAssets(videoId, "video"); }
   else if (kind === "voiceover") {
     await runVoiceover(args);
     if (existsSync(resolve(loadVideoContext(videoId).sourceDir, "TIMING_PLAN.json"))) await runTimingPackage(videoId, true);
@@ -650,14 +682,6 @@ export const getQaJob = (jobId: string) => {
   return job;
 };
 
-const normalizeGoogleModel = (value: unknown) => typeof value === "string" && value.startsWith("google/") ? value.slice("google/".length) : value;
-const aspectRatio = (width: number, height: number) => {
-  const left = Math.max(1, Math.round(width));
-  const right = Math.max(1, Math.round(height));
-  let a = left; let b = right;
-  while (b !== 0) [a, b] = [b, a % b];
-  return `${left / a}:${right / a}`;
-};
 
 export const createAssetRevision = (videoId: string, input: any) => {
   const context = loadVideoContext(videoId);
@@ -714,7 +738,7 @@ export const createAssetRevision = (videoId: string, input: any) => {
     updateRequest({status: "running"});
     try {
       await runImages([videoId, `--asset=${revisionAssetId}`]);
-      syncGeneratedImages(videoId);
+      syncGeneratedAssets(videoId, "images");
       const current = updateRequest({status: "succeeded", completedAt: new Date().toISOString()});
       const currentProject = getProjectState(videoId);
       const selected = new Set(Array.isArray(current.selectedAssetIds) ? current.selectedAssetIds : []);
@@ -765,6 +789,67 @@ export const getDeliveryJob = (jobId: string) => {
   const job = deliveryJobs.get(jobId);
   if (!job) throw new Error(`Delivery job not found: ${jobId}`);
   return job;
+};
+
+/**
+ * Report which rendered outputs are behind the project files they were built from.
+ * Comparing modification times is enough to answer "what has to be rebuilt after
+ * this edit", and it costs nothing — no render, no probe, no model call.
+ */
+export const getBuildStatus = (videoId: string): BuildStatus => {
+  const context = loadVideoContext(videoId);
+  const modifiedAt = (file: string) => existsSync(file) ? statSync(file).mtimeMs : null;
+  const inputs = new Map<string, number>();
+  const addInput = (file: string) => {
+    const modified = modifiedAt(file);
+    if (modified !== null && insideRoot(file)) inputs.set(relative(projectRoot, file), modified);
+  };
+
+  addInput(context.configPath);
+  for (const name of ["SCENE_INDEX.json", "REMOTION_TIMELINE.json", "SCRIPT.md"]) addInput(resolve(context.sourceDir, name));
+  const index = readJson(resolve(context.sourceDir, "SCENE_INDEX.json"), {assets: {}});
+  for (const [assetId, configuredPath] of Object.entries(index?.assets ?? {})) {
+    try {
+      const file = resolveProjectAssetFile(videoId, assetId, String(configuredPath));
+      if (file) addInput(file);
+    } catch { /* validateRenderInputs is the place that reports a broken asset path */ }
+  }
+  const audioDir = resolve(context.publicDir, "audio");
+  addInput(resolve(audioDir, "voiceover", "voiceover.wav"));
+  addInput(resolve(audioDir, "music", "underscore.mp3"));
+  const sfxDir = resolve(audioDir, "sfx");
+  if (existsSync(sfxDir)) for (const file of readdirSync(sfxDir).sort()) addInput(resolve(sfxDir, file));
+
+  const outputs: BuildOutput[] = [];
+  const describe = (id: string, kind: BuildOutput["kind"], label: string, file: string, extra: string[] = []) => {
+    const built = modifiedAt(file);
+    const candidates = [...inputs.entries(), ...extra.flatMap((path) => {
+      const modified = modifiedAt(resolve(projectRoot, path));
+      return modified === null ? [] : [[path, modified] as const];
+    })];
+    const staleInputs = built === null ? [] : candidates.filter(([, modified]) => modified > built).map(([path]) => path).sort();
+    outputs.push({id, kind, label, path: relative(projectRoot, file), exists: built !== null, modifiedAt: built === null ? null : new Date(built).toISOString(), stale: staleInputs.length > 0, staleInputs});
+  };
+
+  const labels: Record<string, string> = {still: "Cover image", silent: "Preview video", final: "Final video"};
+  for (const [id, file] of Object.entries(context.outputs)) if (id in labels) describe(id, "render", labels[id], file);
+  if (existsSync(resolve(context.sourceDir, "DELIVERABLES.json"))) {
+    try {
+      for (const variant of loadDeliverables(videoId)) {
+        describe(variant.id, "delivery", `Delivery variant ${variant.id}`, resolve(projectRoot, variant.output), variant.translation ? [variant.translation] : []);
+      }
+    } catch { /* getDeliverables reports an invalid DELIVERABLES.json with its own message */ }
+  }
+
+  return {
+    videoId,
+    checkedAt: new Date().toISOString(),
+    upToDate: outputs.every((output) => !output.stale),
+    inputs: [...inputs.entries()].map(([path, modified]) => ({path, modifiedAt: new Date(modified).toISOString()})).sort((left, right) => left.path.localeCompare(right.path)),
+    outputs,
+    stale: outputs.filter((output) => output.stale).map((output) => output.id),
+    missing: outputs.filter((output) => !output.exists).map((output) => output.id),
+  };
 };
 
 export const listSeries = () => listSeriesProjects();

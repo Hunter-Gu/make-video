@@ -1,4 +1,4 @@
-import type {Caption, DeliveryJob, DeliveryReport, DeliveryVariant, GenerationJob, GenerationKind, GenerationPreparation, GenerationReadiness, ProjectTransport, QaJob, QaKind, RenderJob, RenderKind, SeriesCoverageArtifact, SeriesPlan, SeriesVerification, SourceCatalog, SourceIndex, SourceJob, SourceUpload, StoryboardArtifact, TimingJob, VideoPlan} from "@make-video/contracts";
+import type {BuildStatus, Caption, CreatedProject, DeliveryJob, DeliveryReport, DeliveryVariant, GenerationJob, GenerationKind, GenerationPreparation, GenerationReadiness, ProjectTransport, QaJob, QaKind, RenderJob, RenderKind, SeriesCoverageArtifact, SeriesPlan, SeriesVerification, SourceCatalog, SourceIndex, SourceJob, SourceUpload, StoryboardArtifact, TimingJob, VideoPlan} from "@make-video/contracts";
 
 const request = async <T,>(path: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(path, {...init, headers: {"content-type": "application/json", ...init?.headers}});
@@ -9,6 +9,7 @@ const request = async <T,>(path: string, init?: RequestInit): Promise<T> => {
 
 export const httpTransport: ProjectTransport = {
   listProjects: () => request("/api/projects"),
+  createProject: (input) => request<CreatedProject>("/api/projects", {method: "POST", body: JSON.stringify(input)}),
   listModels: () => request("/api/models"),
   getProject: (videoId) => request(`/api/project?videoId=${encodeURIComponent(videoId)}`),
   updateCaption: async (videoId, caption: Caption) => { await request(`/api/captions/${encodeURIComponent(caption.id)}`, {method: "PATCH", body: JSON.stringify({...caption, videoId})}); },
@@ -44,6 +45,7 @@ export const httpTransport: ProjectTransport = {
   getDeliverables: (videoId: string) => request<{videoId: string; variants: DeliveryVariant[]; report: DeliveryReport | null}>(`/api/deliverables?videoId=${encodeURIComponent(videoId)}`),
   deliver: (videoId: string, variantIds: string[] = [], force = false) => request<DeliveryJob>("/api/delivery", {method: "POST", body: JSON.stringify({videoId, variantIds, force})}),
   getDeliveryJob: (jobId: string) => request<DeliveryJob>(`/api/delivery/${encodeURIComponent(jobId)}`),
+  getBuildStatus: (videoId: string) => request<BuildStatus>(`/api/build-status?videoId=${encodeURIComponent(videoId)}`),
   listSeries: () => request<string[]>("/api/series"),
   getSeries: (seriesId: string) => request<{seriesId: string; plan: SeriesPlan | null; bible: Record<string, unknown> | null}>(`/api/series/detail?seriesId=${encodeURIComponent(seriesId)}`),
   verifySeries: (seriesId: string) => request<SeriesVerification>(`/api/series/verification?seriesId=${encodeURIComponent(seriesId)}`),

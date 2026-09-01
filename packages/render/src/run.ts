@@ -8,7 +8,7 @@ import {runRemotion} from "./remotion";
 import {buildProjectState} from "./state";
 
 export {buildProjectState, resolveProjectAssetFile} from "./state";
-export {applyTranslation, getDeliveryReport, loadDeliverables, runDelivery} from "./delivery";
+export {applyTranslation, getDeliveryReport, loadDeliverables, runDelivery, verifyDeliveredVariant} from "./delivery";
 
 const compositionId = "MakeVideo";
 
