@@ -17,6 +17,7 @@ const createFixture = async () => {
   const sourceDir = resolve(root, "src", videoId);
   const publicDir = resolve(root, "public", videoId);
   await mkdir(resolve(sourceDir, "sources"), {recursive: true});
+  await mkdir(resolve(sourceDir, "translations"), {recursive: true});
   await mkdir(resolve(publicDir, "audio", "voiceover"), {recursive: true});
   await mkdir(resolve(root, "output", videoId), {recursive: true});
   const remotionBin = resolve(root, "node_modules", ".bin", "remotion");
@@ -37,7 +38,34 @@ const createFixture = async () => {
   await writeFile(resolve(sourceDir, "TIMING_PLAN.json"), JSON.stringify({voiceManifest: `public/${videoId}/audio/voiceover/manifest.json`, scenes: [{id: "scene-1", title: "Opening", type: "image", objective: "Introduce the subject", sourceBlockIds: ["brief-1"], narrationIds: ["narration-1"], minFrames: 1}]}, null, 2));
   await writeFile(resolve(publicDir, "audio", "voiceover", "manifest.json"), JSON.stringify({segments: {"narration-1": {durationSeconds: 1.2}}}, null, 2));
   await writeFile(resolve(sourceDir, "IMAGE_QA.json"), JSON.stringify({images: []}, null, 2));
-  return {root, videoId};
+  await writeFile(resolve(sourceDir, "translations", "stale.json"), JSON.stringify({language: "xx", scenes: {"scene-removed": {title: "Gone"}}}, null, 2));
+  await writeFile(resolve(sourceDir, "DELIVERABLES.json"), JSON.stringify({
+    version: 1,
+    variants: [
+      {id: "thumbnail", kind: "still", width: 160, height: 90, captions: false, frame: 0, output: "output/mcp-e2e/thumbnail.png"},
+      {id: "stale-translation", kind: "still", translation: `src/${videoId}/translations/stale.json`, output: "output/mcp-e2e/stale.png"},
+    ],
+  }, null, 2));
+  const seriesDir = resolve(root, "projects", "mcp-series");
+  await mkdir(seriesDir, {recursive: true});
+  await writeFile(resolve(seriesDir, "series-plan.json"), JSON.stringify({
+    seriesId: "mcp-series",
+    title: "Fixture series",
+    sourceIndex: `src/${videoId}/sources/index.json`,
+    sharedSourceBlockIds: [],
+    omittedSourceBlockIds: [],
+    episodes: [{id: "one", title: "One", question: "Why?", estimatedMinutes: 5, previous: null, next: null, topics: ["fixture"], sourceBlockIds: ["brief-1"], introduces: ["thesis"], requires: [], timelineEventIds: ["start"], positions: {"reading": "cautious"}}],
+  }, null, 2));
+  await writeFile(resolve(seriesDir, "SERIES_BIBLE.json"), JSON.stringify({
+    version: 1,
+    adaptation: {mode: "series", wordsPerMinute: 145},
+    rights: {status: "original", intendedUse: "test"},
+    sharedFiles: {},
+    canonicalPositions: {"reading": "cautious"},
+    timeline: [{id: "start", order: 1, label: "Start"}],
+    terms: [],
+  }, null, 2));
+  return {root, videoId, seriesDir};
 };
 
 const call = async (client: Client, name: string, args: Record<string, unknown>) => {
@@ -152,6 +180,46 @@ test("MCP completes the host-agent preparation and deterministic production path
     assert.equal(render.status, "succeeded", render.error);
     const renderedProject = await call(client, "make_video_get_project", {videoId: fixture.videoId});
     assert.equal(renderedProject.stages.find((stage: any) => stage.id === "still")?.exists, true);
+
+    const deliverables = await call(client, "make_video_get_deliverables", {videoId: fixture.videoId});
+    assert.equal(deliverables.variants[0].id, "thumbnail");
+    assert.equal(deliverables.variants[0].captions, false);
+    const deliveryStart = await call(client, "make_video_deliver", {videoId: fixture.videoId, variantIds: ["thumbnail"]});
+    const delivery = await waitForJob(client, "make_video_get_delivery_job", deliveryStart.id);
+    assert.equal(delivery.status, "succeeded", delivery.error);
+    const delivered = await call(client, "make_video_get_deliverables", {videoId: fixture.videoId});
+    assert.equal(delivered.report.variants.thumbnail.output, "output/mcp-e2e/thumbnail.png");
+    const blocked = await client.callTool({name: "make_video_deliver", arguments: {videoId: fixture.videoId, variantIds: ["missing-variant"]}});
+    assert.equal(blocked.isError, true);
+    const staleStart = await call(client, "make_video_deliver", {videoId: fixture.videoId, variantIds: ["stale-translation"]});
+    const stale = await waitForJob(client, "make_video_get_delivery_job", staleStart.id);
+    assert.equal(stale.status, "failed");
+    assert.match(String(stale.error), /unknown scene: scene-removed/);
+
+    const series = await call(client, "make_video_list_series", {});
+    assert.deepEqual(series.series, ["mcp-series"]);
+    const verification = await call(client, "make_video_verify_series", {seriesId: "mcp-series"});
+    assert.equal(verification.passed, true, verification.errors?.join(" "));
+    assert.equal(verification.coverage.assignedBlocks, 1);
+    const coverage = await call(client, "make_video_build_series_coverage", {seriesId: "mcp-series", force: true});
+    assert.match(String(coverage.content), /Fixture series coverage/);
+
+    await writeFile(resolve(fixture.seriesDir, "series-plan.json"), JSON.stringify({
+      seriesId: "mcp-series",
+      title: "Fixture series",
+      sourceIndex: `src/${fixture.videoId}/sources/index.json`,
+      sharedSourceBlockIds: [],
+      omittedSourceBlockIds: [],
+      episodes: [
+        {id: "one", title: "One", question: "Why?", estimatedMinutes: 5, previous: null, next: "two", topics: [], sourceBlockIds: ["brief-1"], introduces: [], requires: ["thesis"], timelineEventIds: [], positions: {}},
+        {id: "two", title: "Two", question: "And then?", estimatedMinutes: 5, previous: "one", next: null, topics: [], sourceBlockIds: ["brief-1"], introduces: ["thesis"], requires: [], timelineEventIds: [], positions: {"reading": "confident"}},
+      ],
+    }, null, 2));
+    const rejected = await call(client, "make_video_verify_series", {seriesId: "mcp-series"});
+    assert.equal(rejected.passed, false);
+    assert.ok(rejected.errors.some((error: string) => error.includes('requires "thesis"')), rejected.errors.join(" "));
+    assert.ok(rejected.errors.some((error: string) => error.includes("repeated by episodes")), rejected.errors.join(" "));
+    assert.ok(rejected.errors.some((error: string) => error.includes("contradicts the series position")), rejected.errors.join(" "));
   } finally {
     await client.close();
     await rm(fixture.root, {recursive: true, force: true});

@@ -12,5 +12,5 @@
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "include": ["packages/contracts/src", "packages/ai/src", "packages/assets/src", "packages/audio/src", "packages/mcp/src", "packages/qa/src", "packages/render/src", "packages/remotion/src", "packages/sources/src"]
+  "include": ["packages/contracts/src", "packages/ai/src", "packages/assets/src", "packages/audio/src", "packages/mcp/src", "packages/qa/src", "packages/render/src", "packages/remotion/src", "packages/series/src", "packages/sources/src"]
 }

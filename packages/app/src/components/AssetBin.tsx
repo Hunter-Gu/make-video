@@ -1,7 +1,7 @@
 import {useRef, useState} from 'react';
 import {Button} from '@astryxdesign/core/Button';
 import {SegmentedControl, SegmentedControlItem} from '@astryxdesign/core/SegmentedControl';
-import type {Asset, ProjectState, ProjectTransport, QaJob, QaKind, RenderJob, RenderKind} from '@make-video/contracts';
+import type {Asset, DeliveryJob, ProjectState, ProjectTransport, QaJob, QaKind, RenderJob, RenderKind} from '@make-video/contracts';
 
 type TaskStatus = 'idle' | 'running' | 'passed' | 'failed';
 
@@ -83,6 +83,7 @@ export const AssetBin = ({state, selected, onSelect, transport, refresh, notice}
             </div>
             <div className="mt-2 grid gap-1"><TaskRow label="Video QA" status={qaStatus.video === 'idle' ? persistedQaStatus(state, 'video') : qaStatus.video} error={qaErrors.video} /><TaskRow label="Image QA" status={qaStatus.images === 'idle' ? persistedQaStatus(state, 'images') : qaStatus.images} error={qaErrors.images} /><TaskRow label="Clip QA" status={qaStatus['generated-videos'] === 'idle' ? persistedQaStatus(state, 'generated-videos') : qaStatus['generated-videos']} error={qaErrors['generated-videos']} /></div>
           </div>
+          <DeliveryPanel state={state} transport={transport} refresh={refresh} notice={notice} />
           {state.stages.map((stage) => (
             <div className={`grid grid-cols-[10px_1fr_auto] items-center gap-2 rounded-md bg-[#171b21] p-2 text-[10px] ${stage.exists ? '' : ''}`} key={stage.id}>
               <i className={`h-1.5 w-1.5 rounded-full ${stage.exists ? 'bg-[#61b88f]' : 'bg-[#4a5059]'}`} />
@@ -93,6 +94,47 @@ export const AssetBin = ({state, selected, onSelect, transport, refresh, notice}
         </div>
       )}
     </aside>
+  );
+};
+
+const DeliveryPanel = ({state, transport, refresh, notice}: {state: ProjectState; transport: ProjectTransport; refresh: () => Promise<void>; notice: (value: string) => void}) => {
+  const [running, setRunning] = useState(false);
+  const delivery = state.delivery;
+  if (!delivery) return null;
+  const rendered = delivery.report?.variants ?? {};
+  const pending = delivery.variants.filter((variant) => !rendered[variant.id]);
+  const run = async (variantIds: string[]) => {
+    setRunning(true);
+    try {
+      let job: DeliveryJob = await transport.deliver(state.videoId, variantIds);
+      while (job.status === 'queued' || job.status === 'running') {
+        await new Promise((resolve) => window.setTimeout(resolve, 500));
+        job = await transport.getDeliveryJob(job.id);
+      }
+      if (job.status === 'failed') throw new Error(job.error ?? 'Delivery failed');
+      await refresh();
+      notice(`Delivered ${variantIds.length || delivery.variants.length} variant(s)`);
+    } catch (error) { notice(error instanceof Error ? error.message : String(error)); }
+    finally { setRunning(false); }
+  };
+  return (
+    <div className="mb-2 rounded-md border border-[#252c35] bg-[#14181e] p-2">
+      <div className="mb-1.5 flex items-center justify-between text-[9px]"><strong>Delivery variants</strong><span className="text-[#737c87]">{Object.keys(rendered).length}/{delivery.variants.length} rendered</span></div>
+      {delivery.error && <div className="mb-1.5 rounded bg-[#3b2426] px-2 py-1 text-[9px] leading-[1.35] text-[#f1b2b2]">{delivery.error}</div>}
+      <div className="grid gap-1">
+        {delivery.variants.map((variant) => {
+          const result = rendered[variant.id];
+          return (
+            <div className="grid grid-cols-[10px_1fr_auto] items-center gap-2 text-[9px]" key={variant.id}>
+              <i className={`h-1.5 w-1.5 rounded-full ${result ? 'bg-[#61b88f]' : 'bg-[#4a5059]'}`} />
+              <span className="truncate" title={variant.output}>{variant.id}</span>
+              <small className="text-[#737b86]">{variant.width}×{variant.height}{variant.captions ? '' : ' · clean'}{variant.translation ? ' · translated' : ''}</small>
+            </div>
+          );
+        })}
+      </div>
+      <Button className="mt-2" label={running ? 'Rendering variants…' : pending.length ? `Render ${pending.length} pending variant(s)` : 'All variants rendered'} variant="secondary" size="sm" width="100%" isDisabled={running || pending.length === 0} onClick={() => run(pending.map((variant) => variant.id))} />
+    </div>
   );
 };
 

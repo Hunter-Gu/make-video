@@ -24,6 +24,7 @@ const emptyState: ProjectState = {
   sources: [],
   plan: null,
   qa: null,
+  delivery: null,
 };
 
 export const RemotionRoot = () => <Composition<any, CompositionProps>

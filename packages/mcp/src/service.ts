@@ -5,12 +5,13 @@ import {basename, dirname, extname, relative, resolve, sep} from "node:path";
 import {linkAssets} from "@make-video/assets";
 import {runImages, runMusic, runVideos, runVoiceover} from "@make-video/ai";
 import {runTiming as runTimingPackage} from "@make-video/audio";
-import {buildProjectState, resolveProjectAssetFile, runRender} from "@make-video/render";
+import {buildProjectState, getDeliveryReport, loadDeliverables, resolveProjectAssetFile, runDelivery, runRender} from "@make-video/render";
 import {runQa} from "@make-video/qa";
+import {buildSeriesCoverage as buildSeriesCoverageFile, listSeriesProjects, loadSeriesContext, verifySeries as verifySeriesPlan} from "@make-video/series";
 import {runSourceCatalog, runSourceIngest, runSourceList} from "@make-video/sources";
 import type {GenerationJob} from "@make-video/contracts";
 import type {RenderJob} from "@make-video/contracts";
-import type {GenerationPreparation, GenerationReadiness, QaJob, SourceCatalog, SourceIndex, SourceJob, SourceUpload, TimingJob, VideoPlan} from "@make-video/contracts";
+import type {DeliveryJob, GenerationPreparation, GenerationReadiness, ProjectDelivery, QaJob, SeriesCoverageArtifact, SeriesVerification, SourceCatalog, SourceIndex, SourceJob, SourceUpload, TimingJob, VideoPlan} from "@make-video/contracts";
 import {loadVideoContext, projectRoot} from "./context";
 
 const preparedAssetProjects = new Set<string>();
@@ -19,6 +20,7 @@ const renderJobs = new Map<string, RenderJob>();
 const qaJobs = new Map<string, QaJob>();
 const sourceJobs = new Map<string, SourceJob>();
 const timingJobs = new Map<string, TimingJob>();
+const deliveryJobs = new Map<string, DeliveryJob>();
 
 /** Prepare ignored public/ links before reading project media. */
 export const prepareProjectAssets = (videoId: string) => {
@@ -65,6 +67,7 @@ export const getProjectState = (videoId: string) => {
     ...state,
     sources: sourceIndex.sources,
     plan: getPlan(videoId),
+    delivery: getProjectDelivery(videoId),
     qa: qaReports.length > 0 ? {passed: qaReports.every((item) => item.report.passed === true), reports: qaReports.map((item) => ({kind: item.kind, passed: item.report.passed === true, checkedAt: item.report.checkedAt}))} : null,
   };
 };
@@ -730,6 +733,50 @@ export const createAssetRevision = (videoId: string, input: any) => {
   })();
   return job;
 };
+
+const getProjectDelivery = (videoId: string): ProjectDelivery | null => {
+  const context = loadVideoContext(videoId);
+  const declared = existsSync(resolve(context.sourceDir, "DELIVERABLES.json"));
+  const report = getDeliveryReport(videoId);
+  if (!declared) return report ? {variants: [], report, error: null} : null;
+  try { return {variants: loadDeliverables(videoId), report, error: null}; }
+  catch (error) { return {variants: [], report, error: error instanceof Error ? error.message : String(error)}; }
+};
+
+export const getDeliverables = (videoId: string) => ({videoId, variants: loadDeliverables(videoId), report: getDeliveryReport(videoId)});
+
+export const startDelivery = (videoId: string, variantIds: string[] = [], force = false): DeliveryJob => {
+  const declared = loadDeliverables(videoId);
+  const unknown = variantIds.filter((id) => !declared.some((variant) => variant.id === id));
+  if (unknown.length > 0) throw new Error(`Unknown delivery variants: ${unknown.join(", ")}`);
+  const job: DeliveryJob = {id: randomUUID(), videoId, variantIds, status: "queued", createdAt: new Date().toISOString()};
+  deliveryJobs.set(job.id, job);
+  void (async () => {
+    job.status = "running";
+    job.startedAt = new Date().toISOString();
+    try { await runDelivery(videoId, {variantIds, force}); job.status = "succeeded"; }
+    catch (error) { job.status = "failed"; job.error = error instanceof Error ? error.message : String(error); }
+    finally { job.completedAt = new Date().toISOString(); }
+  })();
+  return job;
+};
+
+export const getDeliveryJob = (jobId: string) => {
+  const job = deliveryJobs.get(jobId);
+  if (!job) throw new Error(`Delivery job not found: ${jobId}`);
+  return job;
+};
+
+export const listSeries = () => listSeriesProjects();
+
+export const getSeries = (seriesId: string) => {
+  const context = loadSeriesContext(seriesId);
+  return {seriesId, plan: context.plan, bible: context.bible};
+};
+
+export const verifySeries = (seriesId: string): SeriesVerification => verifySeriesPlan(seriesId);
+
+export const buildSeriesCoverage = (seriesId: string, force = true): SeriesCoverageArtifact => buildSeriesCoverageFile(seriesId, force);
 
 export const resolveMediaPath = (configuredPath: string) => {
   const file = resolve(projectRoot, configuredPath);

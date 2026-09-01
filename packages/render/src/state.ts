@@ -109,5 +109,6 @@ export const buildProjectState = (videoId: string, target: StateTarget = "server
     sources: [],
     plan: null,
     qa: null,
+    delivery: null,
   };
 };

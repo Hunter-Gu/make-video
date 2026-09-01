@@ -47,6 +47,16 @@ export type RenderJob = {id: string; videoId: string; kind: RenderKind; status: 
 export type QaKind = "video" | "images" | "generated-videos";
 export type QaJob = {id: string; videoId: string; kind: QaKind; status: "queued" | "running" | "succeeded" | "failed"; createdAt: string; startedAt?: string; completedAt?: string; error?: string};
 export type QaSummary = {passed: boolean; reports?: Array<{kind: QaKind; passed: boolean; checkedAt?: string}>};
+export type DeliveryVariant = {id: string; kind: "video" | "still"; width: number; height: number; captions: boolean; translation: string | null; frame: number | null; frames: [number, number] | null; output: string; master: boolean};
+export type DeliveryVariantResult = {output: string; kind: "video" | "still"; width: number | null; height: number | null; duration: number | null; captions: boolean; translation: string | null; frame?: number | null; frames?: [number, number] | null; renderedAt?: string};
+export type DeliveryReport = {videoId: string; variants: Record<string, DeliveryVariantResult>; generatedAt: string};
+export type DeliveryJob = {id: string; videoId: string; variantIds: string[]; status: "queued" | "running" | "succeeded" | "failed"; createdAt: string; startedAt?: string; completedAt?: string; error?: string};
+export type ProjectDelivery = {variants: DeliveryVariant[]; report: DeliveryReport | null; error: string | null};
+export type SeriesEpisode = {id: string; title: string; question: string; estimatedMinutes: number; previous: string | null; next: string | null; topics: string[]; sourceBlockIds: string[]; introduces: string[]; requires: string[]; timelineEventIds: string[]; positions: Record<string, string>};
+export type SeriesPlan = {seriesId: string; title: string; sourceIndex: string; sharedSourceBlockIds: string[]; omittedSourceBlockIds: string[]; episodes: SeriesEpisode[]};
+export type SeriesCoverage = {episodes: number; totalBlocks: number; assignedBlocks: number; omittedBlocks: number; unassignedBlockIds: string[]; adaptationMode: string; sourceWords: number; narrationCapacityWords: number; compressionRatio: number; rights: {status: string; intendedUse: string}};
+export type SeriesVerification = {seriesId: string; passed: boolean; errors: string[]; warnings: string[]; plan: SeriesPlan | null; coverage: SeriesCoverage | null};
+export type SeriesCoverageArtifact = {seriesId: string; path: string; content: string};
 export type SourceBlock = {id: string; locator: string; text: string};
 export type ProjectSource = {id: string; title: string; type: string; origin: string; rights: string; sha256: string; blocks: SourceBlock[]};
 export type SourceIndex = {videoId: string; sources: ProjectSource[]};
@@ -60,14 +70,14 @@ export type SourceUpload = {videoId: string; source: {id: string; title: string;
 export type VideoPlanScene = {id: string; chapterId: string; title: string; type: SceneType; objective: string; sourceBlockIds: string[]; visualDirection?: string};
 export type VideoPlanChapter = {id: string; title: string; objective: string; sourceBlockIds: string[]; sceneIds: string[]};
 export type VideoPlan = {version: 1; title: string; adaptationMode: "overview" | "chapter-explanation" | "documentary" | "series-episode"; audience: string; language: string; durationSeconds: number; sourceBlockIds: string[]; chapters: VideoPlanChapter[]; scenes: VideoPlanScene[]};
-export type ProjectState = {videoId: string; composition: {fps: number; durationInFrames: number; width: number; height: number}; models: {image: string | null; video: string | null; voice: string | null}; registry: {image: Model[]; video: Model[]; voice: Model[]}; scenes: Scene[]; captions: Caption[]; effects: RemotionEffect[]; audio: ProjectAudio; cover: Cover | null; assets: Asset[]; stages: Stage[]; revisions: AssetRevision[]; sources: ProjectSource[]; plan: VideoPlan | null; qa: QaSummary | null};
+export type ProjectState = {videoId: string; composition: {fps: number; durationInFrames: number; width: number; height: number}; models: {image: string | null; video: string | null; voice: string | null}; registry: {image: Model[]; video: Model[]; voice: Model[]}; scenes: Scene[]; captions: Caption[]; effects: RemotionEffect[]; audio: ProjectAudio; cover: Cover | null; assets: Asset[]; stages: Stage[]; revisions: AssetRevision[]; sources: ProjectSource[]; plan: VideoPlan | null; qa: QaSummary | null; delivery: ProjectDelivery | null};
 
 export interface ProjectTransport {
   listProjects(): Promise<string[]>;
   listModels(): Promise<ModelCatalog>;
   getProject(videoId: string): Promise<ProjectState>;
   updateCaption(videoId: string, caption: Caption): Promise<void>;
-  updateTimelineRange(videoId: string, input: {type: 'scene' | 'caption' | 'voice' | 'effect' | 'music'; id: string; startFrame: number; endFrame: number}): Promise<void>;
+  updateTimelineRange(videoId: string, input: {type: 'scene' | 'caption' | 'voice' | 'effect'; id: string; startFrame: number; endFrame: number}): Promise<void>;
   updateModels(videoId: string, models: {image?: string; video?: string; voice?: string}): Promise<void>;
   generate(videoId: string, kind: GenerationKind, force?: boolean): Promise<GenerationJob>;
   getGenerationJob(jobId: string): Promise<GenerationJob>;
@@ -89,4 +99,11 @@ export interface ProjectTransport {
   savePlan(videoId: string, plan: VideoPlan): Promise<VideoPlan>;
   createAssetRevision(videoId: string, input: {assetId: string; sceneId: string | null; modelId: string | null; instruction: string}): Promise<GenerationJob>;
   setCover(videoId: string, assetId: string): Promise<void>;
+  getDeliverables(videoId: string): Promise<{videoId: string; variants: DeliveryVariant[]; report: DeliveryReport | null}>;
+  deliver(videoId: string, variantIds?: string[], force?: boolean): Promise<DeliveryJob>;
+  getDeliveryJob(jobId: string): Promise<DeliveryJob>;
+  listSeries(): Promise<string[]>;
+  getSeries(seriesId: string): Promise<{seriesId: string; plan: SeriesPlan | null; bible: Record<string, unknown> | null}>;
+  verifySeries(seriesId: string): Promise<SeriesVerification>;
+  buildSeriesCoverage(seriesId: string, force?: boolean): Promise<SeriesCoverageArtifact>;
 }

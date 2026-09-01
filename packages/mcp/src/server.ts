@@ -8,7 +8,7 @@ import {z} from "zod";
 
 import {projectRoot} from "./context";
 import {getModelCatalog} from "./models";
-import {buildSourceCatalog, buildSourceList, buildStoryboard, checkGenerationReadiness, createAssetRevision, getGenerationJob, getPlan, getProjectState, getQaJob, getRenderJob, getSourceCatalog, getSourceJob, getSources, getTimingJob, listProjects, prepareGeneration, resolveMediaPath, savePlan, setCover, startGeneration, startQa, startRender, startSourceIngest, startTiming, updateCaption, updateModels, updateTimelineRange, uploadSource, validateScript} from "./service";
+import {buildSeriesCoverage, buildSourceCatalog, buildSourceList, buildStoryboard, checkGenerationReadiness, createAssetRevision, getDeliverables, getDeliveryJob, getGenerationJob, getPlan, getProjectState, getQaJob, getRenderJob, getSeries, getSourceCatalog, getSourceJob, getSources, getTimingJob, listProjects, listSeries, prepareGeneration, resolveMediaPath, savePlan, setCover, startDelivery, startGeneration, startQa, startRender, startSourceIngest, startTiming, updateCaption, updateModels, updateTimelineRange, uploadSource, validateScript, verifySeries} from "./service";
 
 type CallToolResult = {
   content: Array<{type: "text"; text: string}>;
@@ -182,6 +182,48 @@ export const createMakeVideoMcpServer = () => {
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: true},
   }, ({videoId, assetId}) => run(() => setCover(videoId, {assetId})));
 
+  server.registerTool("make_video_get_deliverables", {
+    description: "Read the declared delivery variants and the last delivery report for one video project.",
+    inputSchema: z.object({videoId: z.string().min(1)}),
+    annotations: {readOnlyHint: true},
+  }, ({videoId}) => run(() => getDeliverables(videoId)));
+
+  server.registerTool("make_video_deliver", {
+    description: "Render the declared delivery variants (aspect ratios, clean or captioned cuts, translations, thumbnails, trailers, short extracts) and return a task id. Poll make_video_get_delivery_job for completion.",
+    inputSchema: z.object({videoId: z.string().min(1), variantIds: z.array(z.string().min(1)).optional(), force: z.boolean().optional()}),
+    annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: false},
+  }, ({videoId, variantIds, force}) => run(() => startDelivery(videoId, variantIds ?? [], force ?? false)));
+
+  server.registerTool("make_video_get_delivery_job", {
+    description: "Read the status of a delivery variant render job.",
+    inputSchema: z.object({jobId: z.string().min(1)}),
+    annotations: {readOnlyHint: true},
+  }, ({jobId}) => run(() => getDeliveryJob(jobId)));
+
+  server.registerTool("make_video_list_series", {
+    description: "List multi-episode series projects that declare an ordered episode plan.",
+    inputSchema: z.object({}),
+    annotations: {readOnlyHint: true},
+  }, () => result({series: listSeries()}));
+
+  server.registerTool("make_video_get_series", {
+    description: "Read one series plan and its shared series bible.",
+    inputSchema: z.object({seriesId: z.string().min(1)}),
+    annotations: {readOnlyHint: true},
+  }, ({seriesId}) => run(() => getSeries(seriesId)));
+
+  server.registerTool("make_video_verify_series", {
+    description: "Check a series plan for episode ordering, source coverage and repetition, premature dependencies, chronology errors, contradicted canonical positions, missing bibles, and over-compressed runtimes.",
+    inputSchema: z.object({seriesId: z.string().min(1)}),
+    annotations: {readOnlyHint: true},
+  }, ({seriesId}) => run(() => verifySeries(seriesId)));
+
+  server.registerTool("make_video_build_series_coverage", {
+    description: "Write COVERAGE.md for a verified series: what each episode uses, omits, or reserves.",
+    inputSchema: z.object({seriesId: z.string().min(1), force: z.boolean().optional()}),
+    annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: true},
+  }, ({seriesId, force}) => run(() => buildSeriesCoverage(seriesId, force ?? true)));
+
   server.registerResource("make-video-projects", "make-video://projects", {
     title: "Make Video projects",
     description: "Available Make Video project identifiers.",
@@ -298,6 +340,13 @@ export const startHttpServer = () => {
       if (url.pathname.startsWith("/api/sources/ingest/") && request.method === "GET") return sendJson(response, 200, getSourceJob(decodeURIComponent(url.pathname.slice("/api/sources/ingest/".length))));
       if (url.pathname === "/api/assets/revisions" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 201, createAssetRevision(input.videoId, input)); }
       if (url.pathname === "/api/cover" && request.method === "PUT") { const input = await readBody(request); return sendJson(response, 200, setCover(input.videoId, input)); }
+      if (url.pathname === "/api/deliverables" && request.method === "GET") return sendJson(response, 200, getDeliverables(requiredParam(url.searchParams.get("videoId"))));
+      if (url.pathname === "/api/delivery" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 202, startDelivery(input.videoId, Array.isArray(input.variantIds) ? input.variantIds : [], Boolean(input.force))); }
+      if (url.pathname.startsWith("/api/delivery/") && request.method === "GET") return sendJson(response, 200, getDeliveryJob(decodeURIComponent(url.pathname.slice("/api/delivery/".length))));
+      if (url.pathname === "/api/series" && request.method === "GET") return sendJson(response, 200, listSeries());
+      if (url.pathname === "/api/series/detail" && request.method === "GET") return sendJson(response, 200, getSeries(requiredParam(url.searchParams.get("seriesId"))));
+      if (url.pathname === "/api/series/verification" && request.method === "GET") return sendJson(response, 200, verifySeries(requiredParam(url.searchParams.get("seriesId"))));
+      if (url.pathname === "/api/series/coverage" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 200, buildSeriesCoverage(input.seriesId, input.force ?? true)); }
       if (url.pathname === "/media" && request.method === "GET") {
         const file = resolveMediaPath(requiredParam(url.searchParams.get("path")));
         const size = statSync(file).size;

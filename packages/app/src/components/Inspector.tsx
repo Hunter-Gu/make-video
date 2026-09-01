@@ -15,14 +15,13 @@ type InspectorProps = {
   caption: Caption | null;
   asset: Asset | null;
   effect: RemotionEffect | null;
-  audioSelection: {type: 'music'; id: string} | null;
   readiness: GenerationReadiness | null;
   transport: ProjectTransport;
   refresh: () => Promise<void>;
   notice: (value: string) => void;
 };
 
-export const Inspector = ({state, mode, setMode, scene, caption, asset, effect, audioSelection, readiness, transport, refresh, notice}: InspectorProps) => (
+export const Inspector = ({state, mode, setMode, scene, caption, asset, effect, readiness, transport, refresh, notice}: InspectorProps) => (
   <aside className="min-h-0 overflow-auto border-l border-[#242830] bg-[#101318]">
     <SegmentedControl className="m-2.5 flex-wrap" label="Inspector view" value={mode} onChange={(value) => setMode(value as InspectorMode)} layout="fill" size="sm">
       {(['scene', 'caption', 'voice', 'effect', 'audio', 'image'] as const).map((tab) => <SegmentedControlItem key={tab} value={tab} label={tab === 'image' ? 'Visual' : tab === 'audio' ? 'Music' : tab[0].toUpperCase() + tab.slice(1)} />)}
@@ -41,7 +40,7 @@ export const Inspector = ({state, mode, setMode, scene, caption, asset, effect, 
     ) : <div className="grid h-full place-items-center text-xs text-[#68717d]">This scene has no caption.</div>)}
     {mode === 'voice' && (caption ? <VoiceInspector caption={caption} fps={state.composition.fps} track={state.audio.voiceover} readiness={readiness} generate={() => transport.generate(state.videoId, 'voiceover')} getJob={transport.getGenerationJob} buildTiming={() => transport.buildTiming(state.videoId, true)} getTimingJob={transport.getTimingJob} notice={notice} refresh={refresh} /> : <div className="grid h-full place-items-center text-xs text-[#68717d]">Select a voice block.</div>)}
     {mode === 'effect' && <EffectInspector effect={effect} fps={state.composition.fps} />}
-    {mode === 'audio' && <AudioInspector track={audioSelection ? state.audio.music : state.audio.music} generate={() => transport.generate(state.videoId, 'music')} getJob={transport.getGenerationJob} notice={notice} refresh={refresh} />}
+    {mode === 'audio' && <AudioInspector track={state.audio.music} generate={() => transport.generate(state.videoId, 'music')} getJob={transport.getGenerationJob} notice={notice} refresh={refresh} />}
     {mode === 'image' && <ImageInspector state={state} asset={asset} readiness={readiness} transport={transport} refresh={refresh} notice={notice} />}
   </aside>
 );

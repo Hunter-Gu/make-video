@@ -14,6 +14,7 @@
     "@make-video/assets": "workspace:*",
     "@make-video/contracts": "workspace:*",
     "@make-video/render": "workspace:*",
+    "@make-video/series": "workspace:*",
     "@make-video/qa": "workspace:*",
     "@make-video/sources": "workspace:*",
     "@modelcontextprotocol/client": "^2.0.0",

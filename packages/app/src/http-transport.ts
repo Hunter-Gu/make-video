@@ -1,4 +1,4 @@
-import type {Caption, GenerationJob, GenerationKind, GenerationPreparation, GenerationReadiness, ProjectTransport, QaJob, QaKind, RenderJob, RenderKind, SourceCatalog, SourceIndex, SourceJob, SourceUpload, StoryboardArtifact, TimingJob, VideoPlan} from "@make-video/contracts";
+import type {Caption, DeliveryJob, DeliveryReport, DeliveryVariant, GenerationJob, GenerationKind, GenerationPreparation, GenerationReadiness, ProjectTransport, QaJob, QaKind, RenderJob, RenderKind, SeriesCoverageArtifact, SeriesPlan, SeriesVerification, SourceCatalog, SourceIndex, SourceJob, SourceUpload, StoryboardArtifact, TimingJob, VideoPlan} from "@make-video/contracts";
 
 const request = async <T,>(path: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(path, {...init, headers: {"content-type": "application/json", ...init?.headers}});
@@ -41,4 +41,11 @@ export const httpTransport: ProjectTransport = {
   savePlan: (videoId: string, plan: VideoPlan) => request<VideoPlan>("/api/plan", {method: "PUT", body: JSON.stringify({videoId, plan})}),
   createAssetRevision: (videoId, input) => request<GenerationJob>("/api/assets/revisions", {method: "POST", body: JSON.stringify({videoId, ...input})}),
   setCover: async (videoId, assetId) => { await request("/api/cover", {method: "PUT", body: JSON.stringify({videoId, assetId})}); },
+  getDeliverables: (videoId: string) => request<{videoId: string; variants: DeliveryVariant[]; report: DeliveryReport | null}>(`/api/deliverables?videoId=${encodeURIComponent(videoId)}`),
+  deliver: (videoId: string, variantIds: string[] = [], force = false) => request<DeliveryJob>("/api/delivery", {method: "POST", body: JSON.stringify({videoId, variantIds, force})}),
+  getDeliveryJob: (jobId: string) => request<DeliveryJob>(`/api/delivery/${encodeURIComponent(jobId)}`),
+  listSeries: () => request<string[]>("/api/series"),
+  getSeries: (seriesId: string) => request<{seriesId: string; plan: SeriesPlan | null; bible: Record<string, unknown> | null}>(`/api/series/detail?seriesId=${encodeURIComponent(seriesId)}`),
+  verifySeries: (seriesId: string) => request<SeriesVerification>(`/api/series/verification?seriesId=${encodeURIComponent(seriesId)}`),
+  buildSeriesCoverage: (seriesId: string, force = true) => request<SeriesCoverageArtifact>("/api/series/coverage", {method: "POST", body: JSON.stringify({seriesId, force})}),
 };

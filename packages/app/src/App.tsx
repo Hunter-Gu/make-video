@@ -64,6 +64,7 @@ export const App = ({transport}: {transport: ProjectTransport}) => {
   }, [refresh, transport]);
 
   const handleRangeChange = useCallback(async (item: TimelineSelection, range: {startFrame: number; endFrame: number}) => {
+    if (item.type === 'music') return;
     setState((current) => {
       if (!current) return current;
       if (item.type === 'scene') return {...current, scenes: current.scenes.map((scene) => scene.id === item.id ? {...scene, ...range, durationInFrames: range.endFrame - range.startFrame} : scene)};
@@ -132,7 +133,7 @@ export const App = ({transport}: {transport: ProjectTransport}) => {
       <section className="grid min-h-0 grid-cols-[220px_minmax(460px,1fr)_300px] max-[1120px]:grid-cols-[180px_minmax(430px,1fr)_260px]">
         <AssetBin state={state} selected={assetId} onSelect={selectAsset} transport={transport} refresh={refreshCurrent} notice={setNotice} />
         <Preview state={state} mode={previewMode} setMode={setPreviewMode} stage={stage} setStageId={setStageId} sceneId={sceneId} selectScene={selectScene} playheadFrame={playheadFrame} onPlayheadChange={setPlayheadFrame} />
-        <Inspector state={state} mode={inspectorMode} setMode={setInspectorMode} scene={scene} caption={caption} asset={asset} effect={selection?.type === 'effect' ? state.effects.find((item) => item.id === selection.id) ?? null : null} audioSelection={selection?.type === 'music' ? selection : null} readiness={readiness} transport={transport} refresh={refreshCurrent} notice={setNotice} />
+        <Inspector state={state} mode={inspectorMode} setMode={setInspectorMode} scene={scene} caption={caption} asset={asset} effect={selection?.type === 'effect' ? state.effects.find((item) => item.id === selection.id) ?? null : null} readiness={readiness} transport={transport} refresh={refreshCurrent} notice={setNotice} />
       </section>
       <Timeline state={state} selection={selection} playheadFrame={playheadFrame} onSelect={selectTimeline} onSeek={setPlayheadFrame} onRangeChange={handleRangeChange} />
       {modelSettingsOpen && <ModelSettingsDialog state={state} transport={transport} listModels={transport.listModels} refresh={refreshCurrent} notice={setNotice} onClose={() => setModelSettingsOpen(false)} />}
