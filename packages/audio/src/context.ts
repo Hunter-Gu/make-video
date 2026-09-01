@@ -24,7 +24,9 @@ const resolveInsideProject = (value: unknown, label: string) => {
   return file;
 };
 
+const videoIdPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const loadAudioContext = (videoId: string): AudioContext => {
+  if (!videoIdPattern.test(videoId)) throw new Error(`Invalid video id "${videoId}". Use lowercase kebab-case directory names.`);
   const sourceDir = resolve(projectRoot, "src", videoId);
   const configPath = resolve(sourceDir, "video.config.json");
   if (!existsSync(configPath)) throw new Error(`Video config not found: ${configPath}`);

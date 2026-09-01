@@ -21,7 +21,9 @@ const resolveInsideProject = (value: unknown, label: string) => {
   if (fromRoot === ".." || fromRoot.startsWith(`..${sep}`)) throw new Error(`${label} escapes the project: ${value}`);
   return file;
 };
+const videoIdPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const loadRenderContext = (videoId: string): RenderContext => {
+  if (!videoIdPattern.test(videoId)) throw new Error(`Invalid video id "${videoId}". Use lowercase kebab-case directory names.`);
   const sourceDir = resolve(projectRoot, "src", videoId); const configPath = resolve(sourceDir, "video.config.json");
   if (!existsSync(configPath)) throw new Error(`Video config not found: ${configPath}`);
   const config = JSON.parse(readFileSync(configPath, "utf8")) as JsonObject; const composition = config.composition as JsonObject; const production = config.production as JsonObject;

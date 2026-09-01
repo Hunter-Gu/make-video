@@ -18,10 +18,14 @@ const inside = (root: string, file: string) => {
 
 const mediaKind = (file: string): "image" | "video" => /\.(mp4|mov|webm|m4v)$/i.test(file) ? "video" : "image";
 
+/**
+ * Remotion resolves public files through staticFile(), which prefixes the bundle's
+ * static base. Emit the public-relative path and let the composition prefix it.
+ */
 const remotionUrl = (file: string) => {
   const publicRoot = resolve(projectRoot, "public");
   if (!inside(publicRoot, file)) return null;
-  return `/${relative(publicRoot, file).split(sep).map(encodeURIComponent).join("/")}`;
+  return relative(publicRoot, file).split(sep).join("/");
 };
 
 const fileUrl = (file: string, target: StateTarget) => target === "server"

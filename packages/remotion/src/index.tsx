@@ -1,5 +1,5 @@
 import type {CSSProperties, ReactNode} from 'react';
-import {AbsoluteFill, Audio, Easing, Img, OffthreadVideo, interpolate, useCurrentFrame} from 'remotion';
+import {AbsoluteFill, Audio, Easing, Img, OffthreadVideo, interpolate, staticFile, useCurrentFrame} from 'remotion';
 import type {ProjectState, SceneContent} from '@make-video/contracts';
 import type {Asset} from '@make-video/contracts';
 
@@ -112,12 +112,15 @@ export const TimelineEffectFrame = ({children, effects, sceneId, globalStartFram
   </AbsoluteFill>;
 };
 
+/** Absolute and remote sources pass through; public-relative paths resolve through Remotion's static base. */
+export const mediaSrc = (url: string) => /^(https?:\/\/|\/|data:|blob:)/.test(url) ? url : staticFile(url);
+
 type AssetReference = {url: string; kind: Asset['kind']};
 
 const MediaLayer = ({reference, style, content}: {reference: AssetReference | null; style?: CSSProperties; content?: SceneContent}) => {
   if (!reference) return null;
-  if (reference.kind === 'video') return <OffthreadVideo src={reference.url} muted={content?.videoMuted ?? true} volume={content?.videoVolume ?? 1} playbackRate={content?.videoPlaybackRate ?? 1} style={style} />;
-  return <Img src={reference.url} style={style} />;
+  if (reference.kind === 'video') return <OffthreadVideo src={mediaSrc(reference.url)} muted={content?.videoMuted ?? true} volume={content?.videoVolume ?? 1} playbackRate={content?.videoPlaybackRate ?? 1} style={style} />;
+  return <Img src={mediaSrc(reference.url)} style={style} />;
 };
 
 const SceneContentView = ({content, progress, assetUrl, assetReferences}: {content: SceneContent | undefined; progress: number; assetUrl: string | null; assetReferences: Map<string, AssetReference>}) => {
@@ -171,17 +174,17 @@ export const ProjectComposition = ({state}: {state: ProjectState}) => {
     ? interpolate(frame - scene.startFrame, [0, transitionFrames], [0, 1], {easing: Easing.inOut(Easing.cubic), extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})
     : 1;
   return <AbsoluteFill style={{background: '#090d14'}}>
-    {previousAsset && previousScene && transitionProgress < 1 ? <Img src={previousAsset.url} style={{width: '100%', height: '100%', objectFit: 'cover', objectPosition: previousScene.content?.imagePosition ?? 'center', transform: timelineImageTransform(previousScene.endFrame, previousEffect, 1)}} /> : null}
+    {previousAsset && previousScene && transitionProgress < 1 ? <Img src={mediaSrc(previousAsset.url)} style={{width: '100%', height: '100%', objectFit: 'cover', objectPosition: previousScene.content?.imagePosition ?? 'center', transform: timelineImageTransform(previousScene.endFrame, previousEffect, 1)}} /> : null}
     <AbsoluteFill style={transitionStyle(transitionKind, transitionProgress)}>
       <TimelineEffectFrame effects={state.effects} sceneId={scene?.id ?? ''} globalStartFrame={0}>
         <AbsoluteFill style={{background: '#090d14', color: '#f4ead7', fontFamily: 'Georgia, serif'}}>
-          {videoAsset?.url ? <OffthreadVideo src={videoAsset.url} trimBefore={scene?.content?.videoStartInFrames ?? 0} playbackRate={scene?.content?.videoPlaybackRate ?? 1} muted={scene?.content?.videoMuted ?? true} volume={scene?.content?.videoVolume ?? 1} style={{width: '100%', height: '100%', objectFit: scene?.content?.videoFit ?? 'cover'}} /> : asset?.url ? <Img src={asset.url} style={{width: '100%', height: '100%', objectFit: 'cover', transform: timelineImageTransform(frame, motionEffect, progress)}} /> : null}
+          {videoAsset?.url ? <OffthreadVideo src={mediaSrc(videoAsset.url)} trimBefore={scene?.content?.videoStartInFrames ?? 0} playbackRate={scene?.content?.videoPlaybackRate ?? 1} muted={scene?.content?.videoMuted ?? true} volume={scene?.content?.videoVolume ?? 1} style={{width: '100%', height: '100%', objectFit: scene?.content?.videoFit ?? 'cover'}} /> : asset?.url ? <Img src={mediaSrc(asset.url)} style={{width: '100%', height: '100%', objectFit: 'cover', transform: timelineImageTransform(frame, motionEffect, progress)}} /> : null}
           {scene?.content?.type === 'image' || scene?.content?.type === 'chapter' || scene?.content?.type === 'portrait' || scene?.content?.type === 'depth' || scene?.content?.type === 'video' ? <AbsoluteFill style={{background: 'linear-gradient(90deg, rgba(8,12,18,.94), rgba(8,12,18,.35) 65%, rgba(8,12,18,.1))'}} /> : null}
           <SceneContentView content={scene?.content} progress={progress} assetUrl={asset?.url ?? null} assetReferences={assetReferences} />
           {caption ? <div style={{position: 'absolute', left: '9%', right: '9%', bottom: '5%', padding: '10px 18px', borderRadius: 8, background: '#05080db8', textAlign: 'center', fontFamily: 'Arial, sans-serif', fontSize: 'clamp(13px, 1.8vw, 30px)', lineHeight: 1.35}}>{caption.text}</div> : null}
         </AbsoluteFill>
       </TimelineEffectFrame>
     </AbsoluteFill>
-    {audioTracks.map((track) => <Audio key={track.id} src={track.url as string} />)}
+    {audioTracks.map((track) => <Audio key={track.id} src={mediaSrc(track.url as string)} />)}
   </AbsoluteFill>;
 };
