@@ -67,14 +67,16 @@ export const verifySeries = (seriesId: string): SeriesVerification => {
     if ((episode.next ?? null) !== next) fail(`Episode ${episode.id} next must be ${next ?? "null"}.`);
   }
 
-  const sourceIndexFile = context.resolveConfiguredPath(raw.sourceIndex, "series-plan.json sourceIndex");
   let blocks = new Map<string, string>();
-  if (!existsSync(sourceIndexFile)) fail(`Source index not found: ${raw.sourceIndex}`);
-  else {
-    const index = readJson(sourceIndexFile);
-    blocks = new Map((index.sources ?? []).flatMap((source: any) => (source.blocks ?? []).map((block: any) => [String(block.id), String(block.text ?? "")])) as Array<[string, string]>);
-    if (blocks.size === 0) fail(`Source index ${raw.sourceIndex} has no indexed blocks.`);
-  }
+  try {
+    const sourceIndexFile = context.resolveConfiguredPath(raw.sourceIndex, "series-plan.json sourceIndex");
+    if (!existsSync(sourceIndexFile)) fail(`Source index not found: ${raw.sourceIndex}`);
+    else {
+      const index = readJson(sourceIndexFile);
+      blocks = new Map((index.sources ?? []).flatMap((source: any) => (source.blocks ?? []).map((block: any) => [String(block.id), String(block.text ?? "")])) as Array<[string, string]>);
+      if (blocks.size === 0) fail(`Source index ${raw.sourceIndex} has no indexed blocks.`);
+    }
+  } catch (error) { fail(error instanceof Error ? error.message : String(error)); }
 
   const shared = new Set(stringArray(raw.sharedSourceBlockIds) ? raw.sharedSourceBlockIds : []);
   const omitted = new Set(stringArray(raw.omittedSourceBlockIds) ? raw.omittedSourceBlockIds : []);
@@ -102,8 +104,10 @@ export const verifySeries = (seriesId: string): SeriesVerification => {
   if (typeof rights.status !== "string" || !rights.status.trim()) fail("SERIES_BIBLE.json rights.status is required; possession of a file is not adaptation permission.");
   if (typeof rights.intendedUse !== "string" || !rights.intendedUse.trim()) fail("SERIES_BIBLE.json rights.intendedUse is required.");
   for (const [name, path] of Object.entries((bible.sharedFiles ?? {}) as Record<string, unknown>)) {
-    const file = context.resolveConfiguredPath(path, `SERIES_BIBLE.json sharedFiles.${name}`);
-    if (!existsSync(file)) fail(`Shared ${name} bible not found: ${path}`);
+    try {
+      const file = context.resolveConfiguredPath(path, `SERIES_BIBLE.json sharedFiles.${name}`);
+      if (!existsSync(file)) fail(`Shared ${name} bible not found: ${path}`);
+    } catch (error) { fail(error instanceof Error ? error.message : String(error)); }
   }
 
   const introducedBy = new Map<string, string>();
@@ -146,8 +150,10 @@ export const verifySeries = (seriesId: string): SeriesVerification => {
   const pronunciationPath = (bible.sharedFiles ?? {}).pronunciation;
   const pronunciationIds = new Set<string>();
   if (typeof pronunciationPath === "string") {
-    const file = context.resolveConfiguredPath(pronunciationPath, "SERIES_BIBLE.json sharedFiles.pronunciation");
-    if (existsSync(file)) for (const entry of readJson(file).entries ?? []) pronunciationIds.add(String(entry?.id));
+    try {
+      const file = context.resolveConfiguredPath(pronunciationPath, "SERIES_BIBLE.json sharedFiles.pronunciation");
+      if (existsSync(file)) for (const entry of readJson(file).entries ?? []) pronunciationIds.add(String(entry?.id));
+    } catch { /* the shared-file check above already reported the invalid path */ }
   }
   for (const term of Array.isArray(bible.terms) ? bible.terms : []) {
     if (typeof term?.canonical !== "string" || !term.canonical.trim()) fail(`Series term ${term?.id ?? "unknown"} needs a canonical spelling.`);
