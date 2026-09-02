@@ -1,3 +1,4 @@
+import {log} from "@make-video/project";
 import {spawnSync} from "node:child_process";
 import {createHash} from "node:crypto";
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
@@ -33,5 +34,5 @@ export const ingestSources = async (videoId: string, force: boolean) => {
     else { const file = context.resolveConfiguredPath(source.input, `sources.${source.id}.input`); if (!existsSync(file)) throw new Error(`Source not found: ${file}`); origin = source.input; if (type === "pdf") blocks = ingestPdf(file); else if (type === "docx") blocks = ingestDocx(file); else if (type === "epub") blocks = ingestEpub(file); else if (type === "markdown" || type === "text") blocks = paragraphs(readFileSync(file, "utf8"), "document"); else throw new Error(`Unsupported source type for ${source.id}: ${type}`); }
     indexedSources.push({id: source.id, title: source.title ?? source.id, type, origin, rights: source.rights ?? "unspecified", sha256: createHash("sha256").update(blocks.map((block) => block.text).join("\n")).digest("hex"), blocks: blocks.map((block, index) => ({id: `${source.id}-${index + 1}`, ...block}))});
   }
-  mkdirSync(outputDir, {recursive: true}); writeFileSync(indexFile, `${JSON.stringify({videoId, sources: indexedSources}, null, 2)}\n`); console.log(`Indexed ${indexedSources.length} source(s) for ${videoId}: ${indexFile}`);
+  mkdirSync(outputDir, {recursive: true}); writeFileSync(indexFile, `${JSON.stringify({videoId, sources: indexedSources}, null, 2)}\n`); log(`Indexed ${indexedSources.length} source(s) for ${videoId}: ${indexFile}`);
 };

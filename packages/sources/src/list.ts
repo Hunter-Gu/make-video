@@ -1,3 +1,4 @@
+import {log} from "@make-video/project";
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
 import {dirname, resolve} from "node:path";
 
@@ -39,6 +40,6 @@ export const buildSourceList = (videoId: string, force: boolean) => {
   mkdirSync(dirname(output), {recursive: true});
   const content = `${lines.join("\n").trim()}\n`;
   writeFileSync(output, content);
-  console.log(`Source list: ${output}`);
+  log(`Source list: ${output}`);
   return content;
 };

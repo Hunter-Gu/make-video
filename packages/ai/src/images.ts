@@ -1,3 +1,4 @@
+import {log} from "@make-video/project";
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
 import {dirname, extname, relative, resolve, sep} from "node:path";
 
@@ -55,11 +56,11 @@ export const runImages = async (args: string[], provider: MediaProvider = google
     writeFileSync(output, bytes);
     manifest.assets = manifest.assets.filter((item: AnyRecord) => item.id !== asset.id);
     manifest.assets.push({id: asset.id, output: relative(context.publicDir, output), mimeType, model: assetModel, promptHash: hash(prompt), sha256: hash(bytes)});
-    console.log(`Generated ${asset.id}`);
+    log(`Generated ${asset.id}`);
   }
   const order = new Map(imageGeneration.assets.map((asset: AnyRecord, index: number) => [asset.id, index]));
   manifest.assets.sort((left: AnyRecord, right: AnyRecord) => (order.get(String(left.id)) ?? Infinity) - (order.get(String(right.id)) ?? Infinity));
   mkdirSync(dirname(manifestFile), {recursive: true});
   writeJson(manifestFile, manifest);
-  console.log(`Generated images for ${videoId}.`);
+  log(`Generated images for ${videoId}.`);
 };

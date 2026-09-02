@@ -1,3 +1,4 @@
+import {log} from "@make-video/project";
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
 import {dirname, resolve} from "node:path";
 
@@ -52,10 +53,10 @@ export const runVoiceover = async (args: string[], provider: MediaProvider = goo
     const output = resolve(outputDir, `${segment.id}.wav`);
     writeWave(output, pcm);
     manifest.segments[segment.id] = {hash: hash(prompt), durationSeconds: pcm.length / 2 / 24000};
-    console.log(`Generated ${segment.id}: ${(pcm.length / 2 / 24000).toFixed(2)}s`);
+    log(`Generated ${segment.id}: ${(pcm.length / 2 / 24000).toFixed(2)}s`);
   }
   writeJson(resolve(outputDir, "manifest.json"), manifest);
-  console.log(`Generated the aligned voiceover timeline for ${videoId}.`);
+  log(`Generated the aligned voiceover timeline for ${videoId}.`);
 };
 
 export const runMusic = async (args: string[], provider: MediaProvider = googleMediaProvider) => {
@@ -69,5 +70,5 @@ export const runMusic = async (args: string[], provider: MediaProvider = googleM
   const audio = await provider.music({model, prompt: music.prompt});
   mkdirSync(dirname(output), {recursive: true});
   writeFileSync(output, audio.bytes);
-  console.log(`Generated the music bed for ${videoId}.`);
+  log(`Generated the music bed for ${videoId}.`);
 };

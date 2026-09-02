@@ -1,3 +1,4 @@
+import {log} from "@make-video/project";
 import {existsSync, mkdirSync, writeFileSync} from "node:fs";
 import {relative, resolve} from "node:path";
 
@@ -114,6 +115,6 @@ export const createProject = (input: CreateProjectInput): CreatedProject => {
     }), force, created, skipped);
   }
 
-  console.log(`Created video project ${videoId}: ${created.length} file(s) written, ${skipped.length} kept.`);
+  log(`Created video project ${videoId}: ${created.length} file(s) written, ${skipped.length} kept.`);
   return {videoId, path: relative(projectRoot, sourceDir), title: config.title, composition, created, skipped};
 };

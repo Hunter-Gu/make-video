@@ -1,3 +1,4 @@
+import {log} from "@make-video/project";
 import {createHash} from "node:crypto";
 import {existsSync, linkSync, lstatSync, mkdirSync, readFileSync, statSync, unlinkSync} from "node:fs";
 import {dirname, relative, resolve, sep} from "node:path";
@@ -35,5 +36,5 @@ export const linkAssets = (videoId: string) => {
     const sameContent = sameInode || (outputStat.size === sourceStat.size && hashFile(output) === hashFile(source));
     if (!sameContent) throw new Error(`${output} exists but does not match the configured canonical source.`);
   }
-  console.log(`Asset links are ready for ${videoId}.`);
+  log(`Asset links are ready for ${videoId}.`);
 };

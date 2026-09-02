@@ -1,3 +1,4 @@
+import {log} from "@make-video/project";
 import {copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync} from "node:fs";
 import {dirname, relative, resolve, sep} from "node:path";
 
@@ -49,7 +50,7 @@ export const installExample = (videoId: string, force: boolean) => {
   }
 
   linkAssets(videoId);
-  console.log(`Installed example ${videoId}: ${copied.length} file(s) written, ${skipped.length} kept.`);
-  if (skipped.length > 0) console.log(`Existing files were kept:\n${skipped.map((file) => `- ${file}`).join("\n")}\nPass --force to replace them.`);
+  log(`Installed example ${videoId}: ${copied.length} file(s) written, ${skipped.length} kept.`);
+  if (skipped.length > 0) log(`Existing files were kept:\n${skipped.map((file) => `- ${file}`).join("\n")}\nPass --force to replace them.`);
   return {videoId, copied, skipped};
 };

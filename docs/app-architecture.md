@@ -36,6 +36,12 @@ The pnpm workspace keeps runtime boundaries explicit:
 
 - `packages/app`: React/Vite editor shell and browser transports.
 - `packages/contracts`: shared project and transport types.
+Every package reports progress on stderr, never stdout. These functions run
+inside the MCP server as well as behind the CLIs, and a stdio session owns stdout
+for its JSON-RPC frames; a progress line written there corrupts the stream. The
+one exception is the HTTP server printing its own address, which never runs in
+stdio mode.
+
 - `packages/project`: how a video project is located, read, and kept inside the
   repository. Every package that touches project files resolves configured paths
   through it, so the boundary that stops a configuration reaching the rest of the

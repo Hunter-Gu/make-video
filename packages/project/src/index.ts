@@ -5,6 +5,17 @@ export const projectRoot = resolve(process.env.MAKE_VIDEO_PROJECT_ROOT ?? proces
 
 export type JsonObject = Record<string, any>;
 
+/**
+ * Report progress on stderr.
+ *
+ * These functions run inside the MCP server as well as behind the CLIs, and a
+ * stdio MCP session owns stdout for its JSON-RPC frames. A progress line written
+ * there corrupts the stream: some hosts skip the unparseable line, others drop
+ * the session. Nothing here emits machine-readable output on stdout, so all of it
+ * belongs on stderr, where a terminal still shows it.
+ */
+export const log = (message: string) => { process.stderr.write(`${message}\n`); };
+
 export const videoIdPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /**

@@ -1,3 +1,4 @@
+import {log} from "@make-video/project";
 import {spawnSync} from "node:child_process";
 import {existsSync, mkdirSync, readFileSync, renameSync, writeFileSync} from "node:fs";
 import {dirname, extname, relative, resolve} from "node:path";
@@ -237,12 +238,12 @@ export const runDelivery = async (videoId: string, options: {variantIds?: string
       renderedAt: new Date().toISOString(),
     };
     if (issues.length > 0) failures.push(`${variant.id}: ${issues.join("; ")}`);
-    console.log(`${issues.length === 0 ? "Delivered" : "Delivered with issues"} ${variant.id}: ${variant.output}`);
+    log(`${issues.length === 0 ? "Delivered" : "Delivered with issues"} ${variant.id}: ${variant.output}`);
   }
   report.generatedAt = new Date().toISOString();
   report.passed = Object.values(report.variants).every((result) => result.passed !== false);
   const file = writeReport(videoId, report);
-  console.log(`Delivery report: ${file}`);
+  log(`Delivery report: ${file}`);
   // The report is written first: a variant that missed its declaration is still a
   // recorded fact about the files on disk, not something to lose with the error.
   if (failures.length > 0) throw new Error(`Delivered files do not match DELIVERABLES.json:\n${failures.map((failure) => `- ${failure}`).join("\n")}`);

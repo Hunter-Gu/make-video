@@ -236,6 +236,42 @@ test("MCP completes the host-agent preparation and deterministic production path
   }
 });
 
+test("the stdio protocol stream carries nothing but JSON-RPC frames", async () => {
+  // The service runs in-process, so anything it prints on stdout lands between
+  // the server's frames. Some hosts skip an unparseable line; others drop the
+  // session. Drive it over raw stdio rather than a client, which hides this.
+  const fixture = await createFixture();
+  const child = spawn(process.execPath, [resolve(repositoryRoot, "skills/make-video/scripts/mcp.mjs")], {
+    cwd: repositoryRoot,
+    env: {...process.env, MAKE_VIDEO_PROJECT_ROOT: fixture.root},
+    stdio: ["pipe", "pipe", "ignore"],
+  });
+  let raw = "";
+  child.stdout.on("data", (chunk) => { raw += String(chunk); });
+  const send = (value: unknown) => child.stdin.write(`${JSON.stringify(value)}\n`);
+  const lines = () => raw.split("\n").filter((line) => line.trim().length > 0);
+  const waitForLines = async (count: number) => {
+    for (let attempt = 0; attempt < 200; attempt += 1) {
+      if (lines().length >= count) return;
+      await new Promise((resolvePromise) => setTimeout(resolvePromise, 25));
+    }
+    throw new Error(`only ${lines().length} of ${count} responses arrived: ${raw.slice(0, 200)}`);
+  };
+  try {
+    send({jsonrpc: "2.0", id: 1, method: "initialize", params: {protocolVersion: "2025-06-18", capabilities: {}, clientInfo: {name: "stdout-probe", version: "1"}}});
+    await waitForLines(1);
+    send({jsonrpc: "2.0", method: "notifications/initialized"});
+    // linkAssets reports that a project's runtime links are ready.
+    send({jsonrpc: "2.0", id: 2, method: "tools/call", params: {name: "make_video_get_project", arguments: {videoId: fixture.videoId}}});
+    await waitForLines(2);
+
+    for (const line of lines()) assert.doesNotThrow(() => JSON.parse(line), `stdout is not a JSON-RPC frame: ${line.slice(0, 120)}`);
+  } finally {
+    child.kill();
+    await rm(fixture.root, {recursive: true, force: true});
+  }
+});
+
 const freePort = async () => {
   const server = createServer();
   await new Promise<void>((resolvePromise, reject) => { server.once("error", reject); server.listen(0, "127.0.0.1", () => resolvePromise()); });

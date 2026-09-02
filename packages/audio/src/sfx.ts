@@ -1,3 +1,4 @@
+import {log} from "@make-video/project";
 import {mkdirSync, writeFileSync} from "node:fs";
 import {resolve} from "node:path";
 
@@ -27,5 +28,5 @@ export const generateSfx = (videoId: string, force: boolean) => {
   let seed = 48271;
   const random = () => ((seed = (seed * 16807) % 2147483647) / 2147483647) * 2 - 1;
   writeWave(files[2], render(.58, (time, index, length) => { const progress = index / length; return (random() * .24 + Math.sin(2 * Math.PI * (180 + progress * 520) * time) * .16) * Math.sin(Math.PI * progress) ** 1.8; }));
-  console.log(`Generated UI sound effects for ${videoId} in ${outputDir}`);
+  log(`Generated UI sound effects for ${videoId} in ${outputDir}`);
 };

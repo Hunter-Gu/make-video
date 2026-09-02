@@ -1,3 +1,4 @@
+import {log} from "@make-video/project";
 import {spawnSync} from "node:child_process";
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
 import {dirname, resolve} from "node:path";
@@ -43,6 +44,6 @@ export const runImageQa = (args: string[]) => {
   const output = resolve(projectRoot, "output", videoId, "image-qa-report.json");
   mkdirSync(dirname(output), {recursive: true});
   writeFileSync(output, `${JSON.stringify(report, null, 2)}\n`);
-  for (const result of results) console.log(`${result.passed ? "✓" : "✗"} ${result.id}: deviation=${result.deviation.toFixed(1)}, OCR=${JSON.stringify(result.detectedText)}`);
+  for (const result of results) log(`${result.passed ? "✓" : "✗"} ${result.id}: deviation=${result.deviation.toFixed(1)}, OCR=${JSON.stringify(result.detectedText)}`);
   return report;
 };

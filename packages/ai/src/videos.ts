@@ -1,3 +1,4 @@
+import {log} from "@make-video/project";
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
 import {dirname, extname, relative, resolve, sep} from "node:path";
 import {spawnSync} from "node:child_process";
@@ -56,7 +57,7 @@ export const runVideos = async (args: string[], provider: MediaProvider = google
     if (existsSync(output) && prior?.status === "completed" && prior.fingerprint === fingerprint && !force) {
       manifest.assets = manifest.assets.filter((item: AnyRecord) => item.id !== asset.id);
       manifest.assets.push(prior.manifestAsset);
-      console.log(`Reused completed ${asset.id}`);
+      log(`Reused completed ${asset.id}`);
       continue;
     }
     if (existsSync(output) && !force) throw new Error(`Video generation for ${asset.id} would overwrite ${output}. Pass --force to replace it.`);
@@ -78,12 +79,12 @@ export const runVideos = async (args: string[], provider: MediaProvider = google
     manifest.assets = manifest.assets.filter((item: AnyRecord) => item.id !== asset.id);
     manifest.assets.push(manifestAsset);
     operations.assets[asset.id] = {status: "completed", fingerprint, completedAt: new Date().toISOString(), manifestAsset};
-    console.log(`Generated ${asset.id}`);
+    log(`Generated ${asset.id}`);
   }
   const order = new Map(generation.assets.map((asset: AnyRecord, index: number) => [asset.id, index]));
   manifest.assets.sort((left: AnyRecord, right: AnyRecord) => (order.get(left.id) ?? Infinity) - (order.get(right.id) ?? Infinity));
   mkdirSync(dirname(manifestFile), {recursive: true});
   writeJson(manifestFile, manifest);
   writeJson(operationsFile, operations);
-  console.log(`Generated videos for ${videoId}.`);
+  log(`Generated videos for ${videoId}.`);
 };

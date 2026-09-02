@@ -1,3 +1,4 @@
+import {log} from "@make-video/project";
 import {spawnSync} from "node:child_process";
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
 import {dirname, resolve} from "node:path";
@@ -82,7 +83,7 @@ export const runVideoQa = (args: string[], inputOverride?: string) => {
   const reportFile = resolve(projectRoot, "output", videoId, "qa-report.json");
   mkdirSync(dirname(reportFile), {recursive: true});
   writeFileSync(reportFile, `${JSON.stringify(report, null, 2)}\n`);
-  for (const check of checks) console.log(`${check.pass ? "✓" : "✗"} ${check.id}: ${JSON.stringify(check.actual)}`);
-  console.log(`QA report: ${reportFile}`);
+  for (const check of checks) log(`${check.pass ? "✓" : "✗"} ${check.id}: ${JSON.stringify(check.actual)}`);
+  log(`QA report: ${reportFile}`);
   return report;
 };

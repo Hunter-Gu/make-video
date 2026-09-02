@@ -1,3 +1,4 @@
+import {log} from "@make-video/project";
 import {writeFileSync} from "node:fs";
 import {relative, resolve} from "node:path";
 
@@ -47,6 +48,6 @@ export const buildSeriesCoverage = (seriesId: string, force: boolean): SeriesCov
   assertOutputAvailable(file, force, `Series coverage for ${seriesId}`);
   const content = `${lines.join("\n").trim()}\n`;
   writeFileSync(file, content);
-  console.log(`Series coverage: ${file}`);
+  log(`Series coverage: ${file}`);
   return {seriesId, path: relative(projectRoot, file), content};
 };

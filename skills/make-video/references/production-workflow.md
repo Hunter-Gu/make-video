@@ -186,6 +186,12 @@ node --env-file-if-exists=.env <skill-dir>/scripts/render.mjs deliver <video-id>
 Generation and render commands preserve existing outputs. Use `--force` only
 after replacement was explicitly requested.
 
+## Command output
+
+Every command reports its progress on stderr. Reports and rendered media are
+files; nothing is printed on stdout for a caller to parse. The same functions run
+inside the MCP server, where stdout carries the protocol.
+
 ## Generation safety
 
 - Target one video before every generation or render step.

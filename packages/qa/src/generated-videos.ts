@@ -1,3 +1,4 @@
+import {log} from "@make-video/project";
 import {spawnSync} from "node:child_process";
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
 import {dirname, resolve} from "node:path";
@@ -36,7 +37,7 @@ export const runGeneratedVideoQa = (args: string[]) => {
   const output = resolve(projectRoot, "output", videoId, "clip-qa-report.json");
   mkdirSync(dirname(output), {recursive: true});
   writeFileSync(output, `${JSON.stringify(report, null, 2)}\n`);
-  for (const result of results) console.log(`${result.passed ? "✓" : "✗"} ${result.id}: ${result.width}x${result.height}, ${result.duration}s, ${result.sceneCuts} cuts, OCR=${JSON.stringify(result.detectedText)}`);
-  console.log(`Clip QA report: ${output}`);
+  for (const result of results) log(`${result.passed ? "✓" : "✗"} ${result.id}: ${result.width}x${result.height}, ${result.duration}s, ${result.sceneCuts} cuts, OCR=${JSON.stringify(result.detectedText)}`);
+  log(`Clip QA report: ${output}`);
   return report;
 };
