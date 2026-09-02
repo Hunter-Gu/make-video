@@ -1,13 +1,12 @@
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
 import {dirname, extname, relative, resolve, sep} from "node:path";
 
-import {generateImage} from "ai";
-
-import {google, hash, mediaTypeFor, readJson, writeJson} from "./provider";
+import {hash, mediaTypeFor, readJson, writeJson} from "./provider";
+import {googleMediaProvider, type MediaProvider} from "./media-provider";
 import {assertOutputsAvailable, buildVisualContext, loadVideoContext, parseGenerationArgs} from "./project";
 import type {AnyRecord} from "./types";
 
-export const runImages = async (args: string[]) => {
+export const runImages = async (args: string[], provider: MediaProvider = googleMediaProvider) => {
   const {videoId, force, assetIds} = parseGenerationArgs(args);
   const context = loadVideoContext(videoId);
   const config = context.config as AnyRecord;
@@ -50,9 +49,7 @@ export const runImages = async (args: string[]) => {
     if (reference && !existsSync(reference)) throw new Error(`Generated image "${asset.id}" reference was not found: ${reference}`);
     if (reference && ![".png", ".jpg", ".jpeg", ".webp"].includes(extname(reference).toLowerCase())) throw new Error(`Generated image "${asset.id}" reference must be PNG, JPEG, or WebP.`);
     const assetModel = typeof asset.model === "string" && asset.model.length > 0 ? asset.model : model;
-    const result = await generateImage({model: google().image(assetModel), prompt: reference ? {images: [readFileSync(reference)], text: prompt} : prompt, aspectRatio: asset.aspectRatio as `${number}:${number}` | undefined});
-    const bytes = Buffer.from(result.image.uint8Array);
-    const mimeType = result.image.mediaType;
+    const {bytes, mediaType: mimeType} = await provider.image({model: assetModel, prompt, reference: reference ? readFileSync(reference) : undefined, aspectRatio: asset.aspectRatio});
     if (mimeType !== mediaTypeFor(output)) throw new Error(`Generated image "${asset.id}" returned ${mimeType}, which does not match ${extname(output)}.`);
     mkdirSync(dirname(output), {recursive: true});
     writeFileSync(output, bytes);

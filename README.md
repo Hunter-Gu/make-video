@@ -203,10 +203,15 @@ pnpm test
 ```
 
 `pnpm test` rebuilds the bundled skill entrypoints under
-`skills/make-video/scripts/` and runs the deterministic suites for narration
-timing, delivery variants, series verification, source ingestion, and the MCP
-service — plus an end-to-end MCP run over stdio and Streamable HTTP. It needs
-`ffmpeg`, `ffprobe`, and `tesseract` on `PATH`. CI additionally fails when the committed skill
+`skills/make-video/scripts/` and runs the deterministic suites for media
+generation, narration timing, media QA, delivery variants, series verification,
+source ingestion, and the MCP service — plus an end-to-end MCP run over stdio
+and Streamable HTTP. It needs `ffmpeg`, `ffprobe`, and `tesseract` on `PATH`.
+
+No test calls a model. Generation is exercised through a `MediaProvider` stand-in
+that returns fixed media, so the rules that protect against wasted spend — refusing
+to overwrite, regenerating only a named asset, reusing a completed clip, rejecting a
+declaration before any call — are checked without an API key. CI additionally fails when the committed skill
 entrypoints do not match their source.
 
 ## License

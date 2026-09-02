@@ -36,8 +36,10 @@ The pnpm workspace keeps runtime boundaries explicit:
 
 - `packages/app`: React/Vite editor shell and browser transports.
 - `packages/contracts`: shared project and transport types.
-- `packages/ai`: AI SDK provider adapters and the unified media-generation
-  command.
+- `packages/ai`: the unified media-generation command. Every generator takes a
+  `MediaProvider` — the four model calls behind one replaceable interface — so
+  the rules around them (output paths, overwrite refusal, provenance, prompt
+  assembly, resume decisions) are exercised without spending anything.
 - `packages/assets`: project scaffolding, canonical asset linking, preparation,
   and example project installation.
 - `packages/audio`: audio preparation, narration timing, and deterministic UI

@@ -1,9 +1,8 @@
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
 import {dirname, resolve} from "node:path";
 
-import {generateSpeech, generateText} from "ai";
-
-import {google, hash, readJson, writeJson} from "./provider";
+import {hash, readJson, writeJson} from "./provider";
+import {googleMediaProvider, type MediaProvider} from "./media-provider";
 import {assertOutputsAvailable, loadVideoContext, parseTargetArgs} from "./project";
 import type {AnyRecord} from "./types";
 
@@ -30,7 +29,7 @@ const writeWave = (file: string, pcm: Buffer, sampleRate = 24000, channels = 1) 
   writeFileSync(file, Buffer.concat([header, pcm]));
 };
 
-export const runVoiceover = async (args: string[]) => {
+export const runVoiceover = async (args: string[], provider: MediaProvider = googleMediaProvider) => {
   const {videoId, force} = parseTargetArgs(args);
   const context = loadVideoContext(videoId);
   const config = context.config as AnyRecord;
@@ -48,8 +47,8 @@ export const runVoiceover = async (args: string[]) => {
   mkdirSync(outputDir, {recursive: true});
   for (const segment of captions as AnyRecord[]) {
     const prompt = `${voice.direction ?? "Clear documentary narration."}\n\nTranscript:\n${segment.text}`;
-    const result = await generateSpeech({model: google().speech(model), text: prompt, voice: voiceName, outputFormat: "wav"});
-    const pcm = pcmFromAudio(result.audio.uint8Array);
+    const result = await provider.speech({model, text: prompt, voice: voiceName});
+    const pcm = pcmFromAudio(result.bytes);
     const output = resolve(outputDir, `${segment.id}.wav`);
     writeWave(output, pcm);
     manifest.segments[segment.id] = {hash: hash(prompt), durationSeconds: pcm.length / 2 / 24000};
@@ -59,7 +58,7 @@ export const runVoiceover = async (args: string[]) => {
   console.log(`Generated the aligned voiceover timeline for ${videoId}.`);
 };
 
-export const runMusic = async (args: string[]) => {
+export const runMusic = async (args: string[], provider: MediaProvider = googleMediaProvider) => {
   const {videoId, force} = parseTargetArgs(args);
   const context = loadVideoContext(videoId);
   const music = (context.config as AnyRecord).music as AnyRecord | undefined;
@@ -67,15 +66,8 @@ export const runMusic = async (args: string[]) => {
   const output = resolve(context.audioDirs.music, "underscore.mp3");
   assertOutputsAvailable([output], {force, action: `Music generation for ${videoId}`});
   const model = process.env.LYRIA_MODEL ?? music.model;
-  // Lyria is exposed through Google's Interactions API in the AI SDK.
-  const languageModel = model.startsWith("lyria-") ? google().interactions(model as any) : google().languageModel(model);
-  const providerOptions = model.startsWith("lyria-")
-    ? {google: {responseModalities: ["audio"], responseFormat: [{type: "audio", mimeType: "audio/mpeg"}]}}
-    : {google: {responseModalities: ["AUDIO"]}};
-  const result = await generateText({model: languageModel, prompt: music.prompt, providerOptions: providerOptions as any});
-  const audio = result.files.find((file) => file.mediaType.startsWith("audio/"));
-  if (!audio) throw new Error("AI SDK returned no audio for music generation.");
+  const audio = await provider.music({model, prompt: music.prompt});
   mkdirSync(dirname(output), {recursive: true});
-  writeFileSync(output, Buffer.from(audio.uint8Array));
+  writeFileSync(output, audio.bytes);
   console.log(`Generated the music bed for ${videoId}.`);
 };
