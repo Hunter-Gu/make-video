@@ -1,11 +1,12 @@
 import {existsSync, readFileSync} from "node:fs";
-import {isAbsolute, relative, resolve, sep} from "node:path";
+import {resolve} from "node:path";
+
+import {assertOutputsAvailable as assertAvailable, audioDirsFor, projectRoot, readProjectConfig, requireObject, resolveInsideProject, resolvePublicDir} from "@make-video/project";
 
 import type {AnyRecord} from "./types";
 
-export const projectRoot = process.env.MAKE_VIDEO_PROJECT_ROOT ?? process.cwd();
+export {projectRoot};
 
-const videoIdPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const kebabCase = (value: string) => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
 
 export type VideoContext = {
@@ -19,20 +20,6 @@ export type VideoContext = {
   audioDirs: {music: string; sfx: string; voiceover: string};
   outputs: AnyRecord;
   resolveConfiguredPath: (configuredPath: unknown, label: string) => string;
-};
-
-const requireObject = (value: unknown, label: string): AnyRecord => {
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${label} must be an object.`);
-  return value as AnyRecord;
-};
-
-const resolveInsideRepository = (configuredPath: unknown, label: string) => {
-  if (typeof configuredPath !== "string" || configuredPath.length === 0) throw new Error(`${label} must be a non-empty project-relative path.`);
-  if (isAbsolute(configuredPath)) throw new Error(`${label} must not be absolute: ${configuredPath}`);
-  const resolvedPath = resolve(projectRoot, configuredPath);
-  const relativePath = relative(projectRoot, resolvedPath);
-  if (relativePath === ".." || relativePath.startsWith(`..${sep}`)) throw new Error(`${label} escapes the project: ${configuredPath}`);
-  return resolvedPath;
 };
 
 export const parseTargetArgs = (args: string[]) => {
@@ -57,46 +44,21 @@ export const parseGenerationArgs = (args: string[]) => {
 };
 
 export const loadVideoContext = (videoId: string): VideoContext => {
-  if (!videoIdPattern.test(videoId)) throw new Error(`Invalid video id "${videoId}". Use lowercase kebab-case directory names.`);
-  const sourceDir = resolve(projectRoot, "src", videoId);
-  const configPath = resolve(sourceDir, "video.config.json");
-  if (!existsSync(configPath)) throw new Error(`Video config not found: ${configPath}`);
-  const config = JSON.parse(readFileSync(configPath, "utf8")) as AnyRecord;
+  const {config, sourceDir, configPath} = readProjectConfig(videoId);
   const composition = requireObject(config.composition, "composition");
   const production = requireObject(config.production, "production");
-  if (config.videoId !== videoId) throw new Error(`video.config.json declares videoId "${config.videoId}" but directory target is "${videoId}".`);
   if (typeof composition.id !== "string" || composition.id.length === 0) throw new Error("composition.id must be a non-empty string.");
   for (const field of ["fps", "width", "height", "durationInFrames"] as const) {
     if (!Number.isFinite(composition[field]) || composition[field] <= 0) throw new Error(`composition.${field} must be a positive number.`);
   }
-  const configuredPublicPath = production.publicPath ?? videoId;
-  if (typeof configuredPublicPath !== "string") throw new Error("production.publicPath must be a string when provided.");
-  const publicDir = resolve(projectRoot, "public", configuredPublicPath);
-  const relativePublicDir = relative(resolve(projectRoot, "public"), publicDir);
-  if (relativePublicDir === ".." || relativePublicDir.startsWith(`..${sep}`)) throw new Error("production.publicPath must stay inside public/.");
-  const outputs = requireObject(production.outputs, "production.outputs");
-  const resolveOutput = (name: string) => resolveInsideRepository(outputs[name], `production.outputs.${name}`);
-  const resolvedOutputs = {still: resolveOutput("still"), silent: resolveOutput("silent"), unmastered: resolveOutput("unmastered"), final: resolveOutput("final")};
-  if (new Set(Object.values(resolvedOutputs)).size !== 4) throw new Error("production output paths must be distinct.");
-  return {
-    videoId,
-    config,
-    composition,
-    production,
-    sourceDir,
-    configPath,
-    publicDir,
-    audioDirs: {music: resolve(publicDir, "audio/music"), sfx: resolve(publicDir, "audio/sfx"), voiceover: resolve(publicDir, "audio/voiceover")},
-    outputs: resolvedOutputs,
-    resolveConfiguredPath: resolveInsideRepository,
-  };
+  const publicDir = resolvePublicDir(production, videoId);
+  const outputConfig = requireObject(production.outputs, "production.outputs");
+  const outputs = Object.fromEntries(["still", "silent", "unmastered", "final"].map((name) => [name, resolveInsideProject(outputConfig[name], `production.outputs.${name}`)]));
+  if (new Set(Object.values(outputs)).size !== 4) throw new Error("production output paths must be distinct.");
+  return {videoId, config, composition, production, sourceDir, configPath, publicDir, audioDirs: audioDirsFor(publicDir), outputs, resolveConfiguredPath: resolveInsideProject};
 };
 
-export const assertOutputsAvailable = (paths: string[], options: {force: boolean; action: string}) => {
-  if (options.force) return;
-  const existingPaths = paths.filter((path) => existsSync(path));
-  if (existingPaths.length > 0) throw new Error(`${options.action} stopped because generated output already exists:\n${existingPaths.map((path) => `- ${path}`).join("\n")}\nPass --force only when regeneration was explicitly requested.`);
-};
+export const assertOutputsAvailable = (paths: string[], options: {force: boolean; action: string}) => assertAvailable(paths, options.force, options.action);
 
 export const buildVisualContext = (context: VideoContext, requestedCharacters?: Array<{id: string; stage?: string}>) => {
   const visualFile = resolve(context.sourceDir, "VISUAL_BIBLE.json");

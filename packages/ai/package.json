@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.49",
+    "@make-video/project": "workspace:*",
     "ai": "^7.0.0"
   },
   "devDependencies": {

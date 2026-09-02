@@ -16,12 +16,46 @@ import type {BuildOutput, BuildStatus, DeliveryJob, GenerationPreparation, Gener
 import {loadVideoContext, projectRoot} from "./context";
 
 const preparedAssetProjects = new Set<string>();
-const generationJobs = new Map<string, GenerationJob>();
-const renderJobs = new Map<string, RenderJob>();
-const qaJobs = new Map<string, QaJob>();
-const sourceJobs = new Map<string, SourceJob>();
-const timingJobs = new Map<string, TimingJob>();
-const deliveryJobs = new Map<string, DeliveryJob>();
+
+type Job = {id: string; videoId: string; status: "queued" | "running" | "succeeded" | "failed"; createdAt: string; startedAt?: string; completedAt?: string; error?: string};
+
+const jobs = new Map<string, Job>();
+const finishedJobLimit = 200;
+
+/**
+ * Run one background job and keep its state readable by id. Finished jobs are
+ * dropped once there are too many of them, so a long-lived local server does not
+ * grow without bound; a job that is still running is never evicted.
+ */
+const startJob = <T extends Job>(job: T, work: () => Promise<unknown>, describeError: (message: string) => string = (message) => message): T => {
+  jobs.set(job.id, job);
+  for (const [id, tracked] of jobs) {
+    if (jobs.size <= finishedJobLimit) break;
+    if (tracked.status === "succeeded" || tracked.status === "failed") jobs.delete(id);
+  }
+  void (async () => {
+    job.status = "running";
+    job.startedAt = new Date().toISOString();
+    try {
+      await work();
+      job.status = "succeeded";
+    } catch (error) {
+      job.status = "failed";
+      job.error = describeError(error instanceof Error ? error.message : String(error));
+    } finally {
+      job.completedAt = new Date().toISOString();
+    }
+  })();
+  return job;
+};
+
+const getJob = <T extends Job>(jobId: string, label: string): T => {
+  const job = jobs.get(jobId);
+  if (!job) throw new Error(`${label} job not found: ${jobId}. Job state is kept in memory, so it does not survive a server restart.`);
+  return job as T;
+};
+
+const newJob = <T extends Record<string, unknown>>(videoId: string, values: T) => ({id: randomUUID(), videoId, status: "queued" as const, createdAt: new Date().toISOString(), ...values});
 
 /** Prepare ignored public/ links before reading project media. */
 export const prepareProjectAssets = (videoId: string) => {
@@ -326,30 +360,13 @@ export const checkGenerationReadiness = (videoId: string): GenerationReadiness =
   return {videoId, passed: errors.length === 0, errors: [...new Set(errors)], warnings: [...new Set(warnings)], plan: {present: Boolean(savedPlan), valid: planValid}, script: {present: existsSync(scriptFile), valid: script.passed, segments: script.segments.length}, generation: {imageModel: typeof imageGeneration?.model === "string" ? imageGeneration.model : null, videoModel: typeof videoGeneration?.model === "string" ? videoGeneration.model : null, voiceModel, imageAssets: imageAssets.length, videoAssets: videoAssets.length, assignedScenes: [...assignedScenes]}, timing: {planPresent: timingPlanPresent, voiceManifestPresent}};
 };
 
-export const startTiming = (videoId: string, force = false): TimingJob => {
-  const job: TimingJob = {id: randomUUID(), videoId, status: "queued", createdAt: new Date().toISOString()};
-  timingJobs.set(job.id, job);
-  void (async () => {
-    job.status = "running";
-    job.startedAt = new Date().toISOString();
-    try {
-      const validation = validateScript(videoId);
-      if (!validation.passed) throw new Error(`Script validation failed: ${validation.errors.join(" ")}`);
-      await runTimingPackage(videoId, force);
-      job.status = "succeeded";
-    } catch (error) {
-      job.status = "failed";
-      job.error = error instanceof Error ? error.message : String(error);
-    } finally { job.completedAt = new Date().toISOString(); }
-  })();
-  return job;
-};
+export const startTiming = (videoId: string, force = false): TimingJob => startJob(newJob(videoId, {}) as TimingJob, async () => {
+  const validation = validateScript(videoId);
+  if (!validation.passed) throw new Error(`Script validation failed: ${validation.errors.join(" ")}`);
+  await runTimingPackage(videoId, force);
+});
 
-export const getTimingJob = (jobId: string) => {
-  const job = timingJobs.get(jobId);
-  if (!job) throw new Error(`Timing job not found: ${jobId}`);
-  return job;
-};
+export const getTimingJob = (jobId: string) => getJob<TimingJob>(jobId, "Timing");
 
 export const uploadSource = (videoId: string, filename: string, data: Buffer): SourceUpload => {
   const context = loadVideoContext(videoId);
@@ -373,24 +390,10 @@ export const uploadSource = (videoId: string, filename: string, data: Buffer): S
   return {videoId, source};
 };
 
-export const startSourceIngest = (videoId: string, force = true): SourceJob => {
-  const job: SourceJob = {id: randomUUID(), videoId, status: "queued", createdAt: new Date().toISOString()};
-  sourceJobs.set(job.id, job);
-  void (async () => {
-    job.status = "running";
-    job.startedAt = new Date().toISOString();
-    try { await runSourceIngest(videoId, force); job.status = "succeeded"; }
-    catch (error) { job.status = "failed"; job.error = error instanceof Error ? error.message : String(error); }
-    finally { job.completedAt = new Date().toISOString(); }
-  })();
-  return job;
-};
+export const startSourceIngest = (videoId: string, force = true): SourceJob =>
+  startJob(newJob(videoId, {}) as SourceJob, () => runSourceIngest(videoId, force));
 
-export const getSourceJob = (jobId: string) => {
-  const job = sourceJobs.get(jobId);
-  if (!job) throw new Error(`Source job not found: ${jobId}`);
-  return job;
-};
+export const getSourceJob = (jobId: string) => getJob<SourceJob>(jobId, "Source");
 
 export const updateTimelineRange = (videoId: string, input: any) => {
   const context = loadVideoContext(videoId);
@@ -598,89 +601,31 @@ export const runGeneration = async (videoId: string, kind: "images" | "video" | 
 
 export const startGeneration = (videoId: string, kind: "images" | "video" | "voiceover" | "music", force = false): GenerationJob => {
   if (!["images", "video", "voiceover", "music"].includes(kind)) throw new Error(`Unknown generation kind: ${kind}`);
-  const job: GenerationJob = {id: randomUUID(), videoId, kind, status: "queued", createdAt: new Date().toISOString()};
-  generationJobs.set(job.id, job);
-  void (async () => {
-    job.status = "running";
-    job.startedAt = new Date().toISOString();
-    try {
-      await runGeneration(videoId, kind, force);
-      job.status = "succeeded";
-    } catch (error) {
-      job.status = "failed";
-      job.error = error instanceof Error ? error.message : String(error);
-    } finally {
-      job.completedAt = new Date().toISOString();
-    }
-  })();
-  return job;
+  return startJob(newJob(videoId, {kind}) as GenerationJob, () => runGeneration(videoId, kind, force));
 };
 
-export const getGenerationJob = (jobId: string) => {
-  const job = generationJobs.get(jobId);
-  if (!job) throw new Error(`Generation job not found: ${jobId}`);
-  return job;
-};
+export const getGenerationJob = (jobId: string) => getJob<GenerationJob>(jobId, "Generation");
 
 export const startRender = (videoId: string, kind: "still" | "preview" | "final", force = false): RenderJob => {
   if (!["still", "preview", "final"].includes(kind)) throw new Error(`Unknown render kind: ${kind}`);
-  const job: RenderJob = {id: randomUUID(), videoId, kind, status: "queued", createdAt: new Date().toISOString()};
-  renderJobs.set(job.id, job);
-  void (async () => {
-    job.status = "running";
-    job.startedAt = new Date().toISOString();
-    try {
-      validateRenderInputs(videoId);
-      await runRender(kind, videoId, force);
-      if (kind === "preview" || kind === "final") {
-        const context = loadVideoContext(videoId);
-        const output = kind === "preview" ? context.outputs.silent : context.outputs.final;
-        await runQa("video", videoId, relative(projectRoot, output));
-      }
-      job.status = "succeeded";
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      job.status = "failed";
-      job.error = message.includes("QA exited") ? qaFailureDetail(videoId, "video", message) : message;
-    } finally {
-      job.completedAt = new Date().toISOString();
-    }
-  })();
-  return job;
+  return startJob(newJob(videoId, {kind}) as RenderJob, async () => {
+    validateRenderInputs(videoId);
+    await runRender(kind, videoId, force);
+    if (kind === "still") return;
+    const context = loadVideoContext(videoId);
+    const output = kind === "preview" ? context.outputs.silent : context.outputs.final;
+    await runQa("video", videoId, relative(projectRoot, output));
+  }, (message) => message.includes("QA exited") ? qaFailureDetail(videoId, "video", message) : message);
 };
 
-export const getRenderJob = (jobId: string) => {
-  const job = renderJobs.get(jobId);
-  if (!job) throw new Error(`Render job not found: ${jobId}`);
-  return job;
-};
+export const getRenderJob = (jobId: string) => getJob<RenderJob>(jobId, "Render");
 
 export const startQa = (videoId: string, kind: "video" | "images" | "generated-videos"): QaJob => {
   if (!["video", "images", "generated-videos"].includes(kind)) throw new Error(`Unknown QA kind: ${kind}`);
-  const job: QaJob = {id: randomUUID(), videoId, kind, status: "queued", createdAt: new Date().toISOString()};
-  qaJobs.set(job.id, job);
-  void (async () => {
-    job.status = "running";
-    job.startedAt = new Date().toISOString();
-    try {
-      await runQa(kind, videoId);
-      job.status = "succeeded";
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      job.status = "failed";
-      job.error = qaFailureDetail(videoId, kind, message);
-    } finally {
-      job.completedAt = new Date().toISOString();
-    }
-  })();
-  return job;
+  return startJob(newJob(videoId, {kind}) as QaJob, () => runQa(kind, videoId), (message) => qaFailureDetail(videoId, kind, message));
 };
 
-export const getQaJob = (jobId: string) => {
-  const job = qaJobs.get(jobId);
-  if (!job) throw new Error(`QA job not found: ${jobId}`);
-  return job;
-};
+export const getQaJob = (jobId: string) => getJob<QaJob>(jobId, "QA");
 
 
 export const createAssetRevision = (videoId: string, input: any) => {
@@ -722,40 +667,33 @@ export const createAssetRevision = (videoId: string, input: any) => {
   state.revisionRequests.push(request);
   writeJson(context.configPath, config);
   writeJson(stateFile, state);
+  const updateRequest = (values: Record<string, unknown>) => {
+    const current = readJson(stateFile, {version: 1, revisionRequests: []});
+    if (!Array.isArray(current.revisionRequests)) current.revisionRequests = [];
+    const revision = current.revisionRequests.find((item: any) => item.id === request.id);
+    if (revision) Object.assign(revision, values);
+    writeJson(stateFile, current);
+    return current;
+  };
   const job: GenerationJob = {id: request.id, videoId, kind: "images", status: "queued", createdAt: request.createdAt};
-  generationJobs.set(job.id, job);
-  void (async () => {
-    job.status = "running";
-    job.startedAt = new Date().toISOString();
-    const updateRequest = (values: Record<string, unknown>) => {
-      const current = readJson(stateFile, {version: 1, revisionRequests: []});
-      if (!Array.isArray(current.revisionRequests)) current.revisionRequests = [];
-      const revision = current.revisionRequests.find((item: any) => item.id === request.id);
-      if (revision) Object.assign(revision, values);
-      writeJson(stateFile, current);
-      return current;
-    };
+  return startJob(job, async () => {
     updateRequest({status: "running"});
     try {
       await runImages([videoId, `--asset=${revisionAssetId}`]);
       syncGeneratedAssets(videoId, "images");
       const current = updateRequest({status: "succeeded", completedAt: new Date().toISOString()});
+      // The revision replaces its scene's selection without deleting what it revised.
       const currentProject = getProjectState(videoId);
       const selected = new Set(Array.isArray(current.selectedAssetIds) ? current.selectedAssetIds : []);
       for (const item of currentProject.assets) if (item.sceneId === asset.sceneId) selected.delete(item.id);
       selected.add(revisionAssetId);
       current.selectedAssetIds = [...selected];
       writeJson(stateFile, current);
-      job.status = "succeeded";
     } catch (error) {
-      job.status = "failed";
-      job.error = error instanceof Error ? error.message : String(error);
-      updateRequest({status: "failed", error: job.error, completedAt: new Date().toISOString()});
-    } finally {
-      job.completedAt = new Date().toISOString();
+      updateRequest({status: "failed", error: error instanceof Error ? error.message : String(error), completedAt: new Date().toISOString()});
+      throw error;
     }
-  })();
-  return job;
+  });
 };
 
 const getProjectDelivery = (videoId: string): ProjectDelivery | null => {
@@ -773,23 +711,10 @@ export const startDelivery = (videoId: string, variantIds: string[] = [], force 
   const declared = loadDeliverables(videoId);
   const unknown = variantIds.filter((id) => !declared.some((variant) => variant.id === id));
   if (unknown.length > 0) throw new Error(`Unknown delivery variants: ${unknown.join(", ")}`);
-  const job: DeliveryJob = {id: randomUUID(), videoId, variantIds, status: "queued", createdAt: new Date().toISOString()};
-  deliveryJobs.set(job.id, job);
-  void (async () => {
-    job.status = "running";
-    job.startedAt = new Date().toISOString();
-    try { await runDelivery(videoId, {variantIds, force}); job.status = "succeeded"; }
-    catch (error) { job.status = "failed"; job.error = error instanceof Error ? error.message : String(error); }
-    finally { job.completedAt = new Date().toISOString(); }
-  })();
-  return job;
+  return startJob(newJob(videoId, {variantIds}) as DeliveryJob, () => runDelivery(videoId, {variantIds, force}));
 };
 
-export const getDeliveryJob = (jobId: string) => {
-  const job = deliveryJobs.get(jobId);
-  if (!job) throw new Error(`Delivery job not found: ${jobId}`);
-  return job;
-};
+export const getDeliveryJob = (jobId: string) => getJob<DeliveryJob>(jobId, "Delivery");
 
 /**
  * Report which rendered outputs are behind the project files they were built from.

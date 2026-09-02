@@ -1,38 +1,14 @@
-import {existsSync, readFileSync} from "node:fs";
-import {isAbsolute, relative, resolve, sep} from "node:path";
+import {parseTargetArgs, projectRoot, readProjectConfig, resolveInsideProject} from "@make-video/project";
+import {existsSync} from "node:fs";
 
-export const projectRoot = process.env.MAKE_VIDEO_PROJECT_ROOT ?? process.cwd();
-type JsonObject = Record<string, any>;
+export {parseTargetArgs, projectRoot};
 
-export type SourceContext = {videoId: string; config: JsonObject; sourceDir: string; resolveConfiguredPath: (value: unknown, label: string) => string};
+export type SourceContext = {videoId: string; config: Record<string, any>; sourceDir: string; resolveConfiguredPath: (value: unknown, label: string) => string};
 
-const resolveInsideProject = (value: unknown, label: string) => {
-  if (typeof value !== "string" || value.length === 0) throw new Error(`${label} must be a project-relative path.`);
-  if (isAbsolute(value)) throw new Error(`${label} must not be absolute: ${value}`);
-  const file = resolve(projectRoot, value);
-  const fromRoot = relative(projectRoot, file);
-  if (fromRoot === ".." || fromRoot.startsWith(`..${sep}`)) throw new Error(`${label} escapes the project: ${value}`);
-  return file;
-};
-
-const videoIdPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-export const loadSourceContext = (videoId: string): SourceContext => {
-  if (!videoIdPattern.test(videoId)) throw new Error(`Invalid video id "${videoId}". Use lowercase kebab-case directory names.`);
-  const sourceDir = resolve(projectRoot, "src", videoId);
-  const configPath = resolve(sourceDir, "video.config.json");
-  if (!existsSync(configPath)) throw new Error(`Video config not found: ${configPath}`);
-  const config = JSON.parse(readFileSync(configPath, "utf8")) as JsonObject;
-  if (config.videoId !== videoId) throw new Error(`video.config.json declares videoId "${config.videoId}" but directory target is "${videoId}".`);
-  return {videoId, config, sourceDir, resolveConfiguredPath: resolveInsideProject};
-};
-
-export const parseTargetArgs = (args: string[]) => {
-  const positionals = args.filter((arg) => !arg.startsWith("--"));
-  const unknown = args.filter((arg) => arg.startsWith("--") && arg !== "--force");
-  if (unknown.length > 0) throw new Error(`Unknown option: ${unknown.join(", ")}`);
-  if (positionals.length !== 1) throw new Error("Exactly one video id is required.");
-  return {videoId: positionals[0], force: args.includes("--force")};
-};
+export const loadSourceContext = (videoId: string): SourceContext => ({
+  ...readProjectConfig(videoId),
+  resolveConfiguredPath: resolveInsideProject,
+});
 
 export const assertOutputAvailable = (file: string, force: boolean, action: string) => {
   if (!force && existsSync(file)) throw new Error(`${action} stopped because output already exists: ${file}\nPass --force to regenerate.`);

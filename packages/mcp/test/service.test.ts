@@ -175,6 +175,12 @@ test("a narration script must have unique, non-empty, source-backed segments", (
   assert.ok(validation.errors.some((error) => error.includes("Inference claim guess needs a disclosure")));
 });
 
+test("an unknown job id says why it is unknown", () => {
+  assert.throws(() => service.getQaJob("missing"), /QA job not found: missing\. Job state is kept in memory/);
+  assert.throws(() => service.getRenderJob("missing"), /Render job not found/);
+  assert.throws(() => service.getDeliveryJob("missing"), /Delivery job not found/);
+});
+
 test("build status names the inputs an output is behind", () => {
   const {videoId, sourceDir} = project();
   const finalFile = resolve(root, "output", videoId, "final.mp4");

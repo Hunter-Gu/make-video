@@ -16,5 +16,8 @@
       "types": "./src/run.ts",
       "import": "./src/run.ts"
     }
+  },
+  "dependencies": {
+    "@make-video/project": "workspace:*"
   }
 }

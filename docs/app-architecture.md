@@ -36,6 +36,11 @@ The pnpm workspace keeps runtime boundaries explicit:
 
 - `packages/app`: React/Vite editor shell and browser transports.
 - `packages/contracts`: shared project and transport types.
+- `packages/project`: how a video project is located, read, and kept inside the
+  repository. Every package that touches project files resolves configured paths
+  through it, so the boundary that stops a configuration reaching the rest of the
+  disk has one definition rather than seven. Each package still validates what it
+  needs: source ingestion does not require a composition, the MCP service does.
 - `packages/ai`: the unified media-generation command. Every generator takes a
   `MediaProvider` — the four model calls behind one replaceable interface — so
   the rules around them (output paths, overwrite refusal, provenance, prompt

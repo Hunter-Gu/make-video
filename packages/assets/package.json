@@ -16,5 +16,8 @@
     "@types/node": "^26.1.1",
     "esbuild": "^0.28.1",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@make-video/project": "workspace:*"
   }
 }
