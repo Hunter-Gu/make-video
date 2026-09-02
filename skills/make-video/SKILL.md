@@ -3,7 +3,7 @@ name: make-video
 description: Plan and produce image-led knowledge videos with Remotion, including history, biography, science, education, document, and book-based explanations. Use when the user wants a video plan, storyboard, narration, generated or supplied visuals, captions, voiceover, rendering, mastering, or final-video QA. Also use for other local Remotion productions that need this end-to-end pipeline. Do not use for standalone animation snippets with no production workflow.
 license: MIT
 metadata:
-  tags: video, remotion, ffmpeg, ffprobe, sox, tts, captions, rendering, production
+  tags: video, remotion, ffmpeg, ffprobe, tesseract, tts, captions, rendering, production
 ---
 
 ## What this skill does
@@ -51,7 +51,9 @@ project store or a second planning agent in code.
 8. **QA the actual rendered file**, not just source code. Use
    `make_video_qa` or the deterministic QA entrypoint for duration, dimensions,
    fps, audio, loudness, true peak, black/frozen intervals, and configured OCR
-   checks.
+   checks. Image and clip QA need `tesseract` on `PATH`; a missing one is
+   reported as a missing tool, never as a defective image — do not regenerate
+   media in response to it.
 9. **Deliver the requested variants last.** When the request needs more than one
    file — another aspect ratio, a clean version, a translation, a thumbnail, a
    trailer, a short extract — read

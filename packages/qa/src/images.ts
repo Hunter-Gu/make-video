@@ -3,6 +3,7 @@ import {existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
 import {dirname, resolve} from "node:path";
 
 import {loadVideoContext, parseTargetArgs, projectRoot} from "./context";
+import {readImageText} from "./ocr";
 
 export const runImageQa = (args: string[]) => {
   const {videoId} = parseTargetArgs(args);
@@ -13,16 +14,19 @@ export const runImageQa = (args: string[]) => {
     const file = context.resolveConfiguredPath(image.path, `image ${image.id}`);
     if (!existsSync(file)) throw new Error(`Image not found: ${file}`);
     const pixels = spawnSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-i", file, "-vf", "scale=16:16,format=gray", "-frames:v", "1", "-f", "rawvideo", "-"], {encoding: null});
+    if (pixels.error) throw pixels.error;
     const values = [...(pixels.stdout as Buffer)];
     if (pixels.status !== 0 || values.length !== 256) throw new Error(`Could not analyze ${image.id}.`);
     const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
     const deviation = Math.sqrt(values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length);
     const hash = values.map((value) => value >= mean ? "1" : "0").join("");
-    const sample = spawnSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-i", file, "-frames:v", "1", "-f", "image2pipe", "-vcodec", "png", "-"], {encoding: null});
-    const ocr = spawnSync("tesseract", ["stdin", "stdout", "--psm", "11", "tsv"], {input: sample.stdout, encoding: "utf8"});
-    const ocrAvailable = !ocr.error && ocr.status === 0;
-    const text = (ocr.stdout ?? "").split("\n").slice(1).map((line) => line.split("\t")).filter((fields) => Number(fields[10]) >= (image.minOcrConfidence ?? 70)).map((fields) => fields[11]).filter(Boolean).join(" ");
-    results.push({id: image.id, path: image.path, visualIdea: image.visualIdea, deviation, hash, detectedText: text, ocrAvailable, checks: {information: deviation >= (image.minDeviation ?? 8), ocr: image.allowText === true || ocrAvailable, unwantedText: image.allowText === true || ocrAvailable && text.length === 0}});
+    let text = "";
+    if (image.allowText !== true) {
+      const sample = spawnSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-i", file, "-frames:v", "1", "-f", "image2pipe", "-vcodec", "png", "-"], {encoding: null});
+      if (sample.status !== 0) throw new Error(`Could not sample ${image.id} for text detection.`);
+      text = readImageText(sample.stdout as Buffer, image.minOcrConfidence ?? 70);
+    }
+    results.push({id: image.id, path: image.path, visualIdea: image.visualIdea, deviation, hash, detectedText: text, checks: {information: deviation >= (image.minDeviation ?? 8), unwantedText: text.length === 0}});
   }
   for (let left = 0; left < results.length; left += 1) for (let right = left + 1; right < results.length; right += 1) {
     const distance = [...results[left].hash].filter((bit, index) => bit !== results[right].hash[index]).length;

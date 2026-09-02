@@ -1,7 +1,7 @@
 # make-video
 
-A local, agent-driven video production skill built on Remotion, FFmpeg,
-ffprobe, and SoX — turns local assets and a brief into a rendered, loudness-checked
+A local, agent-driven video production skill built on Remotion, FFmpeg, and
+ffprobe — turns local assets and a brief into a rendered, loudness-checked
 video.
 
 Agent-facing docs live in [skills/make-video/SKILL.md](skills/make-video/SKILL.md);
@@ -30,7 +30,13 @@ npx skills add remotion-dev/skills --skill remotion-best-practices
 
 - Node.js 22.9+ (for `--env-file-if-exists`; older versions work if you
   export env vars in the shell instead).
-- `ffmpeg`, `ffprobe`, and `sox` on `PATH`.
+- `ffmpeg` and `ffprobe` on `PATH`. Every render, QA, and delivery check shells
+  out to them.
+- `tesseract` on `PATH` for image and generated-clip QA, which reads media back
+  to catch unwanted or generated lettering. Entries marked `"allowText": true`
+  skip OCR and do not need it.
+- `sox` is optional. The workflow suggests it for hands-on audio inspection; no
+  command in this repository requires it.
 - A Remotion project (`remotion`, `@remotion/cli`, `react`, `react-dom`) in
   whatever project you run this skill against — it is not bundled.
 
@@ -200,7 +206,7 @@ pnpm test
 `skills/make-video/scripts/` and runs the deterministic suites for narration
 timing, delivery variants, series verification, source ingestion, and the MCP
 service — plus an end-to-end MCP run over stdio and Streamable HTTP. It needs
-`ffmpeg` and `ffprobe` on `PATH`. CI additionally fails when the committed skill
+`ffmpeg`, `ffprobe`, and `tesseract` on `PATH`. CI additionally fails when the committed skill
 entrypoints do not match their source.
 
 ## License

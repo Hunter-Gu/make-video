@@ -20,10 +20,11 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      # The deterministic pipeline shells out to FFmpeg; QA and delivery checks
-      # measure real files rather than trusting the renderer.
-      - name: Install FFmpeg
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+      # The deterministic pipeline shells out to these: QA and delivery checks
+      # measure real files rather than trusting the renderer, and image QA reads
+      # media back with tesseract to catch unwanted lettering.
+      - name: Install media tooling
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg tesseract-ocr fonts-dejavu-core
 
       - run: pnpm install --frozen-lockfile
 
