@@ -55,11 +55,22 @@ export const runVideoQa = (args: string[], inputOverride?: string) => {
   const sceneIndex = readJson(resolve(context.sourceDir, "SCENE_INDEX.json"));
   const config = JSON.parse(readFileSync(resolve(context.sourceDir, "video.config.json"), "utf8"));
   const captions = Array.isArray(sceneIndex?.captions) ? sceneIndex.captions : Array.isArray(config.captions) ? config.captions : [];
+  const scenes = new Map((Array.isArray(sceneIndex?.scenes) ? sceneIndex.scenes : []).map((scene: any) => [scene?.id, scene]));
   let previousEnd = 0;
   for (const caption of captions) {
     const valid = (caption.text === undefined || typeof caption.text === "string" && caption.text.trim().length > 0) && Number.isFinite(caption.startFrame) && Number.isFinite(caption.endFrame) && caption.startFrame >= previousEnd && caption.startFrame < caption.endFrame && caption.endFrame <= context.composition.durationInFrames;
     add(`caption:${caption.id}`, valid, "ordered and inside timeline", {startFrame: caption.startFrame, endFrame: caption.endFrame});
     previousEnd = Math.max(previousEnd, caption.endFrame ?? 0);
+    // Narration that runs past the scene it belongs to is heard over the next
+    // picture. Editing a scene boundary can do this silently, so check it here.
+    if (caption.sceneId === undefined) continue;
+    const scene = scenes.get(caption.sceneId);
+    add(
+      `caption-scene:${caption.id}`,
+      Boolean(scene) && caption.startFrame >= scene.startFrame && caption.endFrame <= scene.endFrame,
+      scene ? `inside scene ${caption.sceneId} (${scene.startFrame}-${scene.endFrame})` : `a known scene, not ${caption.sceneId}`,
+      {startFrame: caption.startFrame, endFrame: caption.endFrame},
+    );
   }
   const visual = run("ffmpeg", ["-hide_banner", "-nostats", "-i", input, "-vf", "blackdetect=d=0.5:pix_th=0.02,freezedetect=n=-60dB:d=2", "-an", "-f", "null", "-"]).output;
   const black = Math.max(0, ...[...visual.matchAll(/black_duration:([\d.]+)/g)].map((match) => Number(match[1])));

@@ -32,7 +32,9 @@
     "stillFrame": 240,
     "qa": {
       "output": "silent",
-      "audioRequired": false
+      "audioRequired": false,
+      "maxBlackSeconds": 0.5,
+      "maxFreezeSeconds": 8
     },
     "mastering": null
   },

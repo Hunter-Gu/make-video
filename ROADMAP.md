@@ -85,6 +85,10 @@ Move beyond a slideshow of AI images with identical zoom animations.
   repeatedly.
 - Add deterministic QA for unsafe text, caption overlaps, black or frozen
   frames, missing audio, duration mismatches, and loudness failures.
+  Implemented: image and clip QA read media back for unwanted lettering, and
+  video QA checks dimensions, frame rate, duration, black and frozen intervals,
+  loudness where audio carries content, and that each caption stays inside both
+  the composition and the scene it narrates.
 
 ## Phase 3 — Source to video
 

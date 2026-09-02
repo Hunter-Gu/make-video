@@ -26,6 +26,14 @@
     "packages/render/src",
     "packages/remotion/src",
     "packages/series/src",
-    "packages/sources/src"
+    "packages/sources/src",
+    "packages/ai/test",
+    "packages/audio/test",
+    "packages/mcp/test",
+    "packages/qa/test",
+    "packages/render/test",
+    "packages/series/test",
+    "packages/sources/test",
+    "packages/remotion/test"
   ]
 }

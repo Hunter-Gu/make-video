@@ -145,6 +145,16 @@ text readability, safe areas, scene boundaries, generated-text integrity,
 source claims, audio synchronization, loudness, ending, black/frozen ranges,
 and encoding. Record known limitations and publication status.
 
+Caption checks cover more than the composition bounds: a caption that names a
+scene must also sit inside it. Editing a scene boundary can push narration past
+the picture it belongs to without breaking anything else, so QA is where that is
+caught.
+
+Declare the thresholds a project expects in `production.qa` rather than relying
+on the defaults. An image-led edit holds each still deliberately, so its freeze
+budget follows its longest hold; a project that inherits a default which happens
+to fit is not being checked, it is being flattered.
+
 Loudness and true-peak checks run when the project declares that audio carries
 content — `production.qa.audioRequired`, or, when that is unset, configured
 mastering or audio generation. A silent edit is not measured for loudness:

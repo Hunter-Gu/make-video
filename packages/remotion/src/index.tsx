@@ -23,7 +23,10 @@ const stringParameter = (effect: TimelineEffect | null, key: string, fallback: s
   return typeof value === 'string' && value.length > 0 ? value : fallback;
 };
 
-export const timelineEffectProgress = (frame: number, effect: TimelineEffect | null) => effect
+// A zero-length effect has no progress to report. buildProjectState drops those
+// before they reach a render, but interpolate throws on an empty range, so a
+// project using these helpers directly should not crash on one either.
+export const timelineEffectProgress = (frame: number, effect: TimelineEffect | null) => effect && effect.endFrame > effect.startFrame
   ? interpolate(frame, [effect.startFrame, effect.endFrame], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})
   : 0;
 

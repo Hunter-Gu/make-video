@@ -28,7 +28,7 @@
     "deliver": "node skills/make-video/scripts/render.mjs deliver",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.packages.json",
     "project:create": "node skills/make-video/scripts/assets.mjs create",
-    "test": "pnpm build:scripts && tsx --test packages/ai/test/*.test.ts packages/audio/test/*.test.ts packages/mcp/test/*.test.ts packages/qa/test/*.test.ts packages/render/test/*.test.ts packages/series/test/*.test.ts packages/sources/test/*.test.ts"
+    "test": "pnpm build:scripts && tsx --test packages/ai/test/*.test.ts packages/audio/test/*.test.ts packages/mcp/test/*.test.ts packages/qa/test/*.test.ts packages/remotion/test/*.test.ts packages/render/test/*.test.ts packages/series/test/*.test.ts packages/sources/test/*.test.ts"
   },
   "dependencies": {
     "@make-video/contracts": "workspace:*",
