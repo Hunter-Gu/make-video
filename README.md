@@ -162,6 +162,10 @@ app shows the price in its generation readiness panel.
 
 Generation writes as it goes, so an interrupted run leaves paid work on disk.
 
+Images resume on their own: the manifest is written after every image, so a
+re-run skips anything whose file, prompt, and model are unchanged and generates
+only the rest. An image whose request has changed is refused, not overwritten.
+
 Narration is generated one segment at a time. Set `TTS_START_AT` to the caption
 id where the run stopped: the earlier segments are reused from disk and only the
 rest are bought again.

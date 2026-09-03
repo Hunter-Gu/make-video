@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {spawnSync} from "node:child_process";
-import {mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from "node:fs";
+import {existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {resolve} from "node:path";
 import {after, test} from "node:test";
@@ -30,6 +30,15 @@ const clip = () => {
 };
 const mp4 = clip();
 
+/** Music is probed before it is written, so the fake has to return real MP3 bytes. */
+const song = () => {
+  const file = resolve(root, "song.mp3");
+  const result = spawnSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "sine=frequency=440:duration=1", "-c:a", "libmp3lame", file], {encoding: "utf8"});
+  assert.equal(result.status, 0, result.stderr);
+  return readFileSync(file);
+};
+const mp3 = song();
+
 /** A provider that spends nothing and records exactly what it was asked for. */
 const recorder = (overrides: Partial<MediaProvider> = {}) => {
   const calls: Array<Record<string, any>> = [];
@@ -46,7 +55,7 @@ const recorder = (overrides: Partial<MediaProvider> = {}) => {
     async image(request) { calls.push({kind: "image", ...request}); return {bytes: png, mediaType: "image/png"}; },
     async video(request) { calls.push({kind: "video", ...request}); return {bytes: mp4, mediaType: "video/mp4"}; },
     async speech(request) { calls.push({kind: "speech", ...request}); return {bytes: wave(1.5), mediaType: "audio/wav"}; },
-    async music(request) { calls.push({kind: "music", ...request}); return {bytes: Buffer.from("mp3"), mediaType: "audio/mpeg"}; },
+    async music(request) { calls.push({kind: "music", ...request}); return {bytes: mp3, mediaType: "audio/mpeg"}; },
     ...overrides,
   };
   return {provider, calls};
@@ -83,18 +92,42 @@ test("a generated image is written once, with its provenance recorded", async ()
   assert.equal(manifest.assets[0].promptHash.length, 64);
 });
 
-test("generated media is never overwritten without an explicit request", async () => {
-  const {videoId} = project({imageGeneration: {model: "gemini-image", assets: [imageAsset()]}});
+test("an unchanged image is reused, and a changed one is never overwritten silently", async () => {
+  const {videoId, sourceDir} = project({imageGeneration: {model: "gemini-image", assets: [imageAsset()]}});
   const first = recorder();
   await runImages([videoId], first.provider);
 
   const second = recorder();
-  await assert.rejects(() => runImages([videoId], second.provider), /already exists/);
-  assert.equal(second.calls.length, 0, "a refused run must not call the provider");
+  await runImages([videoId], second.provider);
+  assert.equal(second.calls.length, 0, "an image already paid for must not be bought again");
+
+  const config = readJson(resolve(sourceDir, "video.config.json"));
+  config.imageGeneration.assets[0].prompt = "A busy library.";
+  writeFileSync(resolve(sourceDir, "video.config.json"), JSON.stringify(config, null, 2));
+  const changed = recorder();
+  await assert.rejects(() => runImages([videoId], changed.provider), /would overwrite/);
+  assert.equal(changed.calls.length, 0, "a refused run must not call the provider");
 
   const forced = recorder();
   await runImages([videoId, "--force"], forced.provider);
   assert.equal(forced.calls.length, 1);
+});
+
+test("an interrupted image batch keeps what it paid for and continues", async () => {
+  const {videoId, publicDir} = project({imageGeneration: {model: "gemini-image", assets: [
+    imageAsset(),
+    imageAsset({id: "middle", output: "images/generated/middle.png", prompt: "A reading room."}),
+    imageAsset({id: "closing", output: "images/generated/closing.png", prompt: "An empty hall."}),
+  ]}});
+  let drawn = 0;
+  const interrupted = recorder({async image() { if (++drawn === 2) throw new Error("the connection dropped"); return {bytes: Buffer.from("89504e470d0a1a0a", "hex"), mediaType: "image/png"}; }});
+  await assert.rejects(() => runImages([videoId], interrupted.provider), /the connection dropped/);
+  assert.deepEqual(readJson(resolve(publicDir, "images/generated/manifest.json")).assets.map((asset: any) => asset.id), ["opening"], "the image it did buy keeps its provenance");
+
+  const resumed = recorder();
+  await runImages([videoId], resumed.provider);
+  assert.deepEqual(resumed.calls.map((call) => call.prompt), ["A reading room.", "An empty hall."], "only the unwritten images are generated");
+  assert.deepEqual(readJson(resolve(publicDir, "images/generated/manifest.json")).assets.map((asset: any) => asset.id), ["opening", "middle", "closing"]);
 });
 
 test("only the requested asset is regenerated", async () => {
@@ -227,8 +260,18 @@ test("music is written from the configured prompt and never silently replaced", 
   const {provider, calls} = recorder();
   await runMusic([videoId], provider);
   assert.deepEqual(calls, [{kind: "music", model: "lyria-002", prompt: "A slow string bed."}]);
-  assert.equal(readFileSync(resolve(root, "public", videoId, "audio/music/underscore.mp3")).toString(), "mp3");
+  assert.deepEqual(readFileSync(resolve(root, "public", videoId, "audio/music/underscore.mp3")), mp3);
   await assert.rejects(() => runMusic([videoId], recorder().provider), /already exists/);
+});
+
+test("music that is not readable MP3 never reaches the project", async () => {
+  const wrongType = project({music: {model: "lyria-002", prompt: "A slow string bed."}});
+  await assert.rejects(() => runMusic([wrongType.videoId], recorder({async music() { return {bytes: mp3, mediaType: "audio/wav"}; }}).provider), /returned audio\/wav/);
+
+  const corrupt = project({music: {model: "lyria-002", prompt: "A slow string bed."}});
+  await assert.rejects(() => runMusic([corrupt.videoId], recorder({async music() { return {bytes: Buffer.from("not audio"), mediaType: "audio/mpeg"}; }}).provider), /ffprobe cannot read/);
+  // A bad file must not land on disk, or the no-overwrite rule would block the retry.
+  assert.equal(existsSync(resolve(root, "public", corrupt.videoId, "audio/music/underscore.mp3")), false);
 });
 
 test("an interrupted clip is not silently paid for again", async () => {

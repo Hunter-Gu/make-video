@@ -39,6 +39,11 @@ Repeat the option or use comma-separated IDs for a small affected set. Unrelated
 manifest entries remain unchanged. Existing output is preserved unless the
 user explicitly requested replacement and `--force` is supplied.
 
+The manifest is written after every image, so an interrupted batch keeps the
+provenance of what it bought. Re-running skips any image whose file, prompt, and
+model are unchanged and generates only the rest; an image whose request has
+changed is refused rather than overwritten, and needs `--force`.
+
 Keep reusable style rules in `VISUAL_BIBLE.json`, recurring people and life
 stages in `CHARACTER_BIBLE.json`, and historical boundaries in
 `PROMPT_CONSTRAINTS.md`. Generation automatically prepends them. An asset may
@@ -51,7 +56,7 @@ repeated visual ideas,
 low-variance images, and high-confidence OCR text that was not allowed.
 
 The script uses `GEMINI_IMAGE_MODEL` when set, otherwise the configured model.
-It refuses to overwrite outputs without `--force` and records prompt and file
+It never overwrites an output without `--force` and records prompt and file
 hashes in `images/generated/manifest.json`.
 
 Inspect every generated image before composition. Check identity, anatomy,

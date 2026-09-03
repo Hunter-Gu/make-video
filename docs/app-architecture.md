@@ -142,9 +142,11 @@ Inspectable project files remain authoritative:
 - `GENERATION_PLAN.json` stores the declared unit cost and expected latency of
   each paid asset; `GENERATION_ESTIMATE.json` is the priced report derived from
   it, and is rewritten on every estimate because it costs nothing to recompute.
-- `public/<video-id>/video/generated/operations.json` records each clip request
-  before it is sent, so an interrupted, possibly billed request is visible to the
-  next run instead of being reissued silently.
+- `public/<video-id>/images/generated/manifest.json` records each generated image
+  as it is written, so an interrupted batch keeps its provenance and the next run
+  can skip what is unchanged; `video/generated/operations.json` does the same for
+  clips, recording each request before it is sent so an interrupted, possibly
+  billed request is visible to the next run instead of being reissued silently.
 - `DELIVERABLES.json` stores the declared delivery variants; every variant is a
   render of the same timeline, never a re-cut of the master. Delivery measures
   each file it writes and records whether it matches its declaration.

@@ -114,9 +114,10 @@ MAKE_VIDEO_PROJECT_ROOT=/absolute/project/root node /absolute/skill/path/scripts
 - Estimate before you spend. When the project declares `GENERATION_PLAN.json`,
   run `make_video_estimate_generation` (CLI: `scripts/ai.mjs estimate`) and
   report the price and wait before starting a paid run. It contacts no provider.
-- After an interrupted run, resume rather than repeat: set `TTS_START_AT` to the
-  caption id where narration stopped, and treat a clip reported as "never
-  completed" as possibly already billed — check the provider before forcing it.
+- After an interrupted run, resume rather than repeat: re-run image generation
+  (it skips what is unchanged), set `TTS_START_AT` to the caption id where
+  narration stopped, and treat a clip reported as "never completed" as possibly
+  already billed — check the provider before forcing it.
 
 ## CLI fallback
 

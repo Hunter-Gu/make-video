@@ -1,4 +1,5 @@
 import {log} from "@make-video/project";
+import {spawnSync} from "node:child_process";
 import {existsSync, mkdirSync, statSync, writeFileSync} from "node:fs";
 import {dirname, resolve} from "node:path";
 
@@ -80,6 +81,18 @@ export const runVoiceover = async (args: string[], provider: MediaProvider = goo
   log(`Generated the aligned voiceover timeline for ${videoId}.`);
 };
 
+/**
+ * Confirm the returned bytes really are decodable MP3 before they land on disk.
+ * A corrupt music bed otherwise surfaces at mastering, and writing it first would
+ * leave a bad file that the no-overwrite rule then refuses to replace.
+ */
+const assertPlayableMp3 = (bytes: Buffer, mediaType: string) => {
+  if (mediaType !== "audio/mpeg" && mediaType !== "audio/mp3") throw new Error(`Music generation returned ${mediaType}, but the music bed is written as MP3. Configure a model that returns MPEG audio.`);
+  const probe = spawnSync("ffprobe", ["-v", "error", "-show_entries", "stream=codec_type", "-of", "json", "-i", "pipe:0"], {input: bytes, encoding: "utf8"});
+  const streams = probe.status === 0 ? (JSON.parse(probe.stdout).streams as Array<{codec_type?: string}> | undefined) : undefined;
+  if (!streams?.some((stream) => stream.codec_type === "audio")) throw new Error("Music generation returned audio that ffprobe cannot read.");
+};
+
 export const runMusic = async (args: string[], provider: MediaProvider = googleMediaProvider) => {
   const {videoId, force} = parseTargetArgs(args);
   const context = loadVideoContext(videoId);
@@ -89,6 +102,7 @@ export const runMusic = async (args: string[], provider: MediaProvider = googleM
   assertOutputsAvailable([output], {force, action: `Music generation for ${videoId}`});
   const model = process.env.LYRIA_MODEL ?? music.model;
   const audio = await provider.music({model, prompt: music.prompt});
+  assertPlayableMp3(audio.bytes, audio.mediaType);
   mkdirSync(dirname(output), {recursive: true});
   writeFileSync(output, audio.bytes);
   log(`Generated the music bed for ${videoId}.`);

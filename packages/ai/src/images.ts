@@ -4,7 +4,7 @@ import {dirname, extname, relative, resolve, sep} from "node:path";
 
 import {hash, mediaTypeFor, readJson, writeJson} from "./provider";
 import {googleMediaProvider, type MediaProvider} from "./media-provider";
-import {assertOutputsAvailable, buildVisualContext, loadVideoContext, parseGenerationArgs} from "./project";
+import {buildVisualContext, loadVideoContext, parseGenerationArgs} from "./project";
 import type {AnyRecord} from "./types";
 
 export const runImages = async (args: string[], provider: MediaProvider = googleMediaProvider) => {
@@ -34,14 +34,22 @@ export const runImages = async (args: string[], provider: MediaProvider = google
   const missing = assetIds.filter((id) => !seen.has(id));
   if (missing.length > 0) throw new Error(`Unknown generated image assets: ${missing.join(", ")}`);
   const manifestFile = resolve(context.publicDir, "images/generated/manifest.json");
-  const selectedOutputs = selected.map((index: number) => outputs[index]);
-  assertOutputsAvailable(assetIds.length === 0 ? [...selectedOutputs, manifestFile] : selectedOutputs, {force, action: `Image generation for ${videoId}`});
-
-  const manifest = assetIds.length > 0 && existsSync(manifestFile)
-    ? readJson(manifestFile)
-    : {videoId, model, generatedAt: new Date().toISOString(), assets: []};
+  // The manifest is the record of what has already been paid for, so it is always
+  // read back and written after every image: an interrupted batch keeps the
+  // provenance of the images it did buy, and the next run can skip them.
+  const manifest = existsSync(manifestFile) ? readJson(manifestFile) : {videoId, model, generatedAt: new Date().toISOString(), assets: []};
+  if (!Array.isArray(manifest.assets)) manifest.assets = [];
+  const generated = new Map<string, AnyRecord>(manifest.assets.map((item: AnyRecord) => [String(item.id), item]));
+  const order = new Map(imageGeneration.assets.map((asset: AnyRecord, index: number) => [asset.id, index]));
   manifest.model = model;
   manifest.generatedAt = new Date().toISOString();
+  const writeManifest = () => {
+    manifest.assets = manifest.assets
+      .filter((item: AnyRecord) => order.has(String(item.id)))
+      .sort((left: AnyRecord, right: AnyRecord) => (order.get(String(left.id)) ?? Infinity) - (order.get(String(right.id)) ?? Infinity));
+    mkdirSync(dirname(manifestFile), {recursive: true});
+    writeJson(manifestFile, manifest);
+  };
   for (const index of selected) {
     const asset = imageGeneration.assets[index] as AnyRecord;
     const output = outputs[index];
@@ -50,17 +58,22 @@ export const runImages = async (args: string[], provider: MediaProvider = google
     if (reference && !existsSync(reference)) throw new Error(`Generated image "${asset.id}" reference was not found: ${reference}`);
     if (reference && ![".png", ".jpg", ".jpeg", ".webp"].includes(extname(reference).toLowerCase())) throw new Error(`Generated image "${asset.id}" reference must be PNG, JPEG, or WebP.`);
     const assetModel = typeof asset.model === "string" && asset.model.length > 0 ? asset.model : model;
+    const promptHash = hash(prompt);
+    const prior = generated.get(String(asset.id));
+    if (existsSync(output) && prior?.promptHash === promptHash && prior.model === assetModel && !force) {
+      log(`Reused ${asset.id}`);
+      continue;
+    }
+    if (existsSync(output) && !force) throw new Error(`Image generation for ${asset.id} would overwrite ${output}. Pass --force to replace it.`);
     const {bytes, mediaType: mimeType} = await provider.image({model: assetModel, prompt, reference: reference ? readFileSync(reference) : undefined, aspectRatio: asset.aspectRatio});
     if (mimeType !== mediaTypeFor(output)) throw new Error(`Generated image "${asset.id}" returned ${mimeType}, which does not match ${extname(output)}.`);
     mkdirSync(dirname(output), {recursive: true});
     writeFileSync(output, bytes);
     manifest.assets = manifest.assets.filter((item: AnyRecord) => item.id !== asset.id);
-    manifest.assets.push({id: asset.id, output: relative(context.publicDir, output), mimeType, model: assetModel, promptHash: hash(prompt), sha256: hash(bytes)});
+    manifest.assets.push({id: asset.id, output: relative(context.publicDir, output), mimeType, model: assetModel, promptHash, sha256: hash(bytes)});
+    writeManifest();
     log(`Generated ${asset.id}`);
   }
-  const order = new Map(imageGeneration.assets.map((asset: AnyRecord, index: number) => [asset.id, index]));
-  manifest.assets.sort((left: AnyRecord, right: AnyRecord) => (order.get(String(left.id)) ?? Infinity) - (order.get(String(right.id)) ?? Infinity));
-  mkdirSync(dirname(manifestFile), {recursive: true});
-  writeJson(manifestFile, manifest);
+  writeManifest();
   log(`Generated images for ${videoId}.`);
 };

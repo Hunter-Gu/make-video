@@ -117,9 +117,10 @@ paid asset with `kind`, `units`, `costPerUnit`, and `latencySeconds` — and run
 wait, and an `uncosted` list naming configured generation that carries no
 declared cost. It contacts no provider.
 
-Narration is generated one segment at a time, so an interrupted run leaves paid
-segments on disk. Set `TTS_START_AT` to the caption id where it stopped to reuse
-those and generate only the rest.
+Interrupted paid runs resume rather than repeat. Image generation skips anything
+whose file, prompt, and model are unchanged. Narration is generated one segment
+at a time: set `TTS_START_AT` to the caption id where it stopped to reuse the
+earlier segments and generate only the rest.
 
 The renderer loads generated tracks from the video's runtime directory:
 
