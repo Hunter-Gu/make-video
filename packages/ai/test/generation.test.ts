@@ -12,9 +12,11 @@ delete process.env.GEMINI_VIDEO_MODEL;
 delete process.env.GEMINI_TTS_MODEL;
 delete process.env.GEMINI_TTS_VOICE;
 delete process.env.LYRIA_MODEL;
+delete process.env.TTS_START_AT;
 const {runImages} = await import("../src/images");
 const {runVideos} = await import("../src/videos");
 const {runMusic, runVoiceover} = await import("../src/audio");
+const {estimateGeneration} = await import("../src/estimate");
 type MediaProvider = import("../src/media-provider").MediaProvider;
 
 after(() => rmSync(root, {recursive: true, force: true}));
@@ -227,4 +229,123 @@ test("music is written from the configured prompt and never silently replaced", 
   assert.deepEqual(calls, [{kind: "music", model: "lyria-002", prompt: "A slow string bed."}]);
   assert.equal(readFileSync(resolve(root, "public", videoId, "audio/music/underscore.mp3")).toString(), "mp3");
   await assert.rejects(() => runMusic([videoId], recorder().provider), /already exists/);
+});
+
+test("an interrupted clip is not silently paid for again", async () => {
+  const {videoId, publicDir} = project({videoGeneration: {model: "veo", assets: [videoAsset()]}});
+  const failing = recorder({async video() { throw new Error("the connection dropped"); }});
+  await assert.rejects(() => runVideos([videoId], failing.provider), /the connection dropped/);
+
+  const operations = readJson(resolve(publicDir, "video/generated/operations.json"));
+  assert.equal(operations.assets.shot.status, "running", "the attempt is recorded before the provider is called");
+  assert.ok(operations.assets.shot.startedAt);
+
+  const second = recorder();
+  await assert.rejects(() => runVideos([videoId], second.provider), /never completed.*may already have been charged/s);
+  assert.equal(second.calls.length, 0, "a possibly-billed request must not be repeated without being asked");
+
+  const forced = recorder();
+  await runVideos([videoId, "--force"], forced.provider);
+  assert.equal(forced.calls.length, 1);
+  assert.equal(readJson(resolve(publicDir, "video/generated/operations.json")).assets.shot.status, "completed");
+});
+
+const narration = (captions: Array<{id: string; text: string}>) => {
+  const created = project({voice: {model: "gemini-tts", voiceName: "Kore", direction: "Calm narration."}});
+  writeFileSync(resolve(created.sourceDir, "SCENE_INDEX.json"), JSON.stringify({captions}));
+  return created;
+};
+
+test("narration resumes at a named caption instead of buying the whole track again", async () => {
+  const {videoId, publicDir} = narration([
+    {id: "opening", text: "Alexandria held many scrolls."},
+    {id: "middle", text: "Its readers came from everywhere."},
+    {id: "closing", text: "Its decline was gradual."},
+  ]);
+  let spoken = 0;
+  const interrupted = recorder({async speech(request) { if (++spoken === 2) throw new Error("the request timed out"); return {bytes: Buffer.alloc(24000 * 3 * 2), mediaType: "audio/wav"}; }});
+  await assert.rejects(() => runVoiceover([videoId], interrupted.provider), /the request timed out/);
+
+  process.env.TTS_START_AT = "middle";
+  try {
+    const resumed = recorder();
+    await runVoiceover([videoId], resumed.provider);
+    assert.deepEqual(resumed.calls.map((call) => call.text.split("\n").pop()), ["Its readers came from everywhere.", "Its decline was gradual."], "only the unwritten segments are generated");
+    const manifest = readJson(resolve(publicDir, "audio/voiceover/manifest.json"));
+    assert.deepEqual(Object.keys(manifest.segments), ["opening", "middle", "closing"], "the manifest still covers the whole track");
+    assert.equal(manifest.segments.opening.durationSeconds, 3, "a reused segment is timed from the file on disk");
+    assert.equal(manifest.segments.middle.durationSeconds, 1.5);
+  } finally {
+    delete process.env.TTS_START_AT;
+  }
+});
+
+test("resuming narration refuses to guess at a missing segment", async () => {
+  const {videoId} = narration([{id: "opening", text: "One."}, {id: "closing", text: "Two."}]);
+  process.env.TTS_START_AT = "closing";
+  try {
+    const unknown = recorder();
+    process.env.TTS_START_AT = "ghost";
+    await assert.rejects(() => runVoiceover([videoId], unknown.provider), /TTS_START_AT=ghost is not a caption/);
+
+    process.env.TTS_START_AT = "closing";
+    await assert.rejects(() => runVoiceover([videoId], unknown.provider), /expects the earlier segments to exist, but opening/);
+    assert.equal(unknown.calls.length, 0);
+  } finally {
+    delete process.env.TTS_START_AT;
+  }
+});
+
+const costPlan = (assets: unknown[], extra: Record<string, unknown> = {}) => ({version: 1, currency: "USD", assets, ...extra});
+
+test("a paid run is priced from the project's declared cost plan", async () => {
+  const {videoId, sourceDir} = project({
+    imageGeneration: {model: "gemini-image", assets: [imageAsset()]},
+    voice: {model: "gemini-tts", voiceName: "Kore"},
+  });
+  writeFileSync(resolve(sourceDir, "GENERATION_PLAN.json"), JSON.stringify(costPlan([
+    {id: "opening", kind: "image", units: 2, costPerUnit: 0.04, latencySeconds: [8, 30], sceneIds: ["opening"]},
+    {id: "narration", kind: "voice", unit: "seconds", units: 26.2, costPerUnit: 0.0004, latencySeconds: [10, 60]},
+  ])));
+  const estimate = estimateGeneration(videoId);
+
+  assert.equal(estimate.totalEstimatedCost, 0.09048, "0.08 of image plus 0.01048 of speech, without a floating-point tail");
+  assert.deepEqual(estimate.assets.map((asset) => asset.estimatedCost), [0.08, 0.01048]);
+  assert.deepEqual(estimate.sequentialLatencySeconds, {min: 18, max: 90}, "generation runs one asset at a time, so the waits add up");
+  assert.deepEqual(estimate.uncosted, []);
+  assert.deepEqual(readJson(resolve(sourceDir, "GENERATION_ESTIMATE.json")).totalEstimatedCost, 0.09048);
+
+  // The report is a pure function of the plan, so it can be recomputed at will.
+  assert.equal(estimateGeneration(videoId).planHash, estimate.planHash);
+});
+
+test("configured spending that carries no declared cost is reported", () => {
+  const {videoId, sourceDir} = project({
+    imageGeneration: {model: "gemini-image", assets: [imageAsset(), imageAsset({id: "closing", output: "images/generated/closing.png"})]},
+    voice: {model: "gemini-tts", voiceName: "Kore"},
+    music: {model: "lyria-002", prompt: "A slow string bed."},
+  });
+  writeFileSync(resolve(sourceDir, "GENERATION_PLAN.json"), JSON.stringify(costPlan([
+    {id: "opening", kind: "image", units: 1, costPerUnit: 0.04, latencySeconds: [8, 30]},
+    {id: "narration", kind: "voice", units: 10, costPerUnit: 0.0004, latencySeconds: [10, 60]},
+  ])));
+  assert.deepEqual(estimateGeneration(videoId).uncosted, ["closing", "music"], "an unbudgeted image and an unbudgeted music bed");
+});
+
+test("an unusable cost plan is rejected rather than under-reported", () => {
+  const reject = (assets: unknown[], pattern: RegExp) => {
+    const {videoId, sourceDir} = project({});
+    writeFileSync(resolve(sourceDir, "GENERATION_PLAN.json"), JSON.stringify(costPlan(assets)));
+    assert.throws(() => estimateGeneration(videoId), pattern);
+  };
+  const asset = (values: Record<string, unknown> = {}) => ({id: "opening", kind: "image", units: 1, costPerUnit: 0.04, latencySeconds: [8, 30], ...values});
+  reject([asset({id: "Not Kebab"})], /needs a kebab-case id/);
+  reject([asset(), asset()], /Duplicate cost plan asset: opening/);
+  reject([asset({kind: "hologram"})], /kind must be one of/);
+  reject([asset({units: 0})], /needs positive units/);
+  reject([asset({costPerUnit: -1})], /costPerUnit of zero or more/);
+  reject([asset({latencySeconds: [30, 8]})], /needs latencySeconds as \[min, max\]/);
+
+  const missing = project({});
+  assert.throws(() => estimateGeneration(missing.videoId), /GENERATION_PLAN\.json not found/);
 });

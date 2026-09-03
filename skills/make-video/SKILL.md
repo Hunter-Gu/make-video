@@ -111,6 +111,12 @@ MAKE_VIDEO_PROJECT_ROOT=/absolute/project/root node /absolute/skill/path/scripts
   `--force` only when regeneration was explicitly requested.
 - Never run a generator just to inspect something else (e.g. don't
   regenerate audio to verify a file move).
+- Estimate before you spend. When the project declares `GENERATION_PLAN.json`,
+  run `make_video_estimate_generation` (CLI: `scripts/ai.mjs estimate`) and
+  report the price and wait before starting a paid run. It contacts no provider.
+- After an interrupted run, resume rather than repeat: set `TTS_START_AT` to the
+  caption id where narration stopped, and treat a clip reported as "never
+  completed" as possibly already billed — check the provider before forcing it.
 
 ## CLI fallback
 
@@ -123,6 +129,7 @@ directory, run from the project root, and target exactly one video ID.
 node --env-file-if-exists=.env <skill-dir>/scripts/assets.mjs create <video-id>
 node --env-file-if-exists=.env <skill-dir>/scripts/qa.mjs video <video-id>
 node --env-file-if-exists=.env <skill-dir>/scripts/assets.mjs link <video-id>
+node --env-file-if-exists=.env <skill-dir>/scripts/ai.mjs estimate <video-id>
 node --env-file-if-exists=.env <skill-dir>/scripts/ai.mjs images <video-id>
 node --env-file-if-exists=.env <skill-dir>/scripts/ai.mjs video <video-id>
 node --env-file-if-exists=.env <skill-dir>/scripts/sources.mjs ingest <video-id>

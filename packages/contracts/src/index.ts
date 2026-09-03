@@ -68,6 +68,8 @@ export type SourceIndex = {videoId: string; sources: ProjectSource[]};
 export type SourceCatalog = {videoId: string; entities: Array<Record<string, unknown>>; quotations: Array<Record<string, unknown>>; claims: Array<Record<string, unknown>>; illustrations: Array<Record<string, unknown>>};
 export type SourceJob = {id: string; videoId: string; status: "queued" | "running" | "succeeded" | "failed"; createdAt: string; startedAt?: string; completedAt?: string; error?: string};
 export type TimingJob = {id: string; videoId: string; status: "queued" | "running" | "succeeded" | "failed"; createdAt: string; startedAt?: string; completedAt?: string; error?: string};
+export type EstimatedAsset = {id: string; kind: string; provider?: string; model?: string; unit?: string; units: number; costPerUnit: number; latencySeconds: [number, number]; sceneIds: string[]; estimatedCost: number; estimatedLatencySeconds: {min: number; max: number}};
+export type GenerationEstimate = {videoId: string; currency: string; planHash: string; totalEstimatedCost: number; sequentialLatencySeconds: {min: number; max: number}; assets: EstimatedAsset[]; uncosted: string[]; estimatedAt: string};
 export type GenerationReadiness = {videoId: string; passed: boolean; errors: string[]; warnings: string[]; plan: {present: boolean; valid: boolean}; script: {present: boolean; valid: boolean; segments: number}; generation: {imageModel: string | null; videoModel: string | null; voiceModel: string | null; imageAssets: number; videoAssets: number; assignedScenes: string[]}; timing: {planPresent: boolean; voiceManifestPresent: boolean}};
 export type StoryboardArtifact = {videoId: string; path: string; content: string};
 export type GenerationPreparation = {videoId: string; path: string; imageModel: string | null; assetCount: number; preparedSceneIds: string[]};
@@ -97,6 +99,7 @@ export interface ProjectTransport {
   buildTiming(videoId: string, force?: boolean): Promise<TimingJob>;
   getTimingJob(jobId: string): Promise<TimingJob>;
   checkGenerationReadiness(videoId: string): Promise<GenerationReadiness>;
+  estimateGeneration(videoId: string): Promise<GenerationEstimate>;
   buildStoryboard(videoId: string, force?: boolean): Promise<StoryboardArtifact>;
   prepareGeneration(videoId: string): Promise<GenerationPreparation>;
   getSources(videoId: string): Promise<SourceIndex>;

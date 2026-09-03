@@ -4,7 +4,7 @@ import {basename, dirname, extname, relative, resolve, sep} from "node:path";
 
 import {createProject as createProjectFiles, linkAssets} from "@make-video/assets";
 import type {CreatedProject} from "@make-video/assets";
-import {runImages, runMusic, runVideos, runVoiceover} from "@make-video/ai";
+import {estimateGeneration as estimateGenerationRun, runImages, runMusic, runVideos, runVoiceover} from "@make-video/ai";
 import {runTiming as runTimingPackage} from "@make-video/audio";
 import {buildProjectState, getDeliveryReport, loadDeliverables, resolveProjectAssetFile, runDelivery, runRender} from "@make-video/render";
 import {runQa} from "@make-video/qa";
@@ -12,7 +12,7 @@ import {buildSeriesCoverage as buildSeriesCoverageFile, listSeriesProjects, load
 import {runSourceCatalog, runSourceIngest, runSourceList} from "@make-video/sources";
 import type {GenerationJob} from "@make-video/contracts";
 import type {RenderJob} from "@make-video/contracts";
-import type {BuildOutput, BuildStatus, DeliveryJob, GenerationPreparation, GenerationReadiness, ProjectDelivery, QaJob, SeriesCoverageArtifact, SeriesVerification, SourceCatalog, SourceIndex, SourceJob, SourceUpload, TimingJob, VideoPlan} from "@make-video/contracts";
+import type {BuildOutput, BuildStatus, DeliveryJob, GenerationEstimate, GenerationPreparation, GenerationReadiness, ProjectDelivery, QaJob, SeriesCoverageArtifact, SeriesVerification, SourceCatalog, SourceIndex, SourceJob, SourceUpload, TimingJob, VideoPlan} from "@make-video/contracts";
 import {loadVideoContext, projectRoot} from "./context";
 
 const preparedAssetProjects = new Set<string>();
@@ -308,6 +308,9 @@ export const validateScript = (videoId: string) => {
   }
   return {videoId, path: relative(projectRoot, file), passed: errors.length === 0, segments, errors};
 };
+
+/** Price a paid run from the project's declared cost plan. Contacts no provider. */
+export const estimateGeneration = (videoId: string): GenerationEstimate => estimateGenerationRun(videoId);
 
 export const checkGenerationReadiness = (videoId: string): GenerationReadiness => {
   const context = loadVideoContext(videoId);

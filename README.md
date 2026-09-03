@@ -129,6 +129,52 @@ project files they were built from — naming the exact inputs that moved ahead 
 them. Use it after a script, timeline, asset, or translation edit so a small
 change does not cost a full re-render.
 
+## Knowing what a run costs
+
+Paid generation is the only irreversible step in the pipeline, so a project can
+declare what it intends to spend before spending it. `GENERATION_PLAN.json` lists
+each paid asset with its unit cost and expected latency:
+
+```json
+{
+  "version": 1,
+  "currency": "USD",
+  "assets": [
+    {"id": "harbor-still", "kind": "image", "units": 1, "costPerUnit": 0.04, "latencySeconds": [8, 30]},
+    {"id": "scroll-shot", "kind": "video", "unit": "seconds", "units": 8, "costPerUnit": 0.35, "latencySeconds": [60, 600]}
+  ]
+}
+```
+
+```bash
+pnpm generation:estimate library-of-alexandria
+```
+
+That writes `GENERATION_ESTIMATE.json` with a per-asset and total price, the
+sequential wait, and an `uncosted` list naming anything the project is configured
+to generate that carries no declared cost — the case where the real bill is
+higher than the estimate. It contacts no provider and spends nothing, so it is
+safe to run before every generation. Over MCP the same operation is
+`make_video_estimate_generation` (REST: `POST /api/generation/estimate`), and the
+app shows the price in its generation readiness panel.
+
+## Resuming an interrupted run
+
+Generation writes as it goes, so an interrupted run leaves paid work on disk.
+
+Narration is generated one segment at a time. Set `TTS_START_AT` to the caption
+id where the run stopped: the earlier segments are reused from disk and only the
+rest are bought again.
+
+```bash
+TTS_START_AT=closing node skills/make-video/scripts/ai.mjs voiceover my-video
+```
+
+Video clips take minutes and cost the most, so each request is recorded in
+`operations.json` before it is sent. A clip whose request never completed is
+reported on the next run rather than reissued, because the provider may already
+have billed it; pass `--force` once you have decided to pay for it again.
+
 ## Local app
 
 The local production GUI is documented in

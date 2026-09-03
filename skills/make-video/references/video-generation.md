@@ -14,11 +14,13 @@ reference images.
 Run `<skill-dir>/scripts/ai.mjs video <video-id>`. It starts the AI SDK's asynchronous
 Veo operation, polls until completion, downloads the MP4, validates it with
 ffprobe, and records operation, prompt, file hash, and duration in a manifest.
-Completed outputs are recorded in `operations.json` and reused after an
-interrupted batch. An in-progress provider request is not persisted or resumed;
-inspect the provider and local output before retrying so a timeout does not
-silently create a second paid request. Existing unrelated outputs are
-protected. The script defaults to a 20-minute timeout; configure `pollSeconds`
+Each request is recorded in `operations.json` before it is sent, and completed
+outputs are recorded there and reused after an interrupted batch. A request that
+never completed is reported on the next run instead of being reissued, because
+the provider may already have billed it: inspect the provider and the local
+output, then pass `--force` once you have decided to pay for the shot again. The
+provider's in-progress operation itself cannot be re-attached. Existing unrelated
+outputs are protected. The script defaults to a 20-minute timeout; configure `pollSeconds`
 or `timeoutMinutes` when necessary.
 
 Pass `--asset=<id>` to process only one shot. The script preserves unrelated

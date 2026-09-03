@@ -109,6 +109,7 @@ The stdio and `/mcp` Streamable HTTP entries expose the same tools:
 - `make_video_get_timing_job`
 - `make_video_get_source_job`
 - `make_video_check_generation_readiness`
+- `make_video_estimate_generation`
 - `make_video_get_build_status`
 - `make_video_get_deliverables`
 - `make_video_deliver` (starts a delivery render job)
@@ -138,6 +139,12 @@ Inspectable project files remain authoritative:
   MCP validates its source block references before writing it.
 - `video.config.json.imageGeneration.assets` stores the deterministic image
   generation configuration materialized from that plan.
+- `GENERATION_PLAN.json` stores the declared unit cost and expected latency of
+  each paid asset; `GENERATION_ESTIMATE.json` is the priced report derived from
+  it, and is rewritten on every estimate because it costs nothing to recompute.
+- `public/<video-id>/video/generated/operations.json` records each clip request
+  before it is sent, so an interrupted, possibly billed request is visible to the
+  next run instead of being reissued silently.
 - `DELIVERABLES.json` stores the declared delivery variants; every variant is a
   render of the same timeline, never a re-cut of the master. Delivery measures
   each file it writes and records whether it matches its declaration.
@@ -163,6 +170,10 @@ production timeline or asset store.
 7. Outputs action to prepare image generation configuration from the saved plan.
 8. Delivery variant list with per-variant render state and a pending-variant
    render action.
+
+Cost is read the same way: `make_video_estimate_generation` prices a run from the
+project's declared cost plan without contacting a provider, so a caller can say
+what a paid step will cost before starting it.
 
 Build status is a separate read: it compares output modification times against
 the project files an output was built from, so the caller can rebuild only what a

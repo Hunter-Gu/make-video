@@ -1,7 +1,7 @@
 {
   "videoId": "library-of-alexandria",
   "currency": "USD",
-  "planHash": "17500ac9248b4f1202cb92b41896e7013e4552e3d4883b52cf843f27a4d292e4",
+  "planHash": "c59e4617bd584b8ae6ed19bf33c8054d8f4ffd0d0961583c88cf5c694edffbc8",
   "totalEstimatedCost": 2.85048,
   "sequentialLatencySeconds": {
     "min": 78,
@@ -33,8 +33,8 @@
       "kind": "video",
       "provider": "Gemini",
       "model": "configured-veo-model",
-      "units": 8,
       "unit": "seconds",
+      "units": 8,
       "costPerUnit": 0.35,
       "latencySeconds": [
         60,
@@ -54,8 +54,8 @@
       "kind": "voice",
       "provider": "Gemini",
       "model": "configured-tts-model",
-      "units": 26.2,
       "unit": "seconds",
+      "units": 26.2,
       "costPerUnit": 0.0004,
       "latencySeconds": [
         10,
@@ -74,5 +74,7 @@
         "max": 60
       }
     }
-  ]
+  ],
+  "uncosted": [],
+  "estimatedAt": "2026-09-03T06:42:59.897Z"
 }

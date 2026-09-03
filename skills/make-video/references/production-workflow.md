@@ -110,6 +110,17 @@ Audio is an explicit stage. Generated speech must fit its assigned narration
 blocks; music and effects must not mask it. Keep server generation keys in the
 environment and never save them in project files.
 
+Declare what a paid run should cost in `GENERATION_PLAN.json` — one entry per
+paid asset with `kind`, `units`, `costPerUnit`, and `latencySeconds` — and run
+`scripts/ai.mjs estimate <video-id>` before spending. It writes
+`GENERATION_ESTIMATE.json` with the per-asset and total price, the sequential
+wait, and an `uncosted` list naming configured generation that carries no
+declared cost. It contacts no provider.
+
+Narration is generated one segment at a time, so an interrupted run leaves paid
+segments on disk. Set `TTS_START_AT` to the caption id where it stopped to reuse
+those and generate only the rest.
+
 The renderer loads generated tracks from the video's runtime directory:
 
 - `audio/voiceover/voiceover.wav`
@@ -169,6 +180,7 @@ project root. Every command requires exactly one video id.
 node --env-file-if-exists=.env <skill-dir>/scripts/assets.mjs create <video-id> [--title=…] [--width=…] [--height=…] [--fps=…] [--duration=…]
 node --env-file-if-exists=.env <skill-dir>/scripts/qa.mjs video <video-id>
 node --env-file-if-exists=.env <skill-dir>/scripts/assets.mjs link <video-id>
+node --env-file-if-exists=.env <skill-dir>/scripts/ai.mjs estimate <video-id>
 node --env-file-if-exists=.env <skill-dir>/scripts/ai.mjs images <video-id>
 node --env-file-if-exists=.env <skill-dir>/scripts/ai.mjs video <video-id>
 node --env-file-if-exists=.env <skill-dir>/scripts/sources.mjs ingest <video-id>

@@ -8,7 +8,7 @@ import {z} from "zod";
 
 import {projectRoot} from "./context";
 import {getModelCatalog} from "./models";
-import {buildSeriesCoverage, buildSourceCatalog, buildSourceList, buildStoryboard, checkGenerationReadiness, createAssetRevision, createProject, getBuildStatus, getDeliverables, getDeliveryJob, getGenerationJob, getPlan, getProjectState, getQaJob, getRenderJob, getSeries, getSourceCatalog, getSourceJob, getSources, getTimingJob, listProjects, listSeries, prepareGeneration, resolveMediaPath, savePlan, setCover, startDelivery, startGeneration, startQa, startRender, startSourceIngest, startTiming, updateCaption, updateModels, updateTimelineRange, uploadSource, validateScript, verifySeries} from "./service";
+import {buildSeriesCoverage, buildSourceCatalog, buildSourceList, buildStoryboard, checkGenerationReadiness, createAssetRevision, createProject, estimateGeneration, getBuildStatus, getDeliverables, getDeliveryJob, getGenerationJob, getPlan, getProjectState, getQaJob, getRenderJob, getSeries, getSourceCatalog, getSourceJob, getSources, getTimingJob, listProjects, listSeries, prepareGeneration, resolveMediaPath, savePlan, setCover, startDelivery, startGeneration, startQa, startRender, startSourceIngest, startTiming, updateCaption, updateModels, updateTimelineRange, uploadSource, validateScript, verifySeries} from "./service";
 
 type CallToolResult = {
   content: Array<{type: "text"; text: string}>;
@@ -186,6 +186,12 @@ export const createMakeVideoMcpServer = () => {
     annotations: {readOnlyHint: true},
   }, ({videoId}) => run(() => checkGenerationReadiness(videoId)));
 
+  server.registerTool("make_video_estimate_generation", {
+    description: "Estimate what a paid generation run will cost and how long it will take, from the project's declared GENERATION_PLAN.json. This contacts no provider and spends nothing.",
+    inputSchema: z.object({videoId: z.string().min(1)}),
+    annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: true},
+  }, ({videoId}) => run(() => estimateGeneration(videoId)));
+
   server.registerTool("make_video_request_image_revision", {
     description: "Start a non-destructive image revision job from an existing image asset. Poll make_video_get_generation_job for completion.",
     inputSchema: z.object({videoId: z.string().min(1), assetId: z.string().min(1), modelId: z.string().min(1).nullable().optional(), instruction: z.string().min(1)}),
@@ -357,6 +363,7 @@ export const startHttpServer = () => {
       if (url.pathname === "/api/script/validation" && request.method === "GET") return sendJson(response, 200, validateScript(requiredParam(url.searchParams.get("videoId"))));
       if (url.pathname === "/api/timing" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 202, startTiming(input.videoId, Boolean(input.force))); }
       if (url.pathname.startsWith("/api/timing/") && request.method === "GET") return sendJson(response, 200, getTimingJob(decodeURIComponent(url.pathname.slice("/api/timing/".length))));
+      if (url.pathname === "/api/generation/estimate" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 200, estimateGeneration(input.videoId)); }
       if (url.pathname === "/api/generation/readiness" && request.method === "GET") return sendJson(response, 200, checkGenerationReadiness(requiredParam(url.searchParams.get("videoId"))));
       if (url.pathname === "/api/sources/upload" && request.method === "POST") { const input = parseUpload(request, await readRawBody(request)); return sendJson(response, 201, uploadSource(requiredParam(url.searchParams.get("videoId")), input.filename, input.data)); }
       if (url.pathname === "/api/sources/ingest" && request.method === "POST") { const input = await readBody(request); return sendJson(response, 202, startSourceIngest(input.videoId, input.force ?? true)); }

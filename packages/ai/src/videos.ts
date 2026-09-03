@@ -15,6 +15,16 @@ const frameInput = (context: AnyRecord, configuredPath: unknown, label: string, 
   return {data: readFileSync(path), mediaType: mediaTypeFor(path), frameType};
 };
 
+/** Note a failed request on the operation record before letting the error through. */
+const requestClip = async (provider: MediaProvider, request: Parameters<MediaProvider["video"]>[0], onFailure: () => void) => {
+  try {
+    return await provider.video(request);
+  } catch (error) {
+    onFailure();
+    throw error;
+  }
+};
+
 export const runVideos = async (args: string[], provider: MediaProvider = googleMediaProvider) => {
   const {videoId, force, assetIds} = parseGenerationArgs(args);
   const context = loadVideoContext(videoId);
@@ -41,6 +51,8 @@ export const runVideos = async (args: string[], provider: MediaProvider = google
     ? readJson(manifestFile)
     : {videoId, model, generatedAt: new Date().toISOString(), assets: []};
   const operations = existsSync(operationsFile) ? readJson(operationsFile) : {videoId, model, assets: {}};
+  if (!operations.assets || typeof operations.assets !== "object") operations.assets = {};
+  mkdirSync(dirname(operationsFile), {recursive: true});
   manifest.model = model;
   manifest.generatedAt = new Date().toISOString();
   for (const index of selected) {
@@ -60,8 +72,17 @@ export const runVideos = async (args: string[], provider: MediaProvider = google
       log(`Reused completed ${asset.id}`);
       continue;
     }
+    // A clip takes minutes and costs dollars. If a previous attempt for this exact
+    // request never finished, the provider may already have billed it, so say so
+    // rather than quietly spending again.
+    if (prior && prior.status !== "completed" && prior.fingerprint === fingerprint && !force) {
+      throw new Error(`Video generation for "${asset.id}" started at ${prior.startedAt} and never completed${prior.error ? `: ${prior.error}` : "."} The provider may already have been charged for it. Pass --force to request it again.`);
+    }
     if (existsSync(output) && !force) throw new Error(`Video generation for ${asset.id} would overwrite ${output}. Pass --force to replace it.`);
-    const {bytes} = await provider.video({
+    // Record the attempt before spending, so an interrupted run leaves a trace.
+    operations.assets[asset.id] = {status: "running", fingerprint, model, startedAt: new Date().toISOString()};
+    writeJson(operationsFile, operations);
+    const {bytes} = await requestClip(provider, {
       model,
       prompt,
       frames,
@@ -70,6 +91,9 @@ export const runVideos = async (args: string[], provider: MediaProvider = google
       durationSeconds: asset.durationSeconds,
       pollIntervalMs: (generation.pollSeconds ?? 10) * 1000,
       pollTimeoutMs: (generation.timeoutMinutes ?? 20) * 60_000,
+    }, () => {
+      operations.assets[asset.id].error = "the request failed or timed out";
+      writeJson(operationsFile, operations);
     });
     mkdirSync(dirname(output), {recursive: true});
     writeFileSync(output, bytes);

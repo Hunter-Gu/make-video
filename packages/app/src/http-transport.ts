@@ -1,4 +1,4 @@
-import type {BuildStatus, Caption, CreatedProject, DeliveryJob, DeliveryReport, DeliveryVariant, GenerationJob, GenerationKind, GenerationPreparation, GenerationReadiness, ProjectTransport, QaJob, QaKind, RenderJob, RenderKind, SeriesCoverageArtifact, SeriesPlan, SeriesVerification, SourceCatalog, SourceIndex, SourceJob, SourceUpload, StoryboardArtifact, TimingJob, VideoPlan} from "@make-video/contracts";
+import type {BuildStatus, Caption, CreatedProject, DeliveryJob, DeliveryReport, DeliveryVariant, GenerationEstimate, GenerationJob, GenerationKind, GenerationPreparation, GenerationReadiness, ProjectTransport, QaJob, QaKind, RenderJob, RenderKind, SeriesCoverageArtifact, SeriesPlan, SeriesVerification, SourceCatalog, SourceIndex, SourceJob, SourceUpload, StoryboardArtifact, TimingJob, VideoPlan} from "@make-video/contracts";
 
 const request = async <T,>(path: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(path, {...init, headers: {"content-type": "application/json", ...init?.headers}});
@@ -34,6 +34,7 @@ export const httpTransport: ProjectTransport = {
   buildTiming: (videoId: string, force = false) => request<TimingJob>("/api/timing", {method: "POST", body: JSON.stringify({videoId, force})}),
   getTimingJob: (jobId: string) => request<TimingJob>(`/api/timing/${encodeURIComponent(jobId)}`),
   checkGenerationReadiness: (videoId: string) => request<GenerationReadiness>(`/api/generation/readiness?videoId=${encodeURIComponent(videoId)}`),
+  estimateGeneration: (videoId: string) => request<GenerationEstimate>("/api/generation/estimate", {method: "POST", body: JSON.stringify({videoId})}),
   buildStoryboard: (videoId: string, force = true) => request<StoryboardArtifact>("/api/storyboard", {method: "POST", body: JSON.stringify({videoId, force})}),
   prepareGeneration: (videoId: string) => request<GenerationPreparation>("/api/generation/prepare", {method: "POST", body: JSON.stringify({videoId})}),
   getSources: (videoId: string) => request<SourceIndex>(`/api/sources?videoId=${encodeURIComponent(videoId)}`),

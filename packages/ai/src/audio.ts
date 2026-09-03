@@ -1,5 +1,5 @@
 import {log} from "@make-video/project";
-import {existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
+import {existsSync, mkdirSync, statSync, writeFileSync} from "node:fs";
 import {dirname, resolve} from "node:path";
 
 import {hash, readJson, writeJson} from "./provider";
@@ -30,6 +30,9 @@ const writeWave = (file: string, pcm: Buffer, sampleRate = 24000, channels = 1) 
   writeFileSync(file, Buffer.concat([header, pcm]));
 };
 
+/** Read back the length of a segment already on disk, so a resumed run keeps a complete manifest. */
+const waveDurationSeconds = (file: string, sampleRate = 24000) => Math.max(0, (statSync(file).size - 44) / 2 / sampleRate);
+
 export const runVoiceover = async (args: string[], provider: MediaProvider = googleMediaProvider) => {
   const {videoId, force} = parseTargetArgs(args);
   const context = loadVideoContext(videoId);
@@ -42,16 +45,34 @@ export const runVoiceover = async (args: string[], provider: MediaProvider = goo
   const outputDir = context.audioDirs.voiceover;
   const model = process.env.GEMINI_TTS_MODEL ?? voice.model;
   const voiceName = process.env.GEMINI_TTS_VOICE ?? voice.voiceName;
-  const outputFiles = [...captions.map((segment: AnyRecord) => resolve(outputDir, `${segment.id}.wav`)), resolve(outputDir, "manifest.json")];
+  const segmentFile = (segment: AnyRecord) => resolve(outputDir, `${segment.id}.wav`);
+
+  // Narration is generated one segment at a time, so an interrupted run leaves the
+  // early segments paid for and on disk. TTS_START_AT resumes at a named caption
+  // and reuses those, instead of forcing the whole track to be bought again.
+  const startAt = process.env.TTS_START_AT;
+  const startIndex = startAt ? captions.findIndex((segment: AnyRecord) => segment.id === startAt) : 0;
+  if (startAt && startIndex < 0) throw new Error(`TTS_START_AT=${startAt} is not a caption of ${videoId}. Known ids: ${captions.map((segment: AnyRecord) => segment.id).join(", ")}`);
+  const reused = (captions as AnyRecord[]).slice(0, startIndex);
+  const pending = (captions as AnyRecord[]).slice(startIndex);
+  const missing = reused.filter((segment) => !existsSync(segmentFile(segment)));
+  if (missing.length > 0) throw new Error(`TTS_START_AT=${startAt} expects the earlier segments to exist, but ${missing.map((segment) => segment.id).join(", ")} are missing. Drop TTS_START_AT to generate the whole track.`);
+
+  // The manifest is a report and is always rewritten; only unwritten audio is protected.
+  const outputFiles = [...pending.map(segmentFile), ...(startIndex === 0 ? [resolve(outputDir, "manifest.json")] : [])];
   assertOutputsAvailable(outputFiles, {force, action: `Voice generation for ${videoId}`});
+  const promptFor = (segment: AnyRecord) => `${voice.direction ?? "Clear documentary narration."}\n\nTranscript:\n${segment.text}`;
   const manifest: AnyRecord = {videoId, model, voiceName, segments: {}};
   mkdirSync(outputDir, {recursive: true});
-  for (const segment of captions as AnyRecord[]) {
-    const prompt = `${voice.direction ?? "Clear documentary narration."}\n\nTranscript:\n${segment.text}`;
+  for (const segment of reused) {
+    manifest.segments[segment.id] = {hash: hash(promptFor(segment)), durationSeconds: waveDurationSeconds(segmentFile(segment))};
+    log(`Reused ${segment.id}: ${manifest.segments[segment.id].durationSeconds.toFixed(2)}s`);
+  }
+  for (const segment of pending) {
+    const prompt = promptFor(segment);
     const result = await provider.speech({model, text: prompt, voice: voiceName});
     const pcm = pcmFromAudio(result.bytes);
-    const output = resolve(outputDir, `${segment.id}.wav`);
-    writeWave(output, pcm);
+    writeWave(segmentFile(segment), pcm);
     manifest.segments[segment.id] = {hash: hash(prompt), durationSeconds: pcm.length / 2 / 24000};
     log(`Generated ${segment.id}: ${(pcm.length / 2 / 24000).toFixed(2)}s`);
   }

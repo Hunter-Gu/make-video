@@ -16,6 +16,7 @@
   "scripts": {
     "dev": "pnpm --parallel --filter @make-video/app --filter @make-video/mcp dev",
     "build:scripts": "pnpm --filter @make-video/ai --filter @make-video/assets --filter @make-video/audio --filter @make-video/qa --filter @make-video/render --filter @make-video/series --filter @make-video/sources --filter @make-video/mcp build",
+    "generation:estimate": "node skills/make-video/scripts/ai.mjs estimate",
     "assets:link": "node skills/make-video/scripts/assets.mjs link",
     "example:install": "node skills/make-video/scripts/assets.mjs example",
     "series:verify": "node skills/make-video/scripts/series.mjs verify",
