@@ -1,7 +1,7 @@
 import {existsSync, readFileSync} from "node:fs";
 import {resolve} from "node:path";
 
-import {assertOutputsAvailable as assertAvailable, audioDirsFor, projectRoot, readProjectConfig, requireObject, resolveInsideProject, resolvePublicDir} from "@make-video/project";
+import {assertOutputsAvailable as assertAvailable, audioDirsFor, projectRoot, readJsonFile, readProjectConfig, requireObject, resolveInsideProject, resolvePublicDir} from "@make-video/project";
 
 import type {AnyRecord} from "./types";
 
@@ -65,10 +65,10 @@ export const buildVisualContext = (context: VideoContext, requestedCharacters?: 
   const characterFile = resolve(context.sourceDir, "CHARACTER_BIBLE.json");
   const constraintsFile = resolve(context.sourceDir, "PROMPT_CONSTRAINTS.md");
   const sections: string[] = [];
-  if (existsSync(visualFile)) sections.push(`Visual bible: ${(JSON.parse(readFileSync(visualFile, "utf8")) as AnyRecord).promptDirection}`);
+  if (existsSync(visualFile)) sections.push(`Visual bible: ${(readJsonFile(visualFile) as AnyRecord).promptDirection}`);
   if (requestedCharacters?.length) {
     if (!existsSync(characterFile)) throw new Error("Character references require CHARACTER_BIBLE.json.");
-    const bible = JSON.parse(readFileSync(characterFile, "utf8")) as AnyRecord;
+    const bible = readJsonFile(characterFile) as AnyRecord;
     for (const requested of requestedCharacters) {
       const character = bible.characters?.find((item: AnyRecord) => item.id === requested.id);
       const stage = character?.stages?.find((item: AnyRecord) => item.id === requested.stage);

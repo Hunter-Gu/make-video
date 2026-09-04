@@ -158,6 +158,10 @@ Inspectable project files remain authoritative:
 - Rendered media, QA reports, and `delivery-report.json` remain under
   `output/<video-id>/`.
 
+Every project file is read through one JSON reader that names the file it could
+not parse, and every CLI entrypoint reports a failure as a single line with a
+non-zero exit rather than a stack trace through the minified bundle.
+
 Browser state is limited to local preferences and provider keys. Model choices
 are also saved to project configuration; local storage is not a second
 production timeline or asset store.

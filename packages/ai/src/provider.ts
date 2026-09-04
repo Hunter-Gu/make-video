@@ -1,6 +1,8 @@
 import {createHash} from "node:crypto";
-import {existsSync, readFileSync, renameSync, writeFileSync} from "node:fs";
+import {existsSync, renameSync, writeFileSync} from "node:fs";
 import {extname} from "node:path";
+
+import {readJsonFile} from "@make-video/project";
 
 import {createGoogleGenerativeAI} from "@ai-sdk/google";
 
@@ -15,7 +17,7 @@ export const google = () => {
 export const hash = (value: string | Uint8Array) => createHash("sha256").update(value).digest("hex");
 
 export const readJson = (file: string, fallback: any = null): any =>
-  existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : fallback;
+  existsSync(file) ? readJsonFile(file) : fallback;
 
 export const writeJson = (file: string, value: any) => {
   const temporary = `${file}.tmp`;

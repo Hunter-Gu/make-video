@@ -1,6 +1,6 @@
-import {log} from "@make-video/project";
+import {log, readJsonFile} from "@make-video/project";
 import {spawnSync} from "node:child_process";
-import {existsSync, mkdirSync, readFileSync, renameSync, writeFileSync} from "node:fs";
+import {existsSync, mkdirSync, renameSync, writeFileSync} from "node:fs";
 import {dirname, extname, relative, resolve} from "node:path";
 
 import {linkAssets} from "@make-video/assets";
@@ -13,7 +13,7 @@ import {buildProjectState} from "./state";
 const compositionId = "MakeVideo";
 const kebabCase = (value: unknown) => typeof value === "string" && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
 
-const readJson = (file: string): any => JSON.parse(readFileSync(file, "utf8"));
+const readJson = (file: string): any => readJsonFile(file);
 
 const positiveInteger = (value: unknown, fallback: number, label: string) => {
   if (value === undefined) return fallback;

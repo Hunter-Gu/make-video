@@ -1,6 +1,6 @@
-import {log} from "@make-video/project";
+import {log, readJsonFile} from "@make-video/project";
 import {spawnSync} from "node:child_process";
-import {existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
+import {existsSync, mkdirSync, writeFileSync} from "node:fs";
 import {dirname, resolve} from "node:path";
 
 import {loadVideoContext, parseTargetArgs, projectRoot, readJson} from "./context";
@@ -54,7 +54,7 @@ export const runVideoQa = (args: string[], inputOverride?: string) => {
     add("audio-true-peak", Number.isFinite(truePeak) && truePeak <= maxTruePeak, `≤ ${maxTruePeak} dBFS`, truePeak);
   }
   const sceneIndex = readJson(resolve(context.sourceDir, "SCENE_INDEX.json"));
-  const config = JSON.parse(readFileSync(resolve(context.sourceDir, "video.config.json"), "utf8"));
+  const config = readJsonFile(resolve(context.sourceDir, "video.config.json"));
   const captions = Array.isArray(sceneIndex?.captions) ? sceneIndex.captions : Array.isArray(config.captions) ? config.captions : [];
   const scenes = new Map((Array.isArray(sceneIndex?.scenes) ? sceneIndex.scenes : []).map((scene: any) => [scene?.id, scene]));
   let previousEnd = 0;

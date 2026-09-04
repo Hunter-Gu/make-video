@@ -52,6 +52,7 @@ npx skills add remotion-dev/skills --skill remotion-best-practices
 | `LYRIA_MODEL`                 | No                                                   | Overrides `music.model` from `video.config.json` for the music bed.                                     |
 | `TTS_START_AT`                | No                                                   | Resumes narration generation from a given caption id, reusing earlier segment files.                    |
 | `REMOTION_BROWSER_EXECUTABLE` | No                                                   | Overrides the headless browser Remotion uses to render (defaults to system Chrome on macOS if present). |
+| `MAKE_VIDEO_DEBUG`            | No                                                   | Prints the stack as well as the message when a CLI command fails.                                       |
 
 ### Setting `GEMINI_API_KEY`
 
@@ -248,6 +249,11 @@ source-to-narration compression the requested runtimes imply.
 [skills/make-video/references/series-workflow.md](skills/make-video/references/series-workflow.md).
 
 ## Development
+
+A failing command reports one line — the message, not a stack through the
+minified bundle — and exits non-zero. A malformed project file is named:
+`src/<video-id>/SCENE_INDEX.json is not valid JSON: …`. Set `MAKE_VIDEO_DEBUG`
+for the stack.
 
 ```bash
 pnpm typecheck

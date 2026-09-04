@@ -1,7 +1,7 @@
-import {existsSync, readFileSync, readdirSync} from "node:fs";
+import {existsSync, readdirSync} from "node:fs";
 import {resolve} from "node:path";
 
-import {projectRoot, resolveInsideProject, videoIdPattern} from "@make-video/project";
+import {projectRoot, readJsonFile, resolveInsideProject, videoIdPattern} from "@make-video/project";
 
 export {projectRoot};
 
@@ -15,7 +15,7 @@ export type SeriesContext = {
   resolveConfiguredPath: (value: unknown, label: string) => string;
 };
 
-export const readJson = (file: string): JsonObject => JSON.parse(readFileSync(file, "utf8"));
+export const readJson = (file: string): JsonObject => readJsonFile(file);
 
 export const seriesRoot = () => resolve(projectRoot, "projects");
 

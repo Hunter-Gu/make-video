@@ -1,3 +1,4 @@
+import {readJsonFile} from "@make-video/project";
 import {randomUUID} from "node:crypto";
 import {existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, writeFileSync} from "node:fs";
 import {basename, dirname, extname, relative, resolve, sep} from "node:path";
@@ -65,7 +66,7 @@ export const prepareProjectAssets = (videoId: string) => {
   return true;
 };
 
-const readJson = (file: string, fallback: any = null): any => existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : fallback;
+const readJson = (file: string, fallback: any = null): any => existsSync(file) ? readJsonFile(file) : fallback;
 const insideRoot = (file: string) => {
   const value = relative(projectRoot, file);
   return value !== ".." && !value.startsWith(`..${sep}`);

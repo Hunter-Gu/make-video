@@ -1,4 +1,4 @@
-import {log} from "@make-video/project";
+import {log, readJsonFile} from "@make-video/project";
 import {existsSync, readFileSync, writeFileSync} from "node:fs";
 import {dirname, resolve} from "node:path";
 
@@ -11,18 +11,18 @@ export const buildTiming = (videoId: string, force: boolean) => {
   const context = loadAudioContext(videoId);
   const planFile = resolve(context.sourceDir, "TIMING_PLAN.json");
   if (!existsSync(planFile)) throw new Error(`Timing plan not found: ${planFile}`);
-  const plan = JSON.parse(readFileSync(planFile, "utf8"));
+  const plan = readJsonFile(planFile);
   const generatedManifest = resolve(context.audioDirs.voiceover, "manifest.json");
   const manifestFile = existsSync(generatedManifest)
     ? generatedManifest
     : context.resolveConfiguredPath(plan.voiceManifest, "TIMING_PLAN.voiceManifest");
   if (!existsSync(manifestFile)) throw new Error(`Voice manifest not found: ${manifestFile}`);
-  const voice = JSON.parse(readFileSync(manifestFile, "utf8"));
+  const voice = readJsonFile(manifestFile);
   const scriptFile = resolve(context.sourceDir, "SCRIPT.md");
   const script = existsSync(scriptFile) ? new Map([...readFileSync(scriptFile, "utf8").matchAll(/^- `([^`]+)`: (.+)$/gm)].map((match) => [match[1], match[2]])) : new Map();
   const fps = context.composition.fps;
   const indexFile = resolve(context.sourceDir, "SCENE_INDEX.json");
-  const previousIndex = existsSync(indexFile) ? JSON.parse(readFileSync(indexFile, "utf8")) : null;
+  const previousIndex = existsSync(indexFile) ? readJsonFile(indexFile) : null;
   const previousScenes = new Map((previousIndex?.scenes ?? []).map((scene: any) => [scene.id, scene]));
   const scenes: any[] = []; const captions: any[] = []; let frame = 0;
   for (const scene of plan.scenes ?? []) {
@@ -49,7 +49,7 @@ export const buildTiming = (videoId: string, force: boolean) => {
     if (wave.length < 44 || wave.toString("ascii", 0, 4) !== "RIFF" || wave.readUInt32LE(24) !== sampleRate || wave.readUInt16LE(34) !== 16) throw new Error(`Unsupported voice segment format: ${file}`);
     return wave;
   }) : [];
-  const config = JSON.parse(readFileSync(context.configPath, "utf8"));
+  const config = readJsonFile(context.configPath);
   config.composition.durationInFrames = frame;
   writeFileSync(indexFile, `${JSON.stringify(sceneIndex, null, 2)}\n`);
   writeFileSync(context.configPath, `${JSON.stringify(config, null, 2)}\n`);

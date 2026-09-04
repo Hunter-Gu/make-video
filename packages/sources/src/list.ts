@@ -1,5 +1,5 @@
-import {log} from "@make-video/project";
-import {existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
+import {log, readJsonFile} from "@make-video/project";
+import {existsSync, mkdirSync, writeFileSync} from "node:fs";
 import {dirname, resolve} from "node:path";
 
 import {assertOutputAvailable, loadSourceContext} from "./context";
@@ -11,11 +11,11 @@ export const buildSourceList = (videoId: string, force: boolean) => {
   const context = loadSourceContext(videoId);
   const indexFile = resolve(context.sourceDir, "sources", "index.json");
   if (!existsSync(indexFile)) throw new Error("Source index is required.");
-  const index = JSON.parse(readFileSync(indexFile, "utf8"));
+  const index = readJsonFile(indexFile);
   const catalogFile = resolve(context.sourceDir, "sources", "catalog.json");
-  const catalog = existsSync(catalogFile) ? JSON.parse(readFileSync(catalogFile, "utf8")) : null;
+  const catalog = existsSync(catalogFile) ? readJsonFile(catalogFile) : null;
   const claimsFile = resolve(context.sourceDir, "CLAIMS.json");
-  const claims = existsSync(claimsFile) ? new Map((JSON.parse(readFileSync(claimsFile, "utf8")).claims ?? []).map((claim: any) => [claim.id, claim])) : new Map();
+  const claims = existsSync(claimsFile) ? new Map((readJsonFile(claimsFile).claims ?? []).map((claim: any) => [claim.id, claim])) : new Map();
   const lines = ["# Sources", "", `Generated for \`${videoId}\`.`, "", "## Source documents", ""];
   for (const source of index.sources ?? []) {
     lines.push(`### ${text(source.title || source.id)}`, "", `- ID: \`${text(source.id)}\``, `- Type: ${text(source.type)}`, `- Origin: \`${text(source.origin)}\``, `- Rights: ${text(source.rights)}`, `- SHA-256: \`${text(source.sha256)}\``, "", "Indexed locations:");

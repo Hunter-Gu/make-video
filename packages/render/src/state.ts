@@ -1,3 +1,4 @@
+import {readJsonFile} from "@make-video/project";
 import {existsSync, readFileSync, readdirSync} from "node:fs";
 import {extname, relative, resolve, sep} from "node:path";
 
@@ -8,7 +9,7 @@ import {loadRenderContext, projectRoot} from "./context";
 type StateTarget = "server" | "remotion";
 
 const readJson = (file: string, fallback: any = null): any => existsSync(file)
-  ? JSON.parse(readFileSync(file, "utf8"))
+  ? readJsonFile(file)
   : fallback;
 
 const inside = (root: string, file: string) => {

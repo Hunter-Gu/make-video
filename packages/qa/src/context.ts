@@ -1,6 +1,6 @@
-import {existsSync, readFileSync} from "node:fs";
+import {existsSync} from "node:fs";
 
-import {parseTargetArgs, projectRoot, readProjectConfig, requireObject, resolveInsideProject, resolvePublicDir} from "@make-video/project";
+import {parseTargetArgs, projectRoot, readJsonFile, readProjectConfig, requireObject, resolveInsideProject, resolvePublicDir} from "@make-video/project";
 
 export {parseTargetArgs, projectRoot};
 
@@ -26,4 +26,4 @@ export const loadVideoContext = (videoId: string): VideoContext => {
   return {videoId, sourceDir, publicDir: resolvePublicDir(production, videoId), composition, production, outputs, resolveConfiguredPath: resolveInsideProject};
 };
 
-export const readJson = (file: string, fallback: AnyRecord | null = null): AnyRecord | null => existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : fallback;
+export const readJson = (file: string, fallback: AnyRecord | null = null): AnyRecord | null => existsSync(file) ? readJsonFile(file) : fallback;

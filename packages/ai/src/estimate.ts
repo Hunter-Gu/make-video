@@ -1,8 +1,8 @@
 import {createHash} from "node:crypto";
-import {existsSync, readFileSync} from "node:fs";
+import {existsSync} from "node:fs";
 import {relative, resolve} from "node:path";
 
-import {log, projectRoot} from "@make-video/project";
+import {log, projectRoot, readJsonFile} from "@make-video/project";
 
 import {loadVideoContext} from "./project";
 import {writeJson} from "./provider";
@@ -64,7 +64,7 @@ export const estimateGeneration = (videoId: string): GenerationEstimate => {
   if (!existsSync(planFile)) {
     throw new Error(`GENERATION_PLAN.json not found for ${videoId}: ${relative(projectRoot, planFile)}. Declare the unit cost and latency of each paid asset before estimating.`);
   }
-  const plan = JSON.parse(readFileSync(planFile, "utf8")) as AnyRecord;
+  const plan = readJsonFile(planFile) as AnyRecord;
   if (!plan || typeof plan !== "object" || plan.version !== 1 || !Array.isArray(plan.assets)) {
     throw new Error("GENERATION_PLAN.json must be an object with version 1 and an assets array.");
   }

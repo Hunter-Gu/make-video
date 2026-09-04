@@ -1,5 +1,5 @@
-import {log} from "@make-video/project";
-import {copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync} from "node:fs";
+import {log, readJsonFile} from "@make-video/project";
+import {copyFileSync, existsSync, mkdirSync, readdirSync} from "node:fs";
 import {dirname, relative, resolve, sep} from "node:path";
 
 import {projectRoot} from "./context";
@@ -44,7 +44,7 @@ export const installExample = (videoId: string, force: boolean) => {
   if (existsSync(seriesSource)) {
     const planFile = resolve(seriesSource, "series-plan.json");
     if (!existsSync(planFile)) throw new Error(`Example series is missing ${relative(projectRoot, planFile)}.`);
-    const seriesId = String(JSON.parse(readFileSync(planFile, "utf8")).seriesId ?? "");
+    const seriesId = String(readJsonFile(planFile).seriesId ?? "");
     if (!videoIdPattern.test(seriesId)) throw new Error(`Example series-plan.json needs a kebab-case seriesId.`);
     copyTree(seriesSource, resolve(projectRoot, "projects", seriesId), force, copied, skipped);
   }

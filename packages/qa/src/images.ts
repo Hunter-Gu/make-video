@@ -1,6 +1,6 @@
-import {log} from "@make-video/project";
+import {log, readJsonFile} from "@make-video/project";
 import {spawnSync} from "node:child_process";
-import {existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
+import {existsSync, mkdirSync, writeFileSync} from "node:fs";
 import {dirname, resolve} from "node:path";
 
 import {loadVideoContext, parseTargetArgs, projectRoot} from "./context";
@@ -9,7 +9,7 @@ import {readImageText} from "./ocr";
 export const runImageQa = (args: string[]) => {
   const {videoId} = parseTargetArgs(args);
   const context = loadVideoContext(videoId);
-  const config = JSON.parse(readFileSync(resolve(context.sourceDir, "IMAGE_QA.json"), "utf8"));
+  const config = readJsonFile(resolve(context.sourceDir, "IMAGE_QA.json"));
   const results: any[] = [];
   for (const image of config.images ?? []) {
     const file = context.resolveConfiguredPath(image.path, `image ${image.id}`);

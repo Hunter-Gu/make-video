@@ -16,6 +16,23 @@ export type JsonObject = Record<string, any>;
  */
 export const log = (message: string) => { process.stderr.write(`${message}\n`); };
 
+/**
+ * Run a CLI entrypoint and report a failure as one readable line.
+ *
+ * The CLIs ship as minified single-line bundles, so an uncaught error makes Node
+ * print the entire bundle as the offending "source line" before the message that
+ * actually matters. Set MAKE_VIDEO_DEBUG to get the stack as well.
+ */
+export const runCli = async (work: () => unknown) => {
+  try {
+    await work();
+  } catch (error) {
+    log(error instanceof Error ? error.message : String(error));
+    if (process.env.MAKE_VIDEO_DEBUG && error instanceof Error && error.stack) log(error.stack);
+    process.exitCode = 1;
+  }
+};
+
 export const videoIdPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /**
@@ -39,6 +56,23 @@ export const insideProject = (root: string, file: string) => {
   return value !== ".." && !value.startsWith(`..${sep}`);
 };
 
+/**
+ * Read a JSON project file, naming the file when it cannot be parsed.
+ *
+ * Project files are authored by hand and by the host agent, so a stray comma is
+ * an ordinary failure. Node's own message — "Unexpected token } in JSON at
+ * position 412" — says nothing about which of a project's dozen JSON files it
+ * came from, which is the only thing the reader needs to know.
+ */
+export const readJsonFile = <T = JsonObject>(file: string): T => {
+  const text = readFileSync(file, "utf8");
+  try {
+    return JSON.parse(text) as T;
+  } catch (error) {
+    throw new Error(`${relative(projectRoot, file)} is not valid JSON: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
+
 export const requireObject = (value: unknown, label: string): JsonObject => {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${label} must be an object.`);
   return value as JsonObject;
@@ -50,7 +84,7 @@ export const readProjectConfig = (videoId: string) => {
   const sourceDir = resolve(projectRoot, "src", videoId);
   const configPath = resolve(sourceDir, "video.config.json");
   if (!existsSync(configPath)) throw new Error(`Video config not found: ${configPath}`);
-  const config = JSON.parse(readFileSync(configPath, "utf8")) as JsonObject;
+  const config = readJsonFile(configPath);
   if (config.videoId !== videoId) throw new Error(`video.config.json declares videoId "${config.videoId}" but directory target is "${videoId}".`);
   return {videoId, config, sourceDir, configPath};
 };

@@ -1,6 +1,6 @@
-import {log} from "@make-video/project";
+import {log, readJsonFile} from "@make-video/project";
 import {spawnSync} from "node:child_process";
-import {existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
+import {existsSync, mkdirSync, writeFileSync} from "node:fs";
 import {dirname, resolve} from "node:path";
 
 import {loadVideoContext, parseTargetArgs, projectRoot} from "./context";
@@ -11,7 +11,7 @@ export const runGeneratedVideoQa = (args: string[]) => {
   const context = loadVideoContext(videoId);
   const configFile = resolve(context.sourceDir, "CLIP_QA.json");
   if (!existsSync(configFile)) throw new Error(`Clip QA config not found: ${configFile}`);
-  const config = JSON.parse(readFileSync(configFile, "utf8"));
+  const config = readJsonFile(configFile);
   const results: any[] = [];
   for (const clip of config.clips ?? []) {
     const file = context.resolveConfiguredPath(clip.path, `clip ${clip.id}`);

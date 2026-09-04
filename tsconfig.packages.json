@@ -27,6 +27,7 @@
     "packages/remotion/src",
     "packages/series/src",
     "packages/sources/src",
+    "packages/project/test",
     "packages/ai/test",
     "packages/audio/test",
     "packages/mcp/test",
