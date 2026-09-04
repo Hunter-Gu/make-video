@@ -121,7 +121,17 @@ export const verifySeries = (seriesId: string): SeriesVerification => {
     }
   }
 
-  const timeline = new Map((Array.isArray(bible.timeline) ? bible.timeline : []).map((event: any) => [String(event?.id), Number(event?.order)]));
+  // An event with no usable order would enter the comparisons below as NaN, where
+  // every comparison is false — switching chronology checking off for the rest of
+  // the series instead of reporting anything. Reject it here instead.
+  const timeline = new Map<string, number>();
+  for (const [index, event] of (Array.isArray(bible.timeline) ? bible.timeline : []).entries()) {
+    const id = typeof event?.id === "string" ? event.id.trim() : "";
+    const order = Number(event?.order);
+    if (!id || !Number.isFinite(order)) fail(`SERIES_BIBLE.json timeline[${index}] needs an id and a numeric order.`);
+    else if (timeline.has(id)) fail(`Duplicate series timeline event: ${id}`);
+    else timeline.set(id, order);
+  }
   const flashbacks = new Set(raw.episodes.filter((episode: any) => episode?.outOfOrderTimeline === true).map((episode: any) => String(episode.id)));
   let previousOrder = -Infinity;
   let previousEpisodeId = "";

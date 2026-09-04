@@ -189,3 +189,24 @@ test("coverage refuses to describe a series that does not verify", () => {
   const seriesId = writeSeries({episodes: [episode({id: "one", title: "One", next: "ghost", sourceBlockIds: ["book-1", "book-2", "book-3"]})]});
   assert.throws(() => buildSeriesCoverage(seriesId, true), /does not verify/);
 });
+
+test("an unusable timeline event is rejected, not quietly skipped", () => {
+  // A NaN order makes every chronology comparison false, so one malformed event
+  // used to switch the check off for the whole series and verify clean.
+  const seriesId = writeSeries({
+    episodes: [
+      episode({id: "one", title: "One", next: "two", sourceBlockIds: ["book-1"], timelineEventIds: ["third"]}),
+      episode({id: "two", title: "Two", previous: "one", next: "three", sourceBlockIds: ["book-2"], timelineEventIds: ["broken"]}),
+      episode({id: "three", title: "Three", previous: "two", sourceBlockIds: ["book-3"], timelineEventIds: ["first"]}),
+    ],
+  }, {timeline: [{id: "first", order: 1}, {id: "broken", label: "no order at all"}, {id: "third", order: 3}]});
+  const report = verifySeries(seriesId);
+
+  assert.equal(report.passed, false);
+  assert.ok(report.errors.some((error) => /timeline\[1\] needs an id and a numeric order/.test(error)), report.errors.join(" "));
+  assert.ok(report.errors.some((error) => /Episode three returns to timeline events already covered by one/.test(error)), "the regression the broken event was hiding");
+
+  const duplicated = writeSeries({episodes: [episode({id: "one", title: "One", sourceBlockIds: ["book-1", "book-2", "book-3"]})]},
+    {timeline: [{id: "first", order: 1}, {id: "first", order: 2}]});
+  assert.ok(verifySeries(duplicated).errors.some((error) => /Duplicate series timeline event: first/.test(error)));
+});

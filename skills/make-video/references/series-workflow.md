@@ -21,10 +21,16 @@ Do not infer the shape of the entire work from its opening chapters.
 Present the mode explicitly:
 
 - **Overview** — a selective explanation of the whole work.
+  `SERIES_BIBLE.json` `overview`; `VIDEO_PLAN.json` `overview`.
 - **Chapter focus** — one source section explained in depth.
+  `SERIES_BIBLE.json` `chapter-focus`; `VIDEO_PLAN.json` `chapter-explanation`.
 - **Documentary adaptation** — reorganized around a narrative question rather
   than source chapter order.
+  `SERIES_BIBLE.json` `documentary`; `VIDEO_PLAN.json` `documentary`.
 - **Series** — multiple episodes with deliberate boundaries and progression.
+  `SERIES_BIBLE.json` `series`; an individual episode's `VIDEO_PLAN.json` is
+  `series-episode`, because the plan describes one video and the bible describes
+  the whole series.
 
 Estimate the narration and episode count needed for useful coverage. State
 what will be omitted when the requested runtime requires heavy compression.
@@ -79,6 +85,9 @@ information. Do not let an episode silently contradict them.
 Store the series plan as `projects/<project-id>/series-plan.json` with an ordered
 `episodes` array, project-relative `sourceIndex`, explicit `previous`/`next`
 links, topics, source block IDs, and estimated minutes.
+
+Every `timeline` entry needs an `id` and a numeric `order`; verification rejects
+one that does not, because an unordered event cannot be placed against the rest.
 
 Keep machine-checkable shared state in `SERIES_BIBLE.json`: adaptation mode,
 words-per-minute assumption, rights and intended use, shared bible paths,
