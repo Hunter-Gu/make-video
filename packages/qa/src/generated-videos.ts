@@ -12,8 +12,10 @@ export const runGeneratedVideoQa = (args: string[]) => {
   const configFile = resolve(context.sourceDir, "CLIP_QA.json");
   if (!existsSync(configFile)) throw new Error(`Clip QA config not found: ${configFile}`);
   const config = readJsonFile(configFile);
+  // Checking nothing is not a pass; see the same guard in image QA.
+  if (!Array.isArray(config.clips) || config.clips.length === 0) throw new Error(`CLIP_QA.json needs a non-empty clips array for ${videoId}. Run clip QA only once the project has generated or supplied clips to check.`);
   const results: any[] = [];
-  for (const clip of config.clips ?? []) {
+  for (const clip of config.clips) {
     const file = context.resolveConfiguredPath(clip.path, `clip ${clip.id}`);
     if (!existsSync(file)) throw new Error(`Clip not found: ${file}`);
     const probe = spawnSync("ffprobe", ["-v", "error", "-show_entries", "stream=codec_type,width,height", "-show_entries", "format=duration", "-of", "json", file], {encoding: "utf8"});

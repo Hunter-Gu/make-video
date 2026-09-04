@@ -53,7 +53,9 @@ List selected visual assets in `IMAGE_QA.json` with a semantic `visualIdea`,
 text policy, and minimum information threshold. Run
 `<skill-dir>/scripts/qa.mjs images <video-id>` to reject near-duplicate perceptual hashes,
 repeated visual ideas,
-low-variance images, and high-confidence OCR text that was not allowed.
+low-variance images, and high-confidence OCR text that was not allowed. It
+refuses to run against an empty list rather than reporting a pass for images it
+never looked at, so run it once the project has stills to check.
 
 The script uses `GEMINI_IMAGE_MODEL` when set, otherwise the configured model.
 It never overwrites an output without `--force` and records prompt and file

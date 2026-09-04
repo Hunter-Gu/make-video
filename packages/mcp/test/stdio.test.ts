@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import {spawn, type ChildProcess} from "node:child_process";
+import {spawn, spawnSync, type ChildProcess} from "node:child_process";
 import {chmod, copyFile, mkdtemp, mkdir, rm, writeFile} from "node:fs/promises";
 import {createServer, type AddressInfo} from "node:net";
 import {tmpdir} from "node:os";
@@ -37,7 +37,12 @@ const createFixture = async () => {
   await writeFile(resolve(sourceDir, "sources", "index.json"), JSON.stringify({videoId, sources: [{id: "brief", title: "Fixture brief", type: "markdown", origin: "fixture", rights: "test", sha256: "fixture", blocks: [{id: "brief-1", locator: "p1", text: "Alexandria was a center of learning."}]}]}, null, 2));
   await writeFile(resolve(sourceDir, "TIMING_PLAN.json"), JSON.stringify({voiceManifest: `public/${videoId}/audio/voiceover/manifest.json`, scenes: [{id: "scene-1", title: "Opening", type: "image", objective: "Introduce the subject", sourceBlockIds: ["brief-1"], narrationIds: ["narration-1"], minFrames: 1}]}, null, 2));
   await writeFile(resolve(publicDir, "audio", "voiceover", "manifest.json"), JSON.stringify({segments: {"narration-1": {durationSeconds: 1.2}}}, null, 2));
-  await writeFile(resolve(sourceDir, "IMAGE_QA.json"), JSON.stringify({images: []}, null, 2));
+  // Image QA refuses to report a pass without an image to look at, so the fixture
+  // carries one. Text detection has its own tests; this one exercises the job path.
+  const still = resolve(sourceDir, "fixture.png");
+  const drawn = spawnSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "testsrc=s=64x64", "-frames:v", "1", still], {encoding: "utf8"});
+  assert.equal(drawn.status, 0, drawn.stderr);
+  await writeFile(resolve(sourceDir, "IMAGE_QA.json"), JSON.stringify({version: 1, images: [{id: "fixture-still", path: `src/${videoId}/fixture.png`, visualIdea: "fixture pattern", allowText: true, minDeviation: 1}]}, null, 2));
   await writeFile(resolve(sourceDir, "translations", "stale.json"), JSON.stringify({language: "xx", scenes: {"scene-removed": {title: "Gone"}}}, null, 2));
   await writeFile(resolve(sourceDir, "DELIVERABLES.json"), JSON.stringify({
     version: 1,

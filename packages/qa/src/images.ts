@@ -10,8 +10,11 @@ export const runImageQa = (args: string[]) => {
   const {videoId} = parseTargetArgs(args);
   const context = loadVideoContext(videoId);
   const config = readJsonFile(resolve(context.sourceDir, "IMAGE_QA.json"));
+  // Checking nothing is not a pass. An empty list would otherwise report
+  // passed: true to the app and to MCP without having looked at an image.
+  if (!Array.isArray(config.images) || config.images.length === 0) throw new Error(`IMAGE_QA.json needs a non-empty images array for ${videoId}. Run image QA only once the project has stills to check.`);
   const results: any[] = [];
-  for (const image of config.images ?? []) {
+  for (const image of config.images) {
     const file = context.resolveConfiguredPath(image.path, `image ${image.id}`);
     if (!existsSync(file)) throw new Error(`Image not found: ${file}`);
     const pixels = spawnSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-i", file, "-vf", "scale=16:16,format=gray", "-frames:v", "1", "-f", "rawvideo", "-"], {encoding: null});

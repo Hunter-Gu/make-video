@@ -35,4 +35,6 @@ primary audio track.
 List generated or supplied clips in `CLIP_QA.json`, including expected duration,
 minimum resolution, cut threshold, and text policy. Run
 `<skill-dir>/scripts/qa.mjs generated-videos <video-id>` for ffprobe, scene-cut, midpoint
-OCR, duration, resolution, and text checks. The script does not call an AI model.
+OCR, duration, resolution, and text checks. The script does not call an AI model,
+and refuses to run against an empty list rather than reporting a pass for clips it
+never looked at.

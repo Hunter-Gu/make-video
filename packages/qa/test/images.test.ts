@@ -104,3 +104,11 @@ test("the report records every checked image and its verdict", () => {
 test("a missing image is reported before any analysis", () => {
   assert.throws(() => run([{id: "ghost", path: `src/${videoId}/assets/ghost.png`, allowText: true}]), /Image not found/);
 });
+
+test("checking nothing is never reported as a pass", () => {
+  // An empty list used to produce passed: true, which reaches the app and MCP as
+  // a clean image QA verdict without an image having been looked at.
+  assert.throws(() => run([]), /needs a non-empty images array/);
+  writeFileSync(resolve(sourceDir, "IMAGE_QA.json"), JSON.stringify({version: 1}));
+  assert.throws(() => runImageQa([videoId]), /needs a non-empty images array/);
+});
