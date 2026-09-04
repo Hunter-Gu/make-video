@@ -22,7 +22,7 @@ export const runRender = async (action: "studio" | "still" | "preview" | "final"
   const context = loadRenderContext(videoId);
   const {outputs, production} = context;
   const renderEnv = {...process.env, MAKE_VIDEO_VIDEO_ID: videoId};
-  linkAssets(videoId);
+  linkAssets(videoId, force);
   const state = buildProjectState(videoId, "remotion");
   const props = (configured: unknown) => JSON.stringify({...((configured && typeof configured === "object") ? configured : {}), state});
   if (action === "studio") return runRemotion(["studio", "src/index.ts", "--no-open", `--props=${props(production.silentProps)}`], renderEnv);

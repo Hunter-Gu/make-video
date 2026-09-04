@@ -198,7 +198,7 @@ export const runDelivery = async (videoId: string, options: {variantIds?: string
   const unknown = requested.filter((id) => !declared.some((variant) => variant.id === id));
   if (unknown.length > 0) throw new Error(`Unknown delivery variants: ${unknown.join(", ")}`);
   const variants = requested.length > 0 ? declared.filter((variant) => requested.includes(variant.id)) : declared;
-  linkAssets(videoId);
+  linkAssets(videoId, force);
   const baseProps = context.production.finalProps ?? context.production.silentProps;
   const renderEnv = {...process.env, MAKE_VIDEO_VIDEO_ID: videoId};
   const report: DeliveryReport = getDeliveryReport(videoId) ?? {videoId, variants: {}, generatedAt: new Date().toISOString()};

@@ -29,6 +29,7 @@
     "packages/sources/src",
     "packages/project/test",
     "packages/ai/test",
+    "packages/assets/test",
     "packages/audio/test",
     "packages/mcp/test",
     "packages/qa/test",

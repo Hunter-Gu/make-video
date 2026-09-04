@@ -7,7 +7,17 @@ import {loadAssetContext} from "./context";
 
 const hashFile = (fileName: string) => createHash("sha256").update(readFileSync(fileName)).digest("hex");
 
-export const linkAssets = (videoId: string) => {
+/**
+ * Materialize the video's public media as hard links to their canonical sources.
+ *
+ * A public copy that does not match its source is refused rather than replaced,
+ * because it may be a file someone edited in place. Replacing a source the
+ * ordinary way — write a temp file, rename over it — gives it a new inode, so the
+ * public copy is left holding the old content and that refusal is exactly what a
+ * caller hits after updating an asset; `force` is how they say the canonical
+ * source wins.
+ */
+export const linkAssets = (videoId: string, force = false) => {
   const context = loadAssetContext(videoId);
   const assetLinks = context.production.assetLinks ?? [];
   if (!Array.isArray(assetLinks)) throw new Error("production.assetLinks must be an array.");
@@ -34,7 +44,10 @@ export const linkAssets = (videoId: string) => {
     const sourceStat = statSync(source);
     const sameInode = outputStat.dev === sourceStat.dev && outputStat.ino === sourceStat.ino;
     const sameContent = sameInode || (outputStat.size === sourceStat.size && hashFile(output) === hashFile(source));
-    if (!sameContent) throw new Error(`${output} exists but does not match the configured canonical source.`);
+    if (sameContent) continue;
+    if (!force) throw new Error(`${output} exists but does not match the configured canonical source. Pass --force to replace it with ${item.source}.`);
+    unlinkSync(output);
+    linkSync(source, output);
   }
   log(`Asset links are ready for ${videoId}.`);
 };

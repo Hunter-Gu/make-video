@@ -20,6 +20,6 @@ await runCli(async () => {
   } else {
     const {videoId, force} = parseTargetArgs(args);
     if (mode === "example") installExample(videoId, force);
-    else linkAssets(videoId);
+    else linkAssets(videoId, force);
   }
 });

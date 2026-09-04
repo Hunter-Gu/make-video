@@ -86,6 +86,12 @@ useful. These direct inspection actions do not need wrappers.
 
 ### 4. Plan the edit
 
+Supplied media stays canonical under `src/` or a package, and
+`production.assetLinks` hard-links it into `public/<video-id>/`. A public copy
+that no longer matches its source is refused rather than replaced, since it may
+have been edited in place; after replacing a canonical asset, re-link with
+`--force` to point the public copy back at it.
+
 Keep dimensions, duration, models, asset links, runtime paths, output paths,
 optional audio generation, and mastering settings in `video.config.json`. Its
 declared `videoId` must match the directory. Use the video id as

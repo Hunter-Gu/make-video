@@ -122,6 +122,21 @@ pnpm deliver library-of-alexandria --variant=thumbnail
 Model-backed image, video, voice, and music generation stays separate from
 this local acceptance path and requires the caller's API credentials.
 
+## Replacing a supplied asset
+
+Supplied media stays canonical under `src/`; `production.assetLinks` hard-links
+it into `public/<video-id>/`. Editing a canonical file in place needs nothing —
+the link shows it. Replacing one wholesale (writing a temp file and renaming
+over it, as most tools do) gives it a new inode, so the public copy keeps the
+old bytes and is refused rather than silently replaced:
+
+```bash
+pnpm assets:link my-video --force
+```
+
+Render and delivery pass their own `--force` through, so a forced re-render also
+re-links.
+
 ## Rebuilding only what changed
 
 `make_video_get_build_status` (REST: `GET /api/build-status`) reports which
