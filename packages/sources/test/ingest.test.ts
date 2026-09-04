@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import {spawnSync} from "node:child_process";
 import {mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {resolve} from "node:path";
@@ -104,4 +105,44 @@ test("the source list names every indexed location and claim", async () => {
   assert.match(content, /- `brief-1` — document:paragraph-1/);
   assert.match(content, /\*\*decline\*\* \(paraphrase\): The decline was gradual\./);
   assert.match(content, /\*\*Alexandria\*\* \(place\)/);
+});
+
+/**
+ * Build an EPUB whose archive order is not its reading order and whose navigation
+ * document is not part of the book text — the shape that made ingestion return
+ * the table of contents and the chapters back to front.
+ */
+const epub = (file: string) => {
+  const staging = resolve(root, `epub-${counter}`);
+  mkdirSync(resolve(staging, "META-INF"), {recursive: true});
+  mkdirSync(resolve(staging, "OEBPS"), {recursive: true});
+  writeFileSync(resolve(staging, "META-INF", "container.xml"), '<?xml version="1.0"?><container version="1.0"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>');
+  writeFileSync(resolve(staging, "OEBPS", "content.opf"), `<?xml version="1.0"?><package version="3.0">
+    <manifest>
+      <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+      <item id="c1" href="ch1.xhtml" media-type="application/xhtml+xml"/>
+      <item id="c2" href="ch2.xhtml" media-type="application/xhtml+xml"/>
+    </manifest>
+    <spine><itemref idref="c1"/><itemref idref="c2"/></spine>
+  </package>`);
+  writeFileSync(resolve(staging, "OEBPS", "nav.xhtml"), "<html><body><nav><ol><li>Chapter One</li><li>Chapter Two</li></ol></nav></body></html>");
+  writeFileSync(resolve(staging, "OEBPS", "ch1.xhtml"), "<html><body><p>The first chapter opens the argument.</p></body></html>");
+  writeFileSync(resolve(staging, "OEBPS", "ch2.xhtml"), "<html><body><p>The second chapter answers it.</p></body></html>");
+  // Zipped with the later chapter first, so archive order disagrees with the spine.
+  const zipped = spawnSync("zip", ["-q", "-r", file, "META-INF", "OEBPS/content.opf", "OEBPS/nav.xhtml", "OEBPS/ch2.xhtml", "OEBPS/ch1.xhtml"], {cwd: staging, encoding: "utf8"});
+  assert.equal(zipped.status, 0, zipped.stderr);
+};
+
+test("an EPUB is read in spine order, without its navigation document", async () => {
+  const fixture = project([]);
+  epub(resolve(fixture.sourceDir, "documents", "book.epub"));
+  writeFileSync(resolve(fixture.sourceDir, "video.config.json"), JSON.stringify({videoId: fixture.videoId, sources: [{id: "book", title: "A book", input: fixture.document("book.epub"), rights: "licensed"}]}));
+  await ingestSources(fixture.videoId, false);
+
+  const index = readIndex(fixture.sourceDir);
+  assert.equal(index.sources[0].type, "epub");
+  assert.deepEqual(index.sources[0].blocks.map((block: any) => [block.locator, block.text]), [
+    ["section-1:paragraph-1", "The first chapter opens the argument."],
+    ["section-2:paragraph-1", "The second chapter answers it."],
+  ], "the table of contents is not source material, and chapter two does not come first");
 });

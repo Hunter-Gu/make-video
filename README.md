@@ -35,6 +35,9 @@ npx skills add remotion-dev/skills --skill remotion-best-practices
 - `tesseract` on `PATH` for image and generated-clip QA, which reads media back
   to catch unwanted or generated lettering. Entries marked `"allowText": true`
   skip OCR and do not need it.
+- `unzip` on `PATH` to read DOCX and EPUB sources, and `pdftotext` (from
+  poppler-utils) to read PDF sources. Neither is needed for Markdown, text, or
+  web sources.
 - `sox` is optional. The workflow suggests it for hands-on audio inspection; no
   command in this repository requires it.
 - A Remotion project (`remotion`, `@remotion/cli`, `react`, `react-dom`) in

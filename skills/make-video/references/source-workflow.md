@@ -24,6 +24,10 @@ Run `<skill-dir>/scripts/sources.mjs ingest <video-id>` from the project root. I
 `src/<video-id>/sources/index.json`, preserving page or section locators and
 paragraph IDs. Existing indexes are protected unless regeneration is explicit.
 
+An EPUB is read in the order its spine declares, not the order the archive
+happens to list, and its navigation document is skipped — so `section-1` is the
+book's first chapter and no block holds the table of contents.
+
 Use block IDs when recording support for narration claims and storyboard
 scenes. Mark model interpretation separately from sourced fact. Do not treat an
 illustrative reconstruction as documentary evidence, and record the supplied
