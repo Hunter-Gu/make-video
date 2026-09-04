@@ -99,7 +99,10 @@ declared `videoId` must match the directory. Use the video id as
 
 Keep visual and caption timing in `SCENE_INDEX.json`. Keep absolute-frame
 Remotion effects in `REMOTION_TIMELINE.json`. The app preview and final renderer
-consume both files, so do not create a parallel timeline in code.
+consume both files, so do not create a parallel timeline in code. An effect needs
+whole start and end frames inside the composition, and inside the scene it names
+— the renderer drops anything else without a word, so video QA checks the
+declaration.
 
 Use frame-based Remotion primitives for deterministic rendering. Do not use CSS
 transitions or CSS animations in a Remotion composition.

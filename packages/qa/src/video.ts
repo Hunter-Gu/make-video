@@ -73,6 +73,22 @@ export const runVideoQa = (args: string[], inputOverride?: string) => {
       {startFrame: caption.startFrame, endFrame: caption.endFrame},
     );
   }
+  // The renderer drops an effect whose frame range is unusable or reaches past the
+  // composition, so a mistyped effect disappears from the picture without a word.
+  // Check the declaration here, where a failure is reported rather than swallowed.
+  const effects = readJson(resolve(context.sourceDir, "REMOTION_TIMELINE.json"))?.effects;
+  for (const effect of Array.isArray(effects) ? effects : []) {
+    const usable = Number.isInteger(effect?.startFrame) && Number.isInteger(effect?.endFrame) && effect.startFrame >= 0 && effect.endFrame > effect.startFrame && effect.endFrame <= context.composition.durationInFrames;
+    add(`effect:${effect?.id}`, usable, "a whole frame range inside the timeline", {startFrame: effect?.startFrame, endFrame: effect?.endFrame});
+    if (!usable || effect.sceneId === undefined) continue;
+    const scene = scenes.get(effect.sceneId);
+    add(
+      `effect-scene:${effect.id}`,
+      Boolean(scene) && effect.startFrame >= scene.startFrame && effect.endFrame <= scene.endFrame,
+      scene ? `inside scene ${effect.sceneId} (${scene.startFrame}-${scene.endFrame})` : `a known scene, not ${effect.sceneId}`,
+      {startFrame: effect.startFrame, endFrame: effect.endFrame},
+    );
+  }
   const visual = run("ffmpeg", ["-hide_banner", "-nostats", "-i", input, "-vf", "blackdetect=d=0.5:pix_th=0.02,freezedetect=n=-60dB:d=2", "-an", "-f", "null", "-"]).output;
   const black = Math.max(0, ...[...visual.matchAll(/black_duration:([\d.]+)/g)].map((match) => Number(match[1])));
   const frozen = Math.max(0, ...[...visual.matchAll(/freeze_duration: ([\d.]+)/g)].map((match) => Number(match[1])));

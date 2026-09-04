@@ -28,7 +28,7 @@ const render = (file: string, options: {seconds?: number; width?: number; height
 };
 
 let counter = 0;
-const project = (sceneIndex: Record<string, unknown>, qa: Record<string, unknown> = {}, clip: {seconds?: number; width?: number; height?: number} = {}) => {
+const project = (sceneIndex: Record<string, unknown>, qa: Record<string, unknown> = {}, clip: {seconds?: number; width?: number; height?: number} = {}, effects?: unknown[]) => {
   const videoId = `video-qa-${counter += 1}`;
   const sourceDir = resolve(root, "src", videoId);
   mkdirSync(sourceDir, {recursive: true});
@@ -42,6 +42,7 @@ const project = (sceneIndex: Record<string, unknown>, qa: Record<string, unknown
     },
   }));
   writeFileSync(resolve(sourceDir, "SCENE_INDEX.json"), JSON.stringify(sceneIndex));
+  if (effects) writeFileSync(resolve(sourceDir, "REMOTION_TIMELINE.json"), JSON.stringify({version: 1, effects}));
   render(resolve(root, "output", videoId, "silent.mp4"), clip);
   return videoId;
 };
@@ -122,4 +123,36 @@ test("a missing render is reported before anything is measured", () => {
   const videoId = project(timeline);
   rmSync(resolve(root, "output", videoId, "silent.mp4"));
   assert.throws(() => runVideoQa([videoId]), /QA input not found/);
+});
+
+const effect = (values: Record<string, unknown>) => ({id: "push", sceneId: "opening", type: "ken-burns", label: "Slow push", startFrame: 2, endFrame: 28, ...values});
+
+test("an effect the renderer would silently drop is reported", () => {
+  // buildProjectState filters out an effect whose range is unusable or reaches
+  // past the composition, so it disappears from the picture without a word.
+  const usable = runVideoQa([project(timeline, {}, {}, [effect({})])]);
+  assert.equal(check(usable, "effect:push").pass, true);
+  assert.equal(usable.passed, true, JSON.stringify(usable.checks.filter((item: any) => !item.pass)));
+
+  for (const broken of [{endFrame: 90}, {startFrame: 28, endFrame: 28}, {startFrame: -4}, {endFrame: 12.5}]) {
+    const report = runVideoQa([project(timeline, {}, {}, [effect(broken)])]);
+    assert.equal(check(report, "effect:push").pass, false, JSON.stringify(broken));
+    assert.equal(check(report, "effect-scene:push"), undefined, "an unusable range is reported once, not compared to a scene as well");
+  }
+});
+
+test("an effect that runs past its own scene is caught", () => {
+  const spilling = runVideoQa([project(timeline, {}, {}, [effect({startFrame: 20, endFrame: 40})])]);
+  assert.equal(check(spilling, "effect:push").pass, true, "the range is inside the composition");
+  assert.equal(check(spilling, "effect-scene:push").pass, false);
+  assert.match(String(check(spilling, "effect-scene:push").expected), /inside scene opening \(0-30\)/);
+
+  const orphaned = runVideoQa([project(timeline, {}, {}, [effect({sceneId: "removed"})])]);
+  assert.match(String(check(orphaned, "effect-scene:push").expected), /a known scene, not removed/);
+});
+
+test("a project with no declared effects is not failed for it", () => {
+  const report = runVideoQa([project(timeline, {}, {}, [])]);
+  assert.equal(report.passed, true);
+  assert.equal(report.checks.some((item: any) => item.id.startsWith("effect")), false);
 });
