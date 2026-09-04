@@ -4,6 +4,9 @@ import {dirname, resolve} from "node:path";
 
 import {assertOutputAvailable, loadAudioContext} from "./context";
 
+/** Voice segments are generated as 16-bit mono WAV at this rate; anything else cannot be aligned. */
+const sampleRate = 24000;
+
 export const buildTiming = (videoId: string, force: boolean) => {
   const context = loadAudioContext(videoId);
   const planFile = resolve(context.sourceDir, "TIMING_PLAN.json");
@@ -39,17 +42,21 @@ export const buildTiming = (videoId: string, force: boolean) => {
   const canAssembleVoiceover = segmentFiles.length > 0 && segmentFiles.every(existsSync);
   const voiceoverFile = resolve(context.audioDirs.voiceover, "voiceover.wav");
   if (canAssembleVoiceover) assertOutputAvailable([voiceoverFile], force, `Aligned voiceover for ${videoId}`);
+  // Read and check every segment before writing anything: an unusable one must not
+  // leave the scene index and composition rewritten with no voiceover to match them.
+  const waves = canAssembleVoiceover ? segmentFiles.map((file) => {
+    const wave = readFileSync(file);
+    if (wave.length < 44 || wave.toString("ascii", 0, 4) !== "RIFF" || wave.readUInt32LE(24) !== sampleRate || wave.readUInt16LE(34) !== 16) throw new Error(`Unsupported voice segment format: ${file}`);
+    return wave;
+  }) : [];
   const config = JSON.parse(readFileSync(context.configPath, "utf8"));
   config.composition.durationInFrames = frame;
   writeFileSync(indexFile, `${JSON.stringify(sceneIndex, null, 2)}\n`);
   writeFileSync(context.configPath, `${JSON.stringify(config, null, 2)}\n`);
   if (canAssembleVoiceover) {
-    const sampleRate = 24000;
     const pcm = Buffer.alloc(Math.ceil(frame / fps * sampleRate) * 2);
     for (let index = 0; index < captions.length; index += 1) {
-      const wave = readFileSync(segmentFiles[index]);
-      if (wave.toString("ascii", 0, 4) !== "RIFF" || wave.readUInt32LE(24) !== sampleRate || wave.readUInt16LE(34) !== 16) throw new Error(`Unsupported voice segment format: ${segmentFiles[index]}`);
-      wave.subarray(44).copy(pcm, Math.round(captions[index].startFrame / fps * sampleRate) * 2);
+      waves[index].subarray(44).copy(pcm, Math.round(captions[index].startFrame / fps * sampleRate) * 2);
     }
     const header = Buffer.alloc(44);
     header.write("RIFF", 0); header.writeUInt32LE(36 + pcm.length, 4); header.write("WAVE", 8); header.write("fmt ", 12); header.writeUInt32LE(16, 16); header.writeUInt16LE(1, 20); header.writeUInt16LE(1, 22); header.writeUInt32LE(sampleRate, 24); header.writeUInt32LE(sampleRate * 2, 28); header.writeUInt16LE(2, 32); header.writeUInt16LE(16, 34); header.write("data", 36); header.writeUInt32LE(pcm.length, 40);

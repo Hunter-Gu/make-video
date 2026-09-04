@@ -229,7 +229,9 @@ environment; credentials are never sent as MCP tool input.
 ratios, clean versions without burned-in captions, translated versions,
 thumbnails, trailers, and short extracts. Each variant is rendered from the same
 project timeline rather than re-cut from the master, so a variant cannot drift
-from the edit. See
+from the edit. A run refuses up front if any variant it was asked for already
+exists, rather than after rendering the ones before it, and `delivery-report.json`
+only ever describes variants the project still declares. See
 [skills/make-video/references/delivery-workflow.md](skills/make-video/references/delivery-workflow.md).
 
 ## Series

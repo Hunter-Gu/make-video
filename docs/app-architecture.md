@@ -149,7 +149,8 @@ Inspectable project files remain authoritative:
   billed request is visible to the next run instead of being reissued silently.
 - `DELIVERABLES.json` stores the declared delivery variants; every variant is a
   render of the same timeline, never a re-cut of the master. Delivery measures
-  each file it writes and records whether it matches its declaration.
+  each file it writes and records whether it matches its declaration, and drops
+  report entries for variants the project no longer declares.
 - `SERIES_EPISODE.json` records which series episode a project was scaffolded
   from, so an episode stays traceable to its plan.
 - `projects/<series-id>/series-plan.json` and `SERIES_BIBLE.json` store series

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import {mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from "node:fs";
+import {existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {resolve} from "node:path";
 import {after, test} from "node:test";
@@ -130,4 +130,18 @@ test("generated segment files are assembled into one aligned voiceover", () => {
   assert.equal(voiceover.readUInt32LE(24), 24000);
   // 15 lead frames + two one-second segments, at 24 kHz mono 16-bit.
   assert.equal((voiceover.length - 44) / 2, Math.ceil(75 / 30 * 24000));
+});
+
+test("an unusable voice segment leaves the project untouched", () => {
+  const {videoId, sourceDir, voiceDir} = project({
+    segments: {"narration-1": 1, "narration-2": 1},
+    scenes: [{id: "opening", narrationIds: ["narration-1"]}, {id: "closing", narrationIds: ["narration-2"]}],
+    segmentFiles: true,
+  });
+  writeFileSync(resolve(voiceDir, "narration-2.wav"), "not a wave");
+  assert.throws(() => buildTiming(videoId, false), /Unsupported voice segment format/);
+  // Writing the index first would leave the composition retimed with no voiceover
+  // to match it, and the next run would then need --force to try again.
+  assert.equal(existsSync(resolve(sourceDir, "SCENE_INDEX.json")), false);
+  assert.equal(JSON.parse(readFileSync(resolve(sourceDir, "video.config.json"), "utf8")).composition.durationInFrames, 1);
 });

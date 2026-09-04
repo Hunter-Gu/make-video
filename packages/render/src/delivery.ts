@@ -204,12 +204,22 @@ export const runDelivery = async (videoId: string, options: {variantIds?: string
   const report: DeliveryReport = getDeliveryReport(videoId) ?? {videoId, variants: {}, generatedAt: new Date().toISOString()};
   report.videoId = videoId;
   if (!report.variants || typeof report.variants !== "object") report.variants = {};
+  // A variant that is no longer declared is not a delivered file; keeping its old
+  // result would leave the report passing, or failing, on something that is gone.
+  const declaredIds = new Set(declared.map((variant) => variant.id));
+  for (const id of Object.keys(report.variants)) if (!declaredIds.has(id)) delete report.variants[id];
   const failures: string[] = [];
 
-  for (const variant of variants) {
+  // Every render takes minutes, so refuse the whole run up front rather than after
+  // the variants before the conflict have already been rendered.
+  const targets = new Map(variants.map((variant) => {
     const output = resolve(projectRoot, variant.output);
-    const unmastered = variant.master ? `${output.slice(0, -extname(output).length)}.unmastered.mp4` : null;
-    assertOutputsAvailable([output, ...(unmastered ? [unmastered] : [])], force, `Delivery variant ${variant.id} for ${videoId}`);
+    return [variant.id, {output, unmastered: variant.master ? `${output.slice(0, -extname(output).length)}.unmastered.mp4` : null}];
+  }));
+  assertOutputsAvailable([...targets.values()].flatMap(({output, unmastered}) => unmastered ? [output, unmastered] : [output]), force, `Delivery for ${videoId}`);
+
+  for (const variant of variants) {
+    const {output, unmastered} = targets.get(variant.id)!;
     const renderTarget = unmastered ?? output;
     mkdirSync(dirname(renderTarget), {recursive: true});
     mkdirSync(dirname(output), {recursive: true});

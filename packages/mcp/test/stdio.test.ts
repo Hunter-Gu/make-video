@@ -22,7 +22,7 @@ const createFixture = async () => {
   await mkdir(resolve(root, "output", videoId), {recursive: true});
   const remotionBin = resolve(root, "node_modules", ".bin", "remotion");
   await mkdir(dirname(remotionBin), {recursive: true});
-  await copyFile(resolve(dirname(fileURLToPath(import.meta.url)), "remotion-stub.cjs"), remotionBin);
+  await copyFile(resolve(dirname(fileURLToPath(import.meta.url)), "../../render/test/remotion-stub.cjs"), remotionBin);
   await chmod(remotionBin, 0o755);
   await writeFile(resolve(sourceDir, "video.config.json"), JSON.stringify({
     videoId,

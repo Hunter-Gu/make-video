@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
-import {mkdirSync, mkdtempSync, rmSync, writeFileSync} from "node:fs";
+import {chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from "node:fs";
 import {tmpdir} from "node:os";
-import {resolve} from "node:path";
+import {dirname, resolve} from "node:path";
+import {fileURLToPath} from "node:url";
 import {after, test} from "node:test";
 
 const root = mkdtempSync(resolve(tmpdir(), "make-video-delivery-"));
 process.env.MAKE_VIDEO_PROJECT_ROOT = root;
-const {applyTranslation, loadDeliverables, verifyDeliveredVariant} = await import("../src/delivery");
+const {applyTranslation, loadDeliverables, runDelivery, verifyDeliveredVariant} = await import("../src/delivery");
 const {buildProjectState} = await import("../src/state");
 
 after(() => rmSync(root, {recursive: true, force: true}));
@@ -116,4 +117,37 @@ test("a delivered file is checked against the size and length that were declared
   assert.match(verifyDeliveredVariant(trailer, {width: 1080, height: 1920, duration: 10}, timing).join(" "), /duration is 10s, expected 5\.000s/);
   assert.match(verifyDeliveredVariant(full, {width: null, height: null, duration: null}, timing).join(" "), /unreadable/);
   assert.deepEqual(verifyDeliveredVariant(full, {width: 1920, height: 1080, duration: 10.2}, {...timing, durationToleranceSeconds: 0.5}), []);
+});
+
+/** runDelivery shells out to the Remotion CLI; the stub renders real media at the declared size. */
+const outputDir = resolve(root, "output", videoId);
+const remotionBin = resolve(root, "node_modules", ".bin", "remotion");
+mkdirSync(dirname(remotionBin), {recursive: true});
+copyFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "remotion-stub.cjs"), remotionBin);
+chmodSync(remotionBin, 0o755);
+mkdirSync(outputDir, {recursive: true});
+
+const extract = (id: string) => ({id, kind: "video", frames: [0, 30], width: 320, height: 180, output: `output/${videoId}/${id}.mp4`});
+const reportFile = resolve(outputDir, "delivery-report.json");
+
+test("a conflicting variant stops the run before anything is rendered", async () => {
+  writeDeliverables([extract("first"), extract("second")]);
+  writeFileSync(resolve(outputDir, "second.mp4"), "delivered earlier");
+  await assert.rejects(() => runDelivery(videoId), /already exists/);
+  assert.equal(existsSync(resolve(outputDir, "first.mp4")), false, "each render costs minutes; the conflict must be found before any of them");
+  rmSync(resolve(outputDir, "second.mp4"));
+});
+
+test("a variant that is no longer declared is dropped from the report", async () => {
+  writeDeliverables([extract("first")]);
+  writeFileSync(reportFile, JSON.stringify({
+    videoId,
+    variants: {retired: {output: `output/${videoId}/retired.mp4`, kind: "video", passed: false, issues: ["width is 1, declared 320"]}},
+    generatedAt: new Date().toISOString(),
+  }));
+  const report = await runDelivery(videoId, {force: true});
+
+  assert.deepEqual(Object.keys(report.variants), ["first"], "a variant nobody declares any more is not a delivered file");
+  assert.equal(report.passed, true, "a removed variant must not keep the report failing forever");
+  assert.deepEqual(JSON.parse(readFileSync(reportFile, "utf8")).variants.first.issues, []);
 });

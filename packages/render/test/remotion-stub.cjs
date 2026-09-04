@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Stand-in for the Remotion CLI used by the MCP end-to-end test.
+ * Stand-in for the Remotion CLI used by the delivery and MCP end-to-end tests.
  *
  * It writes a real file at the size and length the render was asked for, so the
  * test exercises the checks that compare delivered files against what the
