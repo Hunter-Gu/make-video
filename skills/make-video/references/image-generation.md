@@ -44,6 +44,10 @@ provenance of what it bought. Re-running skips any image whose file, prompt, and
 model are unchanged and generates only the rest; an image whose request has
 changed is refused rather than overwritten, and needs `--force`.
 
+An asset's `sceneIds` must name scenes the plan actually contains. Readiness
+warns about an assignment that does not, and generation says so again after the
+run: an asset attached to no scene is paid for and never appears.
+
 Keep reusable style rules in `VISUAL_BIBLE.json`, recurring people and life
 stages in `CHARACTER_BIBLE.json`, and historical boundaries in
 `PROMPT_CONSTRAINTS.md`. Generation automatically prepends them. An asset may

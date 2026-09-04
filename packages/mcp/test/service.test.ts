@@ -219,3 +219,23 @@ test("build status covers declared delivery variants and their translations", ()
   assert.deepEqual(status.stale, ["zh-captioned"]);
   assert.deepEqual(status.outputs.find((output) => output.id === "zh-captioned")?.staleInputs, [`src/${videoId}/translations/zh.json`]);
 });
+
+test("generated media assigned to a scene the plan does not have is warned about", () => {
+  const {videoId} = project();
+  service.savePlan(videoId, plan({}));
+  const configPath = resolve(root, "src", videoId, "video.config.json");
+  const config = JSON.parse(readFileSync(configPath, "utf8"));
+  config.imageGeneration = {model: "gemini-image", assets: [
+    {id: "kept", prompt: "A quiet library.", output: "images/generated/kept.png", sceneIds: ["scene-1"]},
+    {id: "orphan", prompt: "An empty hall.", output: "images/generated/orphan.png", sceneIds: ["removed-scene"]},
+  ]};
+  writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+  const readiness = service.checkGenerationReadiness(videoId);
+  assert.ok(
+    readiness.warnings.some((warning) => /assigned to scene removed-scene, which the plan does not contain/.test(warning)),
+    // Without this the asset is generated, attached to nothing, and never appears.
+    readiness.warnings.join(" "),
+  );
+  assert.equal(readiness.warnings.some((warning) => /assigned to scene scene-1/.test(warning)), false);
+});

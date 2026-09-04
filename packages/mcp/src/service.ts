@@ -1,4 +1,4 @@
-import {readJsonFile} from "@make-video/project";
+import {log, readJsonFile} from "@make-video/project";
 import {randomUUID} from "node:crypto";
 import {existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, writeFileSync} from "node:fs";
 import {basename, dirname, extname, relative, resolve, sep} from "node:path";
@@ -347,6 +347,9 @@ export const checkGenerationReadiness = (videoId: string): GenerationReadiness =
   if (!voiceModel) errors.push("voice.model is missing.");
   const planScenes = Array.isArray(savedPlan?.scenes) ? savedPlan.scenes : [];
   for (const scene of planScenes) if (["image", "portrait", "depth", "video", "montage"].includes(scene.type) && !assignedScenes.has(scene.id)) warnings.push(`Scene ${scene.id} has no configured generated media assignment; it must use supplied or Remotion visuals.`);
+  // The other direction: paying for media that is attached to no scene at all.
+  const planSceneIds = new Set(planScenes.map((scene: any) => scene?.id));
+  if (planSceneIds.size > 0) for (const sceneId of assignedScenes) if (!planSceneIds.has(sceneId)) warnings.push(`Generated media is assigned to scene ${sceneId}, which the plan does not contain; it would be paid for and never appear.`);
   const timingFile = resolve(context.sourceDir, "TIMING_PLAN.json");
   const timingPlanPresent = existsSync(timingFile);
   let voiceManifestPresent = false;
@@ -593,8 +596,14 @@ export const runGeneration = async (videoId: string, kind: "images" | "video" | 
     if (!validation.passed) throw new Error(`Script validation failed: ${validation.errors.join(" ")}`);
   }
   const args = [videoId, ...(force ? ["--force"] : [])];
-  if (kind === "images") { await runImages(args); syncGeneratedAssets(videoId, "images"); }
-  else if (kind === "video") { await runVideos(args); syncGeneratedAssets(videoId, "video"); }
+  // An asset assigned to a scene that no longer exists is attached to nothing, so
+  // the media just never appears. Say so here, immediately after paying for it.
+  const attach = (media: "images" | "video") => {
+    const {missingSceneIds} = syncGeneratedAssets(videoId, media);
+    if (missingSceneIds.length > 0) log(`! Generated ${media} are assigned to scenes the project does not have: ${missingSceneIds.join(", ")}. They will not appear until the assignment is corrected.`);
+  };
+  if (kind === "images") { await runImages(args); attach("images"); }
+  else if (kind === "video") { await runVideos(args); attach("video"); }
   else if (kind === "voiceover") {
     await runVoiceover(args);
     if (existsSync(resolve(loadVideoContext(videoId).sourceDir, "TIMING_PLAN.json"))) await runTimingPackage(videoId, true);
